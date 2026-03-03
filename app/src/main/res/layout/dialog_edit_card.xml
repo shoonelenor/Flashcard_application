@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/tvTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Card"
+        android:textAppearance="@style/TextAppearance.Material3.TitleLarge" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilFront"
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:hint="Question / Front"
+        app:counterEnabled="true"
+        app:counterMaxLength="60">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etFront"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:maxLength="60"
+            android:inputType="textCapSentences" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilBack"
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:hint="Answer / Back"
+        app:counterEnabled="true"
+        app:counterMaxLength="120">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etBack"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:maxLength="120"
+            android:minLines="2"
+            android:maxLines="4"
+            android:inputType="textCapSentences|textMultiLine" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+</LinearLayout>
