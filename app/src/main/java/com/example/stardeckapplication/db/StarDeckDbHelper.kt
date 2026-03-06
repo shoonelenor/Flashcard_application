@@ -237,10 +237,53 @@ class StarDeckDbHelper(context: Context) :
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_reports_created ON ${DbContract.T_REPORTS}(${DbContract.R_CREATED_AT})")
     }
 
+    /**
+     * Safe demo seeding you can call anytime (it won't duplicate).
+     * Useful if the database already existed before you added demo accounts.
+     */
+    fun ensureDemoAccounts() {
+        val db = writableDatabase
+        db.beginTransaction()
+        try {
+            seedStaffAccounts(db) // includes demo user too
+            db.setTransactionSuccessful()
+        } finally {
+            db.endTransaction()
+        }
+    }
+
+    /**
+     * Self-service password reset by email (school demo).
+     * Returns true if email exists and password updated.
+     */
+    fun resetPasswordByEmail(email: String, newPassword: CharArray): Boolean {
+        val normalized = email.trim().lowercase()
+        if (normalized.isBlank()) return false
+
+        val newHash = PasswordHasher.hash(newPassword) // clears char[] internally
+
+        val cv = ContentValues().apply {
+            put(DbContract.U_PASSWORD_HASH, newHash)
+            put(DbContract.U_FORCE_PW_CHANGE, 0) // user resets themself, no need force change
+        }
+
+        val rows = writableDatabase.update(
+            DbContract.T_USERS,
+            cv,
+            "${DbContract.U_EMAIL}=?",
+            arrayOf(normalized)
+        )
+
+        return rows > 0
+    }
+
     // ---------- SEED ----------
     private fun seedStaffAccounts(db: SQLiteDatabase) {
+        // Staff accounts
         ensureUser(db, "Admin", "admin@stardeck.local", "Admin@1234", DbContract.ROLE_ADMIN, true)
         ensureUser(db, "Manager", "manager@stardeck.local", "Manager@1234", DbContract.ROLE_MANAGER, true)
+
+        ensureUser(db, "Shoon", "shoon@gmail.com", "shoon@1234", DbContract.ROLE_USER, false)
     }
 
     private fun ensureUser(

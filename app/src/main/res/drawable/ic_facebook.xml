@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Bigger Facebook "f" (fills area more) -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M13.2,21V13.8h2.4l0.4,-2.9h-2.8V9.1c0,-0.8 0.2,-1.4 1.4,-1.4h1.5V5.1c-0.3,0 -1.2,-0.1 -2.3,-0.1c-2.2,0 -3.7,1.3 -3.7,3.8v2.1H7.7v2.9h2.4V21h3.1Z" />
+</vector>

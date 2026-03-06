@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Orbit ring (stroke only) -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#CCFFFFFF"
+        android:strokeWidth="1.6"
+        android:pathData="M12,3
+                          C6.95,3 3,6.95 3,12
+                          C3,17.05 6.95,21 12,21
+                          C17.05,21 21,17.05 21,12
+                          C21,6.95 17.05,3 12,3Z" />
+
+    <!-- Small planet dot -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M18.2,7.6m-1.2,0a1.2,1.2 0 1,0 2.4,0a1.2,1.2 0 1,0 -2.4,0" />
+
+    <!-- Star in the center -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M12,7.2
+                          l1.25,2.65
+                          l2.9,0.25
+                          l-2.2,1.95
+                          l0.65,2.85
+                          L12,13.75
+                          l-2.6,1.15
+                          l0.65,-2.85
+                          l-2.2,-1.95
+                          l2.9,-0.25
+                          Z" />
+</vector>

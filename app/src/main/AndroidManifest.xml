@@ -37,6 +37,8 @@
         <activity android:name=".ui.manager.ManagerReportsActivity" android:exported="false" />
         <activity android:name=".ui.profile.AchievementsActivity" android:exported="false" />
         <activity android:name=".ui.profile.PremiumDemoActivity" android:exported="false" />
+        <activity android:name=".ui.legal.TermsActivity" />
+        <activity android:name=".ui.legal.PrivacyPolicyActivity" />
     </application>
 
 </manifest>
