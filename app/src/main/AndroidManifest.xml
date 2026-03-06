@@ -39,6 +39,8 @@
         <activity android:name=".ui.profile.PremiumDemoActivity" android:exported="false" />
         <activity android:name=".ui.legal.TermsActivity" />
         <activity android:name=".ui.legal.PrivacyPolicyActivity" />
+        <activity android:name=".ui.admin.ManagePremiumContentActivity" android:exported="false" />
+        <activity android:name=".ui.admin.ManageContentSetupActivity" android:exported="false" />
     </application>
 
 </manifest>

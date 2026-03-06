@@ -1,6 +1,5 @@
 package com.example.stardeckapplication.ui.home
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
@@ -8,8 +7,10 @@ import com.example.stardeckapplication.R
 import com.example.stardeckapplication.databinding.FragmentAdminDashboardBinding
 import com.example.stardeckapplication.db.DbContract
 import com.example.stardeckapplication.db.StarDeckDbHelper
-import com.example.stardeckapplication.ui.admin.ManageAccountsActivity
 import com.example.stardeckapplication.util.SessionManager
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class AdminDashboardFragment : Fragment(R.layout.fragment_admin_dashboard) {
 
@@ -32,16 +33,19 @@ class AdminDashboardFragment : Fragment(R.layout.fragment_admin_dashboard) {
         val line = if (last == null) "First login" else "Last login: ${formatTime(last)}"
         b.tvSubtitle.text = "Welcome, ${me.name}\n$line"
 
-        b.btnManageAccounts.setOnClickListener {
-            startActivity(Intent(requireContext(), ManageAccountsActivity::class.java))
+        b.btnOpenMasterData.setOnClickListener {
+            (activity as? AdminHomeActivity)?.openTab(R.id.admin_nav_master_data)
+        }
+
+        b.btnOpenReports.setOnClickListener {
+            (activity as? AdminHomeActivity)?.openTab(R.id.admin_nav_reports)
+        }
+
+        b.btnOpenTickets.setOnClickListener {
+            (activity as? AdminHomeActivity)?.openTab(R.id.admin_nav_ticket)
         }
 
         refreshStats()
-    }
-
-    private fun formatTime(ms: Long): String {
-        val sdf = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault())
-        return sdf.format(java.util.Date(ms))
     }
 
     override fun onResume() {
@@ -50,7 +54,6 @@ class AdminDashboardFragment : Fragment(R.layout.fragment_admin_dashboard) {
     }
 
     private fun refreshStats() {
-        // Read-only queries = safe
         b.tvUsersValue.text = db.adminCountAllUsers().toString()
         b.tvDisabledValue.text = db.adminCountDisabledUsers().toString()
         b.tvPremiumValue.text = db.adminCountPremiumUsers().toString()
@@ -59,6 +62,10 @@ class AdminDashboardFragment : Fragment(R.layout.fragment_admin_dashboard) {
         b.tvReportsValue.text = db.adminCountOpenReports().toString()
         b.tvActiveMonthValue.text = db.countMonthlyActiveUsers().toString()
         b.tvInactiveMonthValue.text = db.countMonthlyInactiveUsers().toString()
+    }
+
+    private fun formatTime(ms: Long): String {
+        return SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(ms))
     }
 
     override fun onDestroyView() {

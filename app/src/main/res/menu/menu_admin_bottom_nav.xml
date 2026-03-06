@@ -1,15 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
+
     <item
-        android:id="@+id/admin_nav_home"
-        android:title="Home"
-        android:icon="@android:drawable/ic_menu_view" />
+        android:id="@+id/admin_nav_dashboard"
+        android:icon="@android:drawable/ic_menu_view"
+        android:title="Dashboard" />
+
     <item
-        android:id="@+id/admin_nav_accounts"
-        android:title="Accounts"
-        android:icon="@android:drawable/ic_menu_manage" />
+        android:id="@+id/admin_nav_master_data"
+        android:icon="@android:drawable/ic_menu_manage"
+        android:title="Master Data" />
+
+    <item
+        android:id="@+id/admin_nav_reports"
+        android:icon="@android:drawable/ic_menu_info_details"
+        android:title="Reports" />
+
+    <item
+        android:id="@+id/admin_nav_ticket"
+        android:icon="@android:drawable/ic_menu_help"
+        android:title="Ticket" />
+
     <item
         android:id="@+id/admin_nav_profile"
-        android:title="Profile"
-        android:icon="@android:drawable/ic_lock_power_off" />
+        android:icon="@android:drawable/ic_menu_myplaces"
+        android:title="Profile" />
+
 </menu>

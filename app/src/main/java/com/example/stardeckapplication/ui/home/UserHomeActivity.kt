@@ -1,7 +1,6 @@
 package com.example.stardeckapplication.ui.home
 
 import android.os.Bundle
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.example.stardeckapplication.R
@@ -14,10 +13,11 @@ class UserHomeActivity : AppCompatActivity() {
     private lateinit var b: ActivityUserHomeBinding
     private val session by lazy { SessionManager(this) }
 
-    private var activeTag: String = TAG_HOME
+    private var activeTag: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         b = ActivityUserHomeBinding.inflate(layoutInflater)
         setContentView(b.root)
 
@@ -27,39 +27,61 @@ class UserHomeActivity : AppCompatActivity() {
             return
         }
 
-        activeTag = savedInstanceState?.getString(KEY_ACTIVE_TAG) ?: TAG_HOME
+        activeTag = savedInstanceState?.getString(KEY_ACTIVE_TAG)
 
         b.bottomNav.setOnItemSelectedListener { item ->
-            if (supportFragmentManager.isStateSaved) return@setOnItemSelectedListener false
-
-            try {
-                when (item.itemId) {
-                    R.id.nav_home -> {
-                        showTab(TAG_HOME) { UserHomeFragment() }
-                        true
-                    }
-                    R.id.nav_decks -> {
-                        showTab(TAG_LIBRARY) { UserDecksFragment() }
-                        true
-                    }
-                    R.id.nav_profile -> {
-                        showTab(TAG_PROFILE) { UserProfileFragment() }
-                        true
-                    }
-                    else -> false
+            when (item.itemId) {
+                R.id.nav_home -> {
+                    showTab(TAG_HOME) { UserHomeFragment() }
+                    true
                 }
-            } catch (e: Exception) {
-                Toast.makeText(this, "Open tab failed: ${e.message}", Toast.LENGTH_SHORT).show()
-                false
+
+                R.id.nav_library -> {
+                    showTab(TAG_LIBRARY) { UserDecksFragment() }
+                    true
+                }
+
+                R.id.nav_study -> {
+                    showTab(TAG_STUDY) { UserStudyFragment() }
+                    true
+                }
+
+                R.id.nav_explore -> {
+                    showTab(TAG_EXPLORE) {
+                        UserPortalPlaceholderFragment.newInstance(
+                            title = "Explore",
+                            subtitle = "Explore tab framework is ready. Public deck logic will be connected safely in the next step.",
+                            features = arrayListOf(
+                                "Browse public decks",
+                                "Search public decks",
+                                "Trending decks",
+                                "Preview decks",
+                                "Save to library",
+                                "Rate / report content"
+                            ),
+                            primaryText = "Open Library",
+                            targetItemId = R.id.nav_library
+                        )
+                    }
+                    true
+                }
+
+                R.id.nav_profile -> {
+                    showTab(TAG_PROFILE) { UserProfileFragment() }
+                    true
+                }
+
+                else -> false
             }
         }
 
-        // Load selected/default tab safely (do not open twice)
         if (savedInstanceState == null) {
             b.bottomNav.selectedItemId = R.id.nav_home
         } else {
             b.bottomNav.selectedItemId = when (activeTag) {
-                TAG_LIBRARY -> R.id.nav_decks
+                TAG_LIBRARY -> R.id.nav_library
+                TAG_STUDY -> R.id.nav_study
+                TAG_EXPLORE -> R.id.nav_explore
                 TAG_PROFILE -> R.id.nav_profile
                 else -> R.id.nav_home
             }
@@ -71,30 +93,39 @@ class UserHomeActivity : AppCompatActivity() {
         super.onSaveInstanceState(outState)
     }
 
-    private fun showTab(tag: String, factory: () -> Fragment) {
-        if (tag == activeTag) return
+    fun openTab(itemId: Int) {
+        if (b.bottomNav.selectedItemId != itemId) {
+            b.bottomNav.selectedItemId = itemId
+        }
+    }
 
+    private fun showTab(tag: String, factory: () -> Fragment) {
         val fm = supportFragmentManager
+        if (activeTag == tag && fm.findFragmentByTag(tag)?.isVisible == true) return
+
         val tx = fm.beginTransaction().setReorderingAllowed(true)
 
-        fm.findFragmentByTag(activeTag)?.let { tx.hide(it) }
+        activeTag?.let { currentTag ->
+            fm.findFragmentByTag(currentTag)?.let { tx.hide(it) }
+        }
 
         val target = fm.findFragmentByTag(tag) ?: factory().also {
             tx.add(R.id.fragmentContainer, it, tag)
         }
 
         tx.show(target)
-
-        // Commit safely
-        if (!fm.isStateSaved) tx.commit() else tx.commitAllowingStateLoss()
+        tx.commit()
 
         activeTag = tag
     }
 
     private companion object {
         private const val KEY_ACTIVE_TAG = "active_tag"
+
         private const val TAG_HOME = "tab_home"
         private const val TAG_LIBRARY = "tab_library"
+        private const val TAG_STUDY = "tab_study"
+        private const val TAG_EXPLORE = "tab_explore"
         private const val TAG_PROFILE = "tab_profile"
     }
 }

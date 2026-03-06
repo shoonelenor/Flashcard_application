@@ -7,7 +7,7 @@
     android:clickable="true"
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground"
-    app:cardCornerRadius="20dp"
+    app:cardCornerRadius="18dp"
     app:strokeWidth="1dp">
 
     <LinearLayout
@@ -16,21 +16,21 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <LinearLayout
+        <TextView
+            android:id="@+id/tvTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:maxLines="2"
+            android:text="Premium deck"
+            android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
 
-            <TextView
-                android:id="@+id/tvTitle"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:maxLines="2"
-                android:text="Deck title"
-                android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
-        </LinearLayout>
+        <TextView
+            android:id="@+id/tvOwner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Owner"
+            android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -39,25 +39,24 @@
             android:orientation="horizontal">
 
             <com.google.android.material.chip.Chip
-                android:id="@+id/chipVisibility"
+                android:id="@+id/chipPremium"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:checkable="false"
                 android:clickable="false"
-                android:text="Private" />
+                android:text="Premium" />
 
             <Space
                 android:layout_width="8dp"
                 android:layout_height="wrap_content" />
 
             <com.google.android.material.chip.Chip
-                android:id="@+id/chipPremium"
+                android:id="@+id/chipStatus"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:checkable="false"
                 android:clickable="false"
-                android:text="Premium"
-                android:visibility="gone" />
+                android:text="Active" />
         </LinearLayout>
 
         <TextView
@@ -70,16 +69,17 @@
             android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
 
         <TextView
+            android:id="@+id/tvCardCount"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:text="Tap card to open deck cards"
+            android:layout_marginTop="8dp"
+            android:text="0 cards"
             android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="10dp"
             android:gravity="end"
             android:orientation="horizontal">
 
@@ -89,14 +89,6 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Edit"
-                android:textAllCaps="false" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnDelete"
-                style="@style/Widget.Material3.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Delete"
                 android:textAllCaps="false" />
         </LinearLayout>
 

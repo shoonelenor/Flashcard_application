@@ -1,5 +1,6 @@
 package com.example.stardeckapplication.ui.study
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.MotionEvent
 import android.view.View
@@ -25,6 +26,8 @@ class StudyActivity : AppCompatActivity() {
         private const val S_SHUFFLED = "s_shuffled"
         private const val S_SEED = "s_seed"
         private const val S_ORDER_IDS = "s_order_ids"
+        private const val S_DUE_MODE = "s_due_mode"
+        private const val S_DUE_COUNT_AT_START = "s_due_count_at_start"
     }
 
     private data class LastAction(
@@ -33,10 +36,13 @@ class StudyActivity : AppCompatActivity() {
         val hardBefore: Int,
         val orderIds: LongArray,
         val sessionId: Long,
-        val deckId: Long
+        val deckId: Long,
+        val cardId: Long,
+        val previousProgress: StarDeckDbHelper.CardProgressSnapshot?
     )
 
     private lateinit var b: ActivityStudyBinding
+
     private val db by lazy { StarDeckDbHelper(this) }
     private val session by lazy { SessionManager(this) }
 
@@ -48,7 +54,6 @@ class StudyActivity : AppCompatActivity() {
 
     private var index: Int = 0
     private var showBack: Boolean = false
-
     private var knownCount: Int = 0
     private var hardCount: Int = 0
 
@@ -61,8 +66,12 @@ class StudyActivity : AppCompatActivity() {
     private var downY = 0f
     private val swipeThresholdPx = 120
 
+    private var dueMode: Boolean = false
+    private var dueCountAtStart: Int = 0
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         b = ActivityStudyBinding.inflate(layoutInflater)
         setContentView(b.root)
 
@@ -71,25 +80,34 @@ class StudyActivity : AppCompatActivity() {
 
         val me = session.load()
         if (me == null || me.role != DbContract.ROLE_USER) {
-            finish(); return
+            finish()
+            return
         }
+
         userId = me.id
-
         deckId = intent.getLongExtra(EXTRA_DECK_ID, -1L)
-        if (deckId <= 0) {
-            finish(); return
+        if (deckId <= 0L) {
+            safeFinishWithMessage("Invalid deck")
+            return
         }
 
-        val title = db.getDeckTitleForOwner(userId, deckId) ?: run { finish(); return }
+        val title = runCatching { db.getDeckTitleForOwner(userId, deckId) }.getOrNull()
+        if (title.isNullOrBlank()) {
+            safeFinishWithMessage("Deck not found")
+            return
+        }
+
         supportActionBar?.title = title
 
-        baseCards = db.getCardsForDeck(userId, deckId)
-        if (baseCards.isEmpty()) {
-            MaterialAlertDialogBuilder(this)
-                .setTitle("No cards")
-                .setMessage("This deck has no cards. Create cards first, then study.")
-                .setPositiveButton("OK") { _, _ -> finish() }
-                .show()
+        val loaded = runCatching {
+            loadStudyCardsSafely()
+            true
+        }.getOrElse {
+            false
+        }
+
+        if (!loaded || baseCards.isEmpty()) {
+            safeFinishWithMessage("This deck has no cards or could not be opened.")
             return
         }
 
@@ -100,11 +118,19 @@ class StudyActivity : AppCompatActivity() {
             hardCount = savedInstanceState.getInt(S_HARD, 0)
             shuffled = savedInstanceState.getBoolean(S_SHUFFLED, false)
             shuffleSeed = savedInstanceState.getLong(S_SEED, System.currentTimeMillis())
+            dueMode = savedInstanceState.getBoolean(S_DUE_MODE, dueMode)
+            dueCountAtStart = savedInstanceState.getInt(S_DUE_COUNT_AT_START, dueCountAtStart)
+
             val ids = savedInstanceState.getLongArray(S_ORDER_IDS)
             order = rebuildOrderFromIds(ids)
         } else {
             shuffleSeed = System.currentTimeMillis()
             order = baseCards.toMutableList()
+        }
+
+        if (order.isEmpty()) {
+            safeFinishWithMessage("No cards available for this study session.")
+            return
         }
 
         if (index < 0) index = 0
@@ -120,6 +146,7 @@ class StudyActivity : AppCompatActivity() {
                     downY = ev.y
                     true
                 }
+
                 MotionEvent.ACTION_UP -> {
                     val dx = ev.x - downX
                     val dy = ev.y - downY
@@ -133,6 +160,7 @@ class StudyActivity : AppCompatActivity() {
                         true
                     }
                 }
+
                 else -> true
             }
         }
@@ -141,6 +169,7 @@ class StudyActivity : AppCompatActivity() {
             if (!showBack) return@setOnClickListener
             markKnown()
         }
+
         b.btnHard.setOnClickListener {
             if (!showBack) return@setOnClickListener
             markHard()
@@ -153,7 +182,8 @@ class StudyActivity : AppCompatActivity() {
     }
 
     override fun onSupportNavigateUp(): Boolean {
-        finish(); return true
+        finish()
+        return true
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -165,15 +195,57 @@ class StudyActivity : AppCompatActivity() {
         outState.putBoolean(S_SHUFFLED, shuffled)
         outState.putLong(S_SEED, shuffleSeed)
         outState.putLongArray(S_ORDER_IDS, order.map { it.id }.toLongArray())
+        outState.putBoolean(S_DUE_MODE, dueMode)
+        outState.putInt(S_DUE_COUNT_AT_START, dueCountAtStart)
     }
 
-    // LEFT = Hard, RIGHT = Known
+    private fun loadStudyCardsSafely() {
+        // Try due-mode first. If anything in SRS path fails, fall back to normal review.
+        val dueLoaded = runCatching {
+            val count = db.getDueCountForDeck(userId, deckId)
+            dueCountAtStart = count
+            dueMode = count > 0
+
+            if (dueMode) {
+                val dueCards = db.getDueCardsForDeck(userId, deckId)
+                baseCards = dueCards.map {
+                    StarDeckDbHelper.CardRow(
+                        id = it.id,
+                        front = it.front,
+                        back = it.back,
+                        createdAt = it.createdAt
+                    )
+                }
+            }
+        }.isSuccess
+
+        if (!dueLoaded || baseCards.isEmpty()) {
+            dueMode = false
+            dueCountAtStart = 0
+            baseCards = runCatching { db.getCardsForDeck(userId, deckId) }.getOrDefault(emptyList())
+        }
+
+        supportActionBar?.subtitle = if (dueMode) {
+            "Due Now • $dueCountAtStart card(s)"
+        } else {
+            "Normal Review"
+        }
+    }
+
     private fun onSwipeLeft() {
-        if (!showBack) nextQuestion() else markHard()
+        if (!showBack) {
+            nextQuestion()
+        } else {
+            markHard()
+        }
     }
 
     private fun onSwipeRight() {
-        if (!showBack) prevQuestion() else markKnown()
+        if (!showBack) {
+            prevQuestion()
+        } else {
+            markKnown()
+        }
     }
 
     private fun nextQuestion() {
@@ -207,39 +279,78 @@ class StudyActivity : AppCompatActivity() {
     }
 
     private fun markKnown() {
-        val sessionId = db.logStudyResult(userId, deckId, DbContract.RESULT_KNOWN)
-        lastAction = snapshotLastAction(sessionId)
-
-        knownCount++
-        showUndoSnackbar("Marked Known")
-        nextOrFinish()
+        applyReview(DbContract.RESULT_KNOWN, "Marked Known")
     }
 
     private fun markHard() {
-        val sessionId = db.logStudyResult(userId, deckId, DbContract.RESULT_HARD)
-        lastAction = snapshotLastAction(sessionId)
-
-        hardCount++
-        showUndoSnackbar("Marked Hard")
-        nextOrFinish()
+        applyReview(DbContract.RESULT_HARD, "Marked Hard")
     }
 
-    private fun snapshotLastAction(sessionId: Long): LastAction {
-        return LastAction(
-            indexBefore = index,
-            knownBefore = knownCount,
-            hardBefore = hardCount,
-            orderIds = order.map { it.id }.toLongArray(),
-            sessionId = sessionId,
-            deckId = deckId
-        )
-    }
+    private fun applyReview(result: String, message: String) {
+        if (order.isEmpty()) return
 
-    private fun showUndoSnackbar(message: String) {
-        updateUndoUi()
+        val card = order.getOrNull(index) ?: return
+
+        // Try SRS path first.
+        val srsWorked = runCatching {
+            val snapshot = db.getCardProgressSnapshot(userId, card.id)
+            val sessionId = db.applySrsReview(
+                ownerUserId = userId,
+                deckId = deckId,
+                cardId = card.id,
+                result = result
+            )
+
+            if (sessionId > 0L) {
+                lastAction = LastAction(
+                    indexBefore = index,
+                    knownBefore = knownCount,
+                    hardBefore = hardCount,
+                    orderIds = order.map { it.id }.toLongArray(),
+                    sessionId = sessionId,
+                    deckId = deckId,
+                    cardId = card.id,
+                    previousProgress = snapshot
+                )
+                true
+            } else {
+                false
+            }
+        }.getOrDefault(false)
+
+        // Safe fallback to old logging path.
+        if (!srsWorked) {
+            val sessionId = runCatching {
+                db.logStudyResult(userId, deckId, result)
+            }.getOrDefault(-1L)
+
+            if (sessionId <= 0L) {
+                Snackbar.make(b.root, "Could not save study result", Snackbar.LENGTH_SHORT).show()
+                return
+            }
+
+            lastAction = LastAction(
+                indexBefore = index,
+                knownBefore = knownCount,
+                hardBefore = hardCount,
+                orderIds = order.map { it.id }.toLongArray(),
+                sessionId = sessionId,
+                deckId = deckId,
+                cardId = card.id,
+                previousProgress = null
+            )
+        }
+
+        when (result) {
+            DbContract.RESULT_KNOWN -> knownCount++
+            DbContract.RESULT_HARD -> hardCount++
+        }
+
         Snackbar.make(b.root, message, Snackbar.LENGTH_LONG)
             .setAction("Undo") { undoLastAction() }
             .show()
+
+        nextOrFinish()
     }
 
     private fun undoLastAction() {
@@ -248,16 +359,32 @@ class StudyActivity : AppCompatActivity() {
             return
         }
 
-        // remove the logged study row (keeps analytics accurate)
-        if (a.sessionId > 0) {
-            db.deleteStudySession(userId, a.sessionId)
+        runCatching {
+            if (a.sessionId > 0L) {
+                db.deleteStudySession(userId, a.sessionId)
+            }
+        }
+
+        runCatching {
+            if (a.previousProgress != null || supportsProgressRestore()) {
+                db.restoreCardProgressSnapshot(
+                    userId = userId,
+                    cardId = a.cardId,
+                    snapshot = a.previousProgress
+                )
+            }
         }
 
         order = rebuildOrderFromIds(a.orderIds)
         knownCount = a.knownBefore
         hardCount = a.hardBefore
-        index = a.indexBefore.coerceIn(0, order.lastIndex)
 
+        if (order.isEmpty()) {
+            safeFinishWithMessage("Study session ended.")
+            return
+        }
+
+        index = a.indexBefore.coerceIn(0, order.lastIndex)
         showBack = true
         lastAction = null
 
@@ -278,10 +405,13 @@ class StudyActivity : AppCompatActivity() {
     private fun showSummary() {
         val total = order.size
         val studied = (knownCount + hardCount).coerceAtMost(total)
+        val mode = if (dueMode) "Due Now" else "Normal Review"
 
         MaterialAlertDialogBuilder(this)
             .setTitle("Session complete")
-            .setMessage("Studied: $studied / $total\nKnown: $knownCount\nHard: $hardCount")
+            .setMessage(
+                "Mode: $mode\nStudied: $studied / $total\nKnown: $knownCount\nHard: $hardCount"
+            )
             .setPositiveButton("Restart") { _, _ -> restartSession() }
             .setNegativeButton("Back") { _, _ -> finish() }
             .show()
@@ -309,13 +439,22 @@ class StudyActivity : AppCompatActivity() {
         showBack = false
         lastAction = null
 
-        order = if (shuffled) baseCards.shuffled(Random(shuffleSeed)).toMutableList()
-        else baseCards.toMutableList()
+        order = if (shuffled) {
+            baseCards.shuffled(Random(shuffleSeed)).toMutableList()
+        } else {
+            baseCards.toMutableList()
+        }
+
+        if (order.isEmpty()) {
+            safeFinishWithMessage("No cards available for restart.")
+            return
+        }
 
         updateAllUi()
     }
 
     private fun updateAllUi() {
+        if (order.isEmpty()) return
         updateTopUi()
         updateCardUi()
         updateButtonsUi()
@@ -324,18 +463,18 @@ class StudyActivity : AppCompatActivity() {
 
     private fun updateTopUi() {
         val total = order.size
-        val left = total - index
-        b.tvCardsLeft.text = "$left cards left"
-
+        val left = (total - index).coerceAtLeast(1)
         val shuffleText = if (shuffled) "On" else "Off"
-        b.tvStats.text = "🔥 $hardCount   ✅ $knownCount   🔀 $shuffleText"
+        val modeText = if (dueMode) "Due" else "All"
+
+        b.tvCardsLeft.text = "$left cards left"
+        b.tvStats.text = "Known $knownCount • Hard $hardCount • Shuffle $shuffleText • $modeText"
     }
 
     private fun updateCardUi() {
-        val card = order[index]
+        val card = order.getOrNull(index) ?: return
         b.tvFront.text = card.front
         b.tvBack.text = card.back
-
         b.divider.visibility = if (showBack) View.VISIBLE else View.GONE
         b.labelAnswer.visibility = if (showBack) View.VISIBLE else View.GONE
         b.tvBack.visibility = if (showBack) View.VISIBLE else View.GONE
@@ -344,7 +483,6 @@ class StudyActivity : AppCompatActivity() {
     private fun updateButtonsUi() {
         b.btnShowAnswer.visibility = if (!showBack) View.VISIBLE else View.INVISIBLE
         b.groupRate.visibility = if (showBack) View.VISIBLE else View.INVISIBLE
-
         b.btnKnown.isEnabled = showBack
         b.btnHard.isEnabled = showBack
     }
@@ -356,20 +494,45 @@ class StudyActivity : AppCompatActivity() {
     }
 
     private fun rebuildOrderFromIds(ids: LongArray?): MutableList<StarDeckDbHelper.CardRow> {
+        if (baseCards.isEmpty()) return mutableListOf()
+
         if (ids == null || ids.isEmpty()) {
-            return if (shuffled) baseCards.shuffled(Random(shuffleSeed)).toMutableList()
-            else baseCards.toMutableList()
+            return if (shuffled) {
+                baseCards.shuffled(Random(shuffleSeed)).toMutableList()
+            } else {
+                baseCards.toMutableList()
+            }
         }
 
         val map = baseCards.associateBy { it.id }
         val rebuilt = mutableListOf<StarDeckDbHelper.CardRow>()
+
         for (id in ids) {
-            val c = map[id]
-            if (c != null) rebuilt.add(c)
+            val card = map[id]
+            if (card != null) rebuilt.add(card)
         }
 
         val existing = rebuilt.map { it.id }.toHashSet()
-        for (c in baseCards) if (!existing.contains(c.id)) rebuilt.add(c)
+        for (card in baseCards) {
+            if (!existing.contains(card.id)) rebuilt.add(card)
+        }
+
         return rebuilt
+    }
+
+    private fun supportsProgressRestore(): Boolean {
+        return runCatching {
+            db.getCardProgressSnapshot(userId, -1L)
+            true
+        }.getOrDefault(false)
+    }
+
+    private fun safeFinishWithMessage(message: String) {
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Study")
+            .setMessage(message)
+            .setPositiveButton("OK") { _, _ -> finish() }
+            .setOnCancelListener { finish() }
+            .show()
     }
 }

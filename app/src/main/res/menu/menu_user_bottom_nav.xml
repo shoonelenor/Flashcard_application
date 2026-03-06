@@ -3,18 +3,27 @@
 
     <item
         android:id="@+id/nav_home"
-        android:title="Home"
-        android:icon="@android:drawable/ic_menu_view" />
+        android:icon="@android:drawable/ic_menu_view"
+        android:title="Home" />
 
-    <!-- Keep the same ID to avoid breaking your Kotlin code, but rename label to Library -->
     <item
-        android:id="@+id/nav_decks"
-        android:title="Library"
-        android:icon="@android:drawable/ic_menu_agenda" />
+        android:id="@+id/nav_library"
+        android:icon="@android:drawable/ic_menu_agenda"
+        android:title="Library" />
+
+    <item
+        android:id="@+id/nav_study"
+        android:icon="@android:drawable/ic_menu_today"
+        android:title="Study" />
+
+    <item
+        android:id="@+id/nav_explore"
+        android:icon="@android:drawable/ic_menu_search"
+        android:title="Explore" />
 
     <item
         android:id="@+id/nav_profile"
-        android:title="Profile"
-        android:icon="@android:drawable/ic_menu_myplaces" />
+        android:icon="@android:drawable/ic_menu_manage"
+        android:title="Profile" />
 
 </menu>

@@ -1,8 +1,9 @@
 package com.example.stardeckapplication.db
 
 object DbContract {
+
     const val DB_NAME = "stardeck.db"
-    const val DB_VERSION = 8 // + last_login_at
+    const val DB_VERSION = 10
 
     // ---------- Users ----------
     const val T_USERS = "users"
@@ -15,12 +16,8 @@ object DbContract {
     const val U_ACCEPTED_TERMS = "accepted_terms"
     const val U_FORCE_PW_CHANGE = "force_pw_change"
     const val U_CREATED_AT = "created_at"
-
-    // Premium demo
-    const val U_IS_PREMIUM_USER = "is_premium_user" // 0/1
-
-    // ✅ NEW: last login time
-    const val U_LAST_LOGIN_AT = "last_login_at" // nullable epoch millis
+    const val U_IS_PREMIUM_USER = "is_premium_user"
+    const val U_LAST_LOGIN_AT = "last_login_at"
 
     const val ROLE_ADMIN = "admin"
     const val ROLE_MANAGER = "manager"
@@ -37,10 +34,11 @@ object DbContract {
     const val D_DESCRIPTION = "description"
     const val D_CREATED_AT = "created_at"
     const val D_STATUS = "status"
+    const val D_IS_PREMIUM = "is_premium"
+    const val D_IS_PUBLIC = "is_public" // 0/1
+
     const val DECK_ACTIVE = "active"
     const val DECK_HIDDEN = "hidden"
-
-    const val D_IS_PREMIUM = "is_premium" // 0/1
 
     // ---------- Cards ----------
     const val T_CARDS = "cards"
@@ -49,6 +47,18 @@ object DbContract {
     const val C_FRONT = "front"
     const val C_BACK = "back"
     const val C_CREATED_AT = "created_at"
+
+    // ---------- Card Progress (SRS-ready) ----------
+    const val T_CARD_PROGRESS = "card_progress"
+    const val P_USER_ID = "user_id"
+    const val P_CARD_ID = "card_id"
+    const val P_DUE_AT = "due_at"
+    const val P_LAST_REVIEWED_AT = "last_reviewed_at"
+    const val P_INTERVAL_DAYS = "interval_days"
+    const val P_EASE_FACTOR = "ease_factor"
+    const val P_REVIEW_COUNT = "review_count"
+    const val P_LAPSE_COUNT = "lapse_count"
+    const val P_LAST_RESULT = "last_result"
 
     // ---------- Study Sessions ----------
     const val T_STUDY_SESSIONS = "study_sessions"
