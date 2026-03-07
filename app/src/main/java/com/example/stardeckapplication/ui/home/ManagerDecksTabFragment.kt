@@ -22,22 +22,24 @@ import com.google.android.material.snackbar.Snackbar
 
 class ManagerDecksTabFragment : Fragment(R.layout.fragment_manager_decks_tab) {
 
-    private var _b: FragmentManagerDecksTabBinding? = null
-    private val b get() = _b!!
+    private var _binding: FragmentManagerDecksTabBinding? = null
+    private val binding get() = _binding!!
 
     private val session by lazy { SessionManager(requireContext()) }
     private val db by lazy { StarDeckDbHelper(requireContext()) }
 
-    private var all: List<StarDeckDbHelper.ManagerDeckRow> = emptyList()
+    private var allDecks: List<StarDeckDbHelper.ManagerDeckRow> = emptyList()
     private var statusFilter: String = "all" // all | active | hidden
 
-    private val adapter = DecksAdapter(
+    private val decksAdapter = DecksAdapter(
         onView = { openDeck(it) },
         onToggle = { toggleDeckStatus(it) }
     )
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        _b = FragmentManagerDecksTabBinding.bind(view)
+        super.onViewCreated(view, savedInstanceState)
+
+        _binding = FragmentManagerDecksTabBinding.bind(view)
 
         val me = session.load()
         if (me == null || me.role != DbContract.ROLE_MANAGER) {
@@ -45,14 +47,25 @@ class ManagerDecksTabFragment : Fragment(R.layout.fragment_manager_decks_tab) {
             return
         }
 
-        b.recycler.layoutManager = LinearLayoutManager(requireContext())
-        b.recycler.adapter = adapter
+        binding.recycler.layoutManager = LinearLayoutManager(requireContext())
+        binding.recycler.adapter = decksAdapter
 
-        b.etSearch.doAfterTextChanged { applyFilters() }
+        binding.etSearch.doAfterTextChanged { applyFilters() }
 
-        b.chipAll.setOnClickListener { statusFilter = "all"; applyFilters() }
-        b.chipActive.setOnClickListener { statusFilter = DbContract.DECK_ACTIVE; applyFilters() }
-        b.chipHidden.setOnClickListener { statusFilter = DbContract.DECK_HIDDEN; applyFilters() }
+        binding.chipAll.setOnClickListener {
+            statusFilter = "all"
+            applyFilters()
+        }
+
+        binding.chipActive.setOnClickListener {
+            statusFilter = DbContract.DECK_ACTIVE
+            applyFilters()
+        }
+
+        binding.chipHidden.setOnClickListener {
+            statusFilter = DbContract.DECK_HIDDEN
+            applyFilters()
+        }
 
         safeReload()
     }
@@ -64,7 +77,7 @@ class ManagerDecksTabFragment : Fragment(R.layout.fragment_manager_decks_tab) {
 
     private fun safeReload() {
         try {
-            all = db.managerGetAllDecks()
+            allDecks = db.managerGetAllDecks()
             applyFilters()
         } catch (e: SQLiteException) {
             showDbError(e)
@@ -74,9 +87,9 @@ class ManagerDecksTabFragment : Fragment(R.layout.fragment_manager_decks_tab) {
     }
 
     private fun applyFilters() {
-        val q = b.etSearch.text?.toString().orEmpty().trim().lowercase()
+        val q = binding.etSearch.text?.toString().orEmpty().trim().lowercase()
 
-        var filtered = all
+        var filtered = allDecks
 
         filtered = when (statusFilter) {
             DbContract.DECK_ACTIVE -> filtered.filter { it.status == DbContract.DECK_ACTIVE }
@@ -85,60 +98,65 @@ class ManagerDecksTabFragment : Fragment(R.layout.fragment_manager_decks_tab) {
         }
 
         if (q.isNotBlank()) {
-            filtered = filtered.filter {
-                it.title.lowercase().contains(q) ||
-                        (it.description ?: "").lowercase().contains(q) ||
-                        it.ownerEmail.lowercase().contains(q) ||
-                        it.ownerName.lowercase().contains(q)
+            filtered = filtered.filter { row ->
+                row.title.lowercase().contains(q) ||
+                        (row.description ?: "").lowercase().contains(q) ||
+                        row.ownerEmail.lowercase().contains(q) ||
+                        row.ownerName.lowercase().contains(q)
             }
         }
 
-        adapter.submit(filtered)
-        b.tvCount.text = "${filtered.size} deck(s)"
+        decksAdapter.submit(filtered)
 
-        val empty = filtered.isEmpty()
-        b.groupEmpty.visibility = if (empty) View.VISIBLE else View.GONE
-        b.recycler.visibility = if (empty) View.GONE else View.VISIBLE
+        binding.tvCount.text = "${filtered.size} deck(s)"
 
-        if (empty) {
-            if (all.isEmpty()) {
-                b.tvEmptyTitle.text = "No decks yet"
-                b.tvEmptyDesc.text = "Decks will appear here after users create them."
+        val isEmpty = filtered.isEmpty()
+        binding.groupEmpty.visibility = if (isEmpty) View.VISIBLE else View.GONE
+        binding.recycler.visibility = if (isEmpty) View.GONE else View.VISIBLE
+
+        if (isEmpty) {
+            if (allDecks.isEmpty()) {
+                binding.tvEmptyTitle.text = "No decks yet"
+                binding.tvEmptyDesc.text = "Decks will appear here after users create them."
             } else {
-                b.tvEmptyTitle.text = "No matches"
-                b.tvEmptyDesc.text = "Try changing filters or clearing search."
+                binding.tvEmptyTitle.text = "No matches"
+                binding.tvEmptyDesc.text = "Try changing filters or clearing search."
             }
         }
     }
 
     private fun openDeck(row: StarDeckDbHelper.ManagerDeckRow) {
-        startActivity(
-            Intent(requireContext(), ManagerDeckCardsActivity::class.java).apply {
-                putExtra(ManagerDeckCardsActivity.EXTRA_DECK_ID, row.deckId)
-                putExtra(ManagerDeckCardsActivity.EXTRA_DECK_TITLE, row.title)
-                putExtra(ManagerDeckCardsActivity.EXTRA_OWNER_EMAIL, row.ownerEmail)
-            }
-        )
+        val intent = Intent(requireContext(), ManagerDeckCardsActivity::class.java)
+        intent.putExtra(ManagerDeckCardsActivity.EXTRA_DECK_ID, row.deckId)
+        intent.putExtra(ManagerDeckCardsActivity.EXTRA_DECK_TITLE, row.title)
+        intent.putExtra(ManagerDeckCardsActivity.EXTRA_OWNER_EMAIL, row.ownerEmail)
+        startActivity(intent)
     }
 
     private fun toggleDeckStatus(row: StarDeckDbHelper.ManagerDeckRow) {
         val newStatus =
-            if (row.status == DbContract.DECK_ACTIVE) DbContract.DECK_HIDDEN else DbContract.DECK_ACTIVE
-        val word = if (newStatus == DbContract.DECK_HIDDEN) "Hide" else "Unhide"
+            if (row.status == DbContract.DECK_ACTIVE) DbContract.DECK_HIDDEN
+            else DbContract.DECK_ACTIVE
+
+        val actionWord = if (newStatus == DbContract.DECK_HIDDEN) "Hide" else "Unhide"
 
         MaterialAlertDialogBuilder(requireContext())
-            .setTitle("$word deck?")
+            .setTitle("$actionWord deck?")
             .setMessage(
                 "Deck: ${row.title}\nOwner: ${row.ownerEmail}\n\n" +
-                        if (newStatus == DbContract.DECK_HIDDEN) "This will remove it from user view." else "This will make it visible to users."
+                        if (newStatus == DbContract.DECK_HIDDEN) {
+                            "This will remove it from user view."
+                        } else {
+                            "This will make it visible to users."
+                        }
             )
-            .setPositiveButton(word) { _, _ ->
+            .setPositiveButton(actionWord) { _, _ ->
                 val rows = db.managerSetDeckStatus(row.deckId, newStatus)
                 if (rows == 1) {
-                    Snackbar.make(b.root, "Updated", Snackbar.LENGTH_SHORT).show()
+                    Snackbar.make(binding.root, "Updated", Snackbar.LENGTH_SHORT).show()
                     safeReload()
                 } else {
-                    Snackbar.make(b.root, "Could not update", Snackbar.LENGTH_LONG).show()
+                    Snackbar.make(binding.root, "Could not update", Snackbar.LENGTH_LONG).show()
                 }
             }
             .setNegativeButton("Cancel", null)
@@ -148,19 +166,21 @@ class ManagerDecksTabFragment : Fragment(R.layout.fragment_manager_decks_tab) {
     private fun showDbError(e: Exception) {
         MaterialAlertDialogBuilder(requireContext())
             .setTitle("Database error")
-            .setMessage("Please clear app data / reinstall if you recently changed DB schema.\n\nError: ${e.message}")
+            .setMessage(
+                "Please clear app data / reinstall if you recently changed DB schema.\n\nError: ${e.message}"
+            )
             .setPositiveButton("OK", null)
             .show()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        _b = null
+        _binding = null
     }
 
     private class DecksAdapter(
-        val onView: (StarDeckDbHelper.ManagerDeckRow) -> Unit,
-        val onToggle: (StarDeckDbHelper.ManagerDeckRow) -> Unit
+        private val onView: (StarDeckDbHelper.ManagerDeckRow) -> Unit,
+        private val onToggle: (StarDeckDbHelper.ManagerDeckRow) -> Unit
     ) : RecyclerView.Adapter<DecksAdapter.VH>() {
 
         private val items = mutableListOf<StarDeckDbHelper.ManagerDeckRow>()
@@ -172,8 +192,12 @@ class ManagerDecksTabFragment : Fragment(R.layout.fragment_manager_decks_tab) {
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
-            val b = ItemManagerDeckTabBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-            return VH(b, onView, onToggle)
+            val binding = ItemManagerDeckTabBinding.inflate(
+                LayoutInflater.from(parent.context),
+                parent,
+                false
+            )
+            return VH(binding, onView, onToggle)
         }
 
         override fun getItemCount(): Int = items.size
@@ -183,23 +207,26 @@ class ManagerDecksTabFragment : Fragment(R.layout.fragment_manager_decks_tab) {
         }
 
         class VH(
-            private val b: ItemManagerDeckTabBinding,
-            val onView: (StarDeckDbHelper.ManagerDeckRow) -> Unit,
-            val onToggle: (StarDeckDbHelper.ManagerDeckRow) -> Unit
-        ) : RecyclerView.ViewHolder(b.root) {
+            private val binding: ItemManagerDeckTabBinding,
+            private val onView: (StarDeckDbHelper.ManagerDeckRow) -> Unit,
+            private val onToggle: (StarDeckDbHelper.ManagerDeckRow) -> Unit
+        ) : RecyclerView.ViewHolder(binding.root) {
 
             fun bind(row: StarDeckDbHelper.ManagerDeckRow) {
-                b.tvTitle.text = row.title
-                b.tvOwner.text = "Owner: ${row.ownerEmail}"
-                b.tvMeta.text = "${row.cardCount} card(s) • ${row.status}"
-                b.tvDesc.text = row.description?.takeIf { it.isNotBlank() } ?: "No description"
+                binding.tvTitle.text = row.title
+                binding.tvOwner.text = "Owner: ${row.ownerEmail}"
+                binding.tvMeta.text = "${row.cardCount} card(s) • ${row.status}"
+                binding.tvDesc.text = row.description?.takeIf { it.isNotBlank() } ?: "No description"
 
-                b.btnView.setOnClickListener { onView(row) }
-                b.btnToggle.text = if (row.status == DbContract.DECK_ACTIVE) "Hide" else "Unhide"
-                b.btnToggle.setOnClickListener { onToggle(row) }
+                binding.btnView.setOnClickListener { onView(row) }
 
-                // Small joyful indicator
-                b.chipStatus.text = if (row.status == DbContract.DECK_ACTIVE) "🟢 Active" else "🙈 Hidden"
+                binding.btnToggle.text =
+                    if (row.status == DbContract.DECK_ACTIVE) "Hide" else "Unhide"
+
+                binding.btnToggle.setOnClickListener { onToggle(row) }
+
+                binding.chipStatus.text =
+                    if (row.status == DbContract.DECK_ACTIVE) "Active" else "Hidden"
             }
         }
     }

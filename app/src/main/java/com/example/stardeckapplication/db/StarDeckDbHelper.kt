@@ -43,6 +43,108 @@ class StarDeckDbHelper(context: Context) :
         seedStaffAccounts(db)
         seedDemoDecksAndCards(db)
     }
+
+    // ---------- SMALL HELPERS ----------
+    private fun deckExistsAny(deckId: Long): Boolean {
+        readableDatabase.rawQuery(
+            """
+            SELECT 1
+            FROM ${DbContract.T_DECKS}
+            WHERE ${DbContract.D_ID}=?
+            LIMIT 1
+            """.trimIndent(),
+            arrayOf(deckId.toString())
+        ).use { c ->
+            return c.moveToFirst()
+        }
+    }
+
+    private fun activeAdminExists(userId: Long): Boolean {
+        readableDatabase.rawQuery(
+            """
+            SELECT 1
+            FROM ${DbContract.T_USERS}
+            WHERE ${DbContract.U_ID}=?
+              AND ${DbContract.U_ROLE}=?
+              AND ${DbContract.U_STATUS}=?
+            LIMIT 1
+            """.trimIndent(),
+            arrayOf(
+                userId.toString(),
+                DbContract.ROLE_ADMIN,
+                DbContract.STATUS_ACTIVE
+            )
+        ).use { c ->
+            return c.moveToFirst()
+        }
+    }
+
+    private fun activeUserExists(userId: Long): Boolean {
+        readableDatabase.rawQuery(
+            """
+            SELECT 1
+            FROM ${DbContract.T_USERS}
+            WHERE ${DbContract.U_ID}=?
+              AND ${DbContract.U_ROLE}=?
+              AND ${DbContract.U_STATUS}=?
+            LIMIT 1
+            """.trimIndent(),
+            arrayOf(
+                userId.toString(),
+                DbContract.ROLE_USER,
+                DbContract.STATUS_ACTIVE
+            )
+        ).use { c ->
+            return c.moveToFirst()
+        }
+    }
+
+    private fun adminOwnsDeck(adminUserId: Long, deckId: Long): Boolean {
+        readableDatabase.rawQuery(
+            """
+            SELECT 1
+            FROM ${DbContract.T_DECKS} d
+            INNER JOIN ${DbContract.T_USERS} u
+                ON u.${DbContract.U_ID}=d.${DbContract.D_OWNER_USER_ID}
+            WHERE d.${DbContract.D_ID}=?
+              AND d.${DbContract.D_OWNER_USER_ID}=?
+              AND u.${DbContract.U_ROLE}=?
+              AND u.${DbContract.U_STATUS}=?
+            LIMIT 1
+            """.trimIndent(),
+            arrayOf(
+                deckId.toString(),
+                adminUserId.toString(),
+                DbContract.ROLE_ADMIN,
+                DbContract.STATUS_ACTIVE
+            )
+        ).use { c ->
+            return c.moveToFirst()
+        }
+    }
+
+    fun isPremiumUser(userId: Long): Boolean {
+        readableDatabase.rawQuery(
+            """
+        SELECT COALESCE(${DbContract.U_IS_PREMIUM_USER}, 0)
+        FROM ${DbContract.T_USERS}
+        WHERE ${DbContract.U_ID}=?
+        LIMIT 1
+        """.trimIndent(),
+            arrayOf(userId.toString())
+        ).use { c ->
+            return c.moveToFirst() && c.getInt(0) == 1
+        }
+    }
+
+    /**
+     * Backward-compatible name used by older UI files.
+     */
+    fun isUserPremium(userId: Long): Boolean {
+        return isPremiumUser(userId)
+    }
+
+    // ---------- ADMIN CONTENT OWNERS (kept for compatibility) ----------
     data class AdminContentOwnerRow(
         val id: Long,
         val name: String,
@@ -54,11 +156,11 @@ class StarDeckDbHelper(context: Context) :
 
         readableDatabase.rawQuery(
             """
-        SELECT ${DbContract.U_ID}, ${DbContract.U_NAME}, ${DbContract.U_EMAIL}
-        FROM ${DbContract.T_USERS}
-        WHERE ${DbContract.U_ROLE}=?
-        ORDER BY ${DbContract.U_NAME} COLLATE NOCASE ASC, ${DbContract.U_EMAIL} COLLATE NOCASE ASC
-        """.trimIndent(),
+            SELECT ${DbContract.U_ID}, ${DbContract.U_NAME}, ${DbContract.U_EMAIL}
+            FROM ${DbContract.T_USERS}
+            WHERE ${DbContract.U_ROLE}=?
+            ORDER BY ${DbContract.U_NAME} COLLATE NOCASE ASC, ${DbContract.U_EMAIL} COLLATE NOCASE ASC
+            """.trimIndent(),
             arrayOf(DbContract.ROLE_USER)
         ).use { c ->
             while (c.moveToNext()) {
@@ -73,33 +175,163 @@ class StarDeckDbHelper(context: Context) :
         return out
     }
 
-    private fun adminUserExists(userId: Long): Boolean {
+    // ---------- ADMIN CONTENT SETUP ----------
+    data class AdminDeckContentRow(
+        val id: Long,
+        val ownerUserId: Long,
+        val ownerName: String,
+        val ownerEmail: String,
+        val title: String,
+        val description: String?,
+        val createdAt: Long,
+        val status: String,
+        val isPremium: Boolean,
+        val isPublic: Boolean,
+        val cardCount: Int
+    )
+
+    data class PublicDeckCatalogRow(
+        val deckId: Long,
+        val title: String,
+        val description: String?,
+        val ownerName: String,
+        val isPremium: Boolean,
+        val isLocked: Boolean,
+        val cardCount: Int
+    )
+
+    fun adminGetOwnDeckContent(adminUserId: Long): List<AdminDeckContentRow> {
+        if (!activeAdminExists(adminUserId)) return emptyList()
+
+        val out = mutableListOf<AdminDeckContentRow>()
         readableDatabase.rawQuery(
             """
-        SELECT 1
-        FROM ${DbContract.T_USERS}
-        WHERE ${DbContract.U_ID}=?
-          AND ${DbContract.U_ROLE}=?
-        LIMIT 1
-        """.trimIndent(),
-            arrayOf(userId.toString(), DbContract.ROLE_USER)
+            SELECT
+                d.${DbContract.D_ID},
+                d.${DbContract.D_OWNER_USER_ID},
+                u.${DbContract.U_NAME},
+                u.${DbContract.U_EMAIL},
+                d.${DbContract.D_TITLE},
+                d.${DbContract.D_DESCRIPTION},
+                d.${DbContract.D_CREATED_AT},
+                d.${DbContract.D_STATUS},
+                COALESCE(d.${DbContract.D_IS_PREMIUM}, 0),
+                COALESCE(d.${DbContract.D_IS_PUBLIC}, 0),
+                COUNT(c.${DbContract.C_ID}) AS card_count
+            FROM ${DbContract.T_DECKS} d
+            INNER JOIN ${DbContract.T_USERS} u
+                ON u.${DbContract.U_ID}=d.${DbContract.D_OWNER_USER_ID}
+            LEFT JOIN ${DbContract.T_CARDS} c
+                ON c.${DbContract.C_DECK_ID}=d.${DbContract.D_ID}
+            WHERE d.${DbContract.D_OWNER_USER_ID}=?
+            GROUP BY
+                d.${DbContract.D_ID},
+                d.${DbContract.D_OWNER_USER_ID},
+                u.${DbContract.U_NAME},
+                u.${DbContract.U_EMAIL},
+                d.${DbContract.D_TITLE},
+                d.${DbContract.D_DESCRIPTION},
+                d.${DbContract.D_CREATED_AT},
+                d.${DbContract.D_STATUS},
+                d.${DbContract.D_IS_PREMIUM},
+                d.${DbContract.D_IS_PUBLIC}
+            ORDER BY d.${DbContract.D_CREATED_AT} DESC
+            """.trimIndent(),
+            arrayOf(adminUserId.toString())
         ).use { c ->
-            return c.moveToFirst()
+            while (c.moveToNext()) {
+                out += AdminDeckContentRow(
+                    id = c.getLong(0),
+                    ownerUserId = c.getLong(1),
+                    ownerName = c.getString(2),
+                    ownerEmail = c.getString(3),
+                    title = c.getString(4),
+                    description = c.getString(5),
+                    createdAt = c.getLong(6),
+                    status = c.getString(7),
+                    isPremium = c.getInt(8) == 1,
+                    isPublic = c.getInt(9) == 1,
+                    cardCount = c.getInt(10)
+                )
+            }
         }
+        return out
     }
 
-    private fun deckExistsAny(deckId: Long): Boolean {
+    fun adminGetAllDeckContent(): List<AdminDeckContentRow> {
+        val out = mutableListOf<AdminDeckContentRow>()
+
         readableDatabase.rawQuery(
             """
-        SELECT 1
-        FROM ${DbContract.T_DECKS}
-        WHERE ${DbContract.D_ID}=?
-        LIMIT 1
-        """.trimIndent(),
-            arrayOf(deckId.toString())
+            SELECT
+                d.${DbContract.D_ID},
+                d.${DbContract.D_OWNER_USER_ID},
+                u.${DbContract.U_NAME},
+                u.${DbContract.U_EMAIL},
+                d.${DbContract.D_TITLE},
+                d.${DbContract.D_DESCRIPTION},
+                d.${DbContract.D_CREATED_AT},
+                d.${DbContract.D_STATUS},
+                COALESCE(d.${DbContract.D_IS_PREMIUM}, 0),
+                COALESCE(d.${DbContract.D_IS_PUBLIC}, 0),
+                COUNT(c.${DbContract.C_ID}) AS card_count
+            FROM ${DbContract.T_DECKS} d
+            INNER JOIN ${DbContract.T_USERS} u
+                ON u.${DbContract.U_ID}=d.${DbContract.D_OWNER_USER_ID}
+            LEFT JOIN ${DbContract.T_CARDS} c
+                ON c.${DbContract.C_DECK_ID}=d.${DbContract.D_ID}
+            GROUP BY
+                d.${DbContract.D_ID},
+                d.${DbContract.D_OWNER_USER_ID},
+                u.${DbContract.U_NAME},
+                u.${DbContract.U_EMAIL},
+                d.${DbContract.D_TITLE},
+                d.${DbContract.D_DESCRIPTION},
+                d.${DbContract.D_CREATED_AT},
+                d.${DbContract.D_STATUS},
+                d.${DbContract.D_IS_PREMIUM},
+                d.${DbContract.D_IS_PUBLIC}
+            ORDER BY d.${DbContract.D_IS_PREMIUM} DESC, d.${DbContract.D_CREATED_AT} DESC
+            """.trimIndent(),
+            null
         ).use { c ->
-            return c.moveToFirst()
+            while (c.moveToNext()) {
+                out += AdminDeckContentRow(
+                    id = c.getLong(0),
+                    ownerUserId = c.getLong(1),
+                    ownerName = c.getString(2),
+                    ownerEmail = c.getString(3),
+                    title = c.getString(4),
+                    description = c.getString(5),
+                    createdAt = c.getLong(6),
+                    status = c.getString(7),
+                    isPremium = c.getInt(8) == 1,
+                    isPublic = c.getInt(9) == 1,
+                    cardCount = c.getInt(10)
+                )
+            }
         }
+
+        return out
+    }
+
+    fun adminCreateDeckContentForAdmin(
+        adminUserId: Long,
+        title: String,
+        description: String?,
+        isPremium: Boolean,
+        isPublic: Boolean,
+        isHidden: Boolean
+    ): Long {
+        if (!activeAdminExists(adminUserId)) return -1L
+        return adminCreateDeckContent(
+            ownerUserId = adminUserId,
+            title = title,
+            description = description,
+            isPremium = isPremium,
+            isHidden = isHidden,
+            isPublic = isPublic
+        )
     }
 
     fun adminCreateDeckContent(
@@ -112,7 +344,7 @@ class StarDeckDbHelper(context: Context) :
     ): Long {
         val cleanTitle = title.trim()
         if (cleanTitle.isBlank()) return -1L
-        if (!adminUserExists(ownerUserId)) return -1L
+        if (!activeAdminExists(ownerUserId) && !activeUserExists(ownerUserId)) return -1L
 
         val cv = ContentValues().apply {
             put(DbContract.D_OWNER_USER_ID, ownerUserId)
@@ -127,6 +359,89 @@ class StarDeckDbHelper(context: Context) :
         return writableDatabase.insertOrThrow(DbContract.T_DECKS, null, cv)
     }
 
+    fun adminUpdateDeckContentForAdmin(
+        adminUserId: Long,
+        deckId: Long,
+        title: String,
+        description: String?,
+        isPremium: Boolean,
+        isPublic: Boolean,
+        isHidden: Boolean
+    ): Int {
+        if (!adminOwnsDeck(adminUserId, deckId)) return 0
+
+        val cleanTitle = title.trim()
+        if (cleanTitle.isBlank()) return 0
+
+        val cv = ContentValues().apply {
+            put(DbContract.D_TITLE, cleanTitle)
+            put(DbContract.D_DESCRIPTION, description?.trim().orEmpty().ifBlank { null })
+            put(DbContract.D_IS_PREMIUM, if (isPremium) 1 else 0)
+            put(DbContract.D_IS_PUBLIC, if (isPublic) 1 else 0)
+            put(DbContract.D_STATUS, if (isHidden) DbContract.DECK_HIDDEN else DbContract.DECK_ACTIVE)
+        }
+
+        return writableDatabase.update(
+            DbContract.T_DECKS,
+            cv,
+            "${DbContract.D_ID}=? AND ${DbContract.D_OWNER_USER_ID}=?",
+            arrayOf(deckId.toString(), adminUserId.toString())
+        )
+    }
+
+    // keep old call compatible
+    fun adminUpdateDeckContent(
+        deckId: Long,
+        title: String,
+        description: String?,
+        isPremium: Boolean,
+        isHidden: Boolean,
+        isPublic: Boolean
+    ): Int {
+        val cleanTitle = title.trim()
+        if (cleanTitle.isBlank()) return 0
+
+        val cv = ContentValues().apply {
+            put(DbContract.D_TITLE, cleanTitle)
+            put(DbContract.D_DESCRIPTION, description?.trim().orEmpty().ifBlank { null })
+            put(DbContract.D_IS_PREMIUM, if (isPremium) 1 else 0)
+            put(DbContract.D_STATUS, if (isHidden) DbContract.DECK_HIDDEN else DbContract.DECK_ACTIVE)
+            put(DbContract.D_IS_PUBLIC, if (isPublic) 1 else 0)
+        }
+
+        return writableDatabase.update(
+            DbContract.T_DECKS,
+            cv,
+            "${DbContract.D_ID}=?",
+            arrayOf(deckId.toString())
+        )
+    }
+
+    fun adminDeleteDeckContentForAdmin(adminUserId: Long, deckId: Long): Int {
+        if (!adminOwnsDeck(adminUserId, deckId)) return 0
+
+        val db = writableDatabase
+        db.beginTransaction()
+        return try {
+            db.delete(
+                DbContract.T_CARDS,
+                "${DbContract.C_DECK_ID}=?",
+                arrayOf(deckId.toString())
+            )
+
+            val rows = db.delete(
+                DbContract.T_DECKS,
+                "${DbContract.D_ID}=? AND ${DbContract.D_OWNER_USER_ID}=?",
+                arrayOf(deckId.toString(), adminUserId.toString())
+            )
+
+            if (rows == 1) db.setTransactionSuccessful()
+            rows
+        } finally {
+            db.endTransaction()
+        }
+    }
+
     fun adminDeleteDeckContent(deckId: Long): Int {
         return writableDatabase.delete(
             DbContract.T_DECKS,
@@ -138,17 +453,107 @@ class StarDeckDbHelper(context: Context) :
     fun getDeckTitleAny(deckId: Long): String? {
         readableDatabase.rawQuery(
             """
-        SELECT ${DbContract.D_TITLE}
-        FROM ${DbContract.T_DECKS}
-        WHERE ${DbContract.D_ID}=?
-        LIMIT 1
-        """.trimIndent(),
+            SELECT ${DbContract.D_TITLE}
+            FROM ${DbContract.T_DECKS}
+            WHERE ${DbContract.D_ID}=?
+            LIMIT 1
+            """.trimIndent(),
             arrayOf(deckId.toString())
         ).use { c ->
             return if (c.moveToFirst()) c.getString(0) else null
         }
     }
 
+    fun adminGetCardsForDeck(adminUserId: Long, deckId: Long): List<CardRow> {
+        if (!adminOwnsDeck(adminUserId, deckId)) return emptyList()
+
+        val out = mutableListOf<CardRow>()
+        readableDatabase.rawQuery(
+            """
+            SELECT
+                ${DbContract.C_ID},
+                ${DbContract.C_FRONT},
+                ${DbContract.C_BACK},
+                ${DbContract.C_CREATED_AT}
+            FROM ${DbContract.T_CARDS}
+            WHERE ${DbContract.C_DECK_ID}=?
+            ORDER BY ${DbContract.C_CREATED_AT} DESC
+            """.trimIndent(),
+            arrayOf(deckId.toString())
+        ).use { c ->
+            while (c.moveToNext()) {
+                out += CardRow(
+                    id = c.getLong(0),
+                    front = c.getString(1),
+                    back = c.getString(2),
+                    createdAt = c.getLong(3)
+                )
+            }
+        }
+        return out
+    }
+
+    fun adminCreateCard(
+        adminUserId: Long,
+        deckId: Long,
+        front: String,
+        back: String
+    ): Long {
+        if (!adminOwnsDeck(adminUserId, deckId)) return -1L
+
+        val cleanFront = front.trim()
+        val cleanBack = back.trim()
+        if (cleanFront.isBlank() || cleanBack.isBlank()) return -1L
+
+        val cv = ContentValues().apply {
+            put(DbContract.C_DECK_ID, deckId)
+            put(DbContract.C_FRONT, cleanFront)
+            put(DbContract.C_BACK, cleanBack)
+            put(DbContract.C_CREATED_AT, System.currentTimeMillis())
+        }
+        return writableDatabase.insertOrThrow(DbContract.T_CARDS, null, cv)
+    }
+
+    fun adminUpdateCard(
+        adminUserId: Long,
+        deckId: Long,
+        cardId: Long,
+        front: String,
+        back: String
+    ): Int {
+        if (!adminOwnsDeck(adminUserId, deckId)) return 0
+
+        val cleanFront = front.trim()
+        val cleanBack = back.trim()
+        if (cleanFront.isBlank() || cleanBack.isBlank()) return 0
+
+        val cv = ContentValues().apply {
+            put(DbContract.C_FRONT, cleanFront)
+            put(DbContract.C_BACK, cleanBack)
+        }
+        return writableDatabase.update(
+            DbContract.T_CARDS,
+            cv,
+            "${DbContract.C_ID}=? AND ${DbContract.C_DECK_ID}=?",
+            arrayOf(cardId.toString(), deckId.toString())
+        )
+    }
+
+    fun adminDeleteCard(
+        adminUserId: Long,
+        deckId: Long,
+        cardId: Long
+    ): Int {
+        if (!adminOwnsDeck(adminUserId, deckId)) return 0
+
+        return writableDatabase.delete(
+            DbContract.T_CARDS,
+            "${DbContract.C_ID}=? AND ${DbContract.C_DECK_ID}=?",
+            arrayOf(cardId.toString(), deckId.toString())
+        )
+    }
+
+    // old "any" methods kept for compatibility
     fun createCardAny(deckId: Long, front: String, back: String): Long {
         if (!deckExistsAny(deckId)) return -1L
 
@@ -184,94 +589,25 @@ class StarDeckDbHelper(context: Context) :
         )
     }
 
-    // ---------- ADMIN CONTENT SETUP ----------
-    data class AdminDeckContentRow(
-        val id: Long,
-        val ownerUserId: Long,
-        val ownerName: String,
-        val ownerEmail: String,
-        val title: String,
-        val description: String?,
-        val createdAt: Long,
-        val status: String,
-        val isPremium: Boolean,
-        val cardCount: Int
-    )
-
-    fun adminGetAllDeckContent(): List<AdminDeckContentRow> {
-        val out = mutableListOf<AdminDeckContentRow>()
-
-        readableDatabase.rawQuery(
-            """
-            SELECT
-                d.${DbContract.D_ID},
-                d.${DbContract.D_OWNER_USER_ID},
-                u.${DbContract.U_NAME},
-                u.${DbContract.U_EMAIL},
-                d.${DbContract.D_TITLE},
-                d.${DbContract.D_DESCRIPTION},
-                d.${DbContract.D_CREATED_AT},
-                d.${DbContract.D_STATUS},
-                d.${DbContract.D_IS_PREMIUM},
-                COUNT(c.${DbContract.C_ID}) AS card_count
-            FROM ${DbContract.T_DECKS} d
-            INNER JOIN ${DbContract.T_USERS} u
-                ON u.${DbContract.U_ID} = d.${DbContract.D_OWNER_USER_ID}
-            LEFT JOIN ${DbContract.T_CARDS} c
-                ON c.${DbContract.C_DECK_ID} = d.${DbContract.D_ID}
-            GROUP BY
-                d.${DbContract.D_ID},
-                d.${DbContract.D_OWNER_USER_ID},
-                u.${DbContract.U_NAME},
-                u.${DbContract.U_EMAIL},
-                d.${DbContract.D_TITLE},
-                d.${DbContract.D_DESCRIPTION},
-                d.${DbContract.D_CREATED_AT},
-                d.${DbContract.D_STATUS},
-                d.${DbContract.D_IS_PREMIUM}
-            ORDER BY d.${DbContract.D_IS_PREMIUM} DESC, d.${DbContract.D_CREATED_AT} DESC
-            """.trimIndent(),
-            null
-        ).use { c ->
-            while (c.moveToNext()) {
-                out += AdminDeckContentRow(
-                    id = c.getLong(0),
-                    ownerUserId = c.getLong(1),
-                    ownerName = c.getString(2),
-                    ownerEmail = c.getString(3),
-                    title = c.getString(4),
-                    description = c.getString(5),
-                    createdAt = c.getLong(6),
-                    status = c.getString(7),
-                    isPremium = c.getInt(8) == 1,
-                    cardCount = c.getInt(9)
-                )
-            }
-        }
-
-        return out
+    fun adminCreateCardContent(deckId: Long, front: String, back: String): Long {
+        val cleanFront = front.trim()
+        val cleanBack = back.trim()
+        if (cleanFront.isBlank() || cleanBack.isBlank()) return -1L
+        if (!deckExistsAny(deckId)) return -1L
+        return createCardAny(deckId, cleanFront, cleanBack)
     }
 
-    fun adminUpdateDeckContent(
-        deckId: Long,
-        title: String,
-        description: String?,
-        isPremium: Boolean,
-        isHidden: Boolean
-    ): Int {
-        val cv = ContentValues().apply {
-            put(DbContract.D_TITLE, title.trim())
-            put(DbContract.D_DESCRIPTION, description?.trim().orEmpty().ifBlank { null })
-            put(DbContract.D_IS_PREMIUM, if (isPremium) 1 else 0)
-            put(DbContract.D_STATUS, if (isHidden) DbContract.DECK_HIDDEN else DbContract.DECK_ACTIVE)
-        }
+    fun adminUpdateCardContent(deckId: Long, cardId: Long, front: String, back: String): Int {
+        val cleanFront = front.trim()
+        val cleanBack = back.trim()
+        if (cleanFront.isBlank() || cleanBack.isBlank()) return 0
+        if (!deckExistsAny(deckId)) return 0
+        return updateCardAny(deckId, cardId, cleanFront, cleanBack)
+    }
 
-        return writableDatabase.update(
-            DbContract.T_DECKS,
-            cv,
-            "${DbContract.D_ID}=?",
-            arrayOf(deckId.toString())
-        )
+    fun adminDeleteCardContent(deckId: Long, cardId: Long): Int {
+        if (!deckExistsAny(deckId)) return 0
+        return deleteCardAny(deckId, cardId)
     }
 
     fun adminEnsurePremiumSeedContent(): Int {
@@ -312,6 +648,1000 @@ class StarDeckDbHelper(context: Context) :
         return insertedDecks
     }
 
+    fun getPublicDeckCatalogForUser(userId: Long): List<PublicDeckCatalogRow> {
+        val out = mutableListOf<PublicDeckCatalogRow>()
+
+        readableDatabase.rawQuery(
+            """
+            SELECT
+                d.${DbContract.D_ID},
+                d.${DbContract.D_TITLE},
+                d.${DbContract.D_DESCRIPTION},
+                owner.${DbContract.U_NAME},
+                COALESCE(d.${DbContract.D_IS_PREMIUM}, 0),
+                CASE
+                    WHEN COALESCE(d.${DbContract.D_IS_PREMIUM}, 0)=1
+                         AND COALESCE(viewer.${DbContract.U_IS_PREMIUM_USER}, 0)=0
+                    THEN 1 ELSE 0
+                END AS is_locked,
+                COUNT(c.${DbContract.C_ID}) AS card_count
+            FROM ${DbContract.T_DECKS} d
+            INNER JOIN ${DbContract.T_USERS} owner
+                ON owner.${DbContract.U_ID}=d.${DbContract.D_OWNER_USER_ID}
+            LEFT JOIN ${DbContract.T_USERS} viewer
+                ON viewer.${DbContract.U_ID}=?
+            LEFT JOIN ${DbContract.T_CARDS} c
+                ON c.${DbContract.C_DECK_ID}=d.${DbContract.D_ID}
+            WHERE d.${DbContract.D_STATUS}=?
+              AND COALESCE(d.${DbContract.D_IS_PUBLIC}, 0)=1
+            GROUP BY
+                d.${DbContract.D_ID},
+                d.${DbContract.D_TITLE},
+                d.${DbContract.D_DESCRIPTION},
+                owner.${DbContract.U_NAME},
+                d.${DbContract.D_IS_PREMIUM},
+                viewer.${DbContract.U_IS_PREMIUM_USER}
+            ORDER BY d.${DbContract.D_CREATED_AT} DESC
+            """.trimIndent(),
+            arrayOf(userId.toString(), DbContract.DECK_ACTIVE)
+        ).use { c ->
+            while (c.moveToNext()) {
+                out += PublicDeckCatalogRow(
+                    deckId = c.getLong(0),
+                    title = c.getString(1),
+                    description = c.getString(2),
+                    ownerName = c.getString(3),
+                    isPremium = c.getInt(4) == 1,
+                    isLocked = c.getInt(5) == 1,
+                    cardCount = c.getInt(6)
+                )
+            }
+        }
+
+        return out
+    }
+
+    fun getPublicDeckTitleForUser(userId: Long, deckId: Long): String? {
+        readableDatabase.rawQuery(
+            """
+            SELECT d.${DbContract.D_TITLE}
+            FROM ${DbContract.T_DECKS} d
+            WHERE d.${DbContract.D_ID}=?
+              AND d.${DbContract.D_STATUS}=?
+              AND COALESCE(d.${DbContract.D_IS_PUBLIC}, 0)=1
+            LIMIT 1
+            """.trimIndent(),
+            arrayOf(deckId.toString(), DbContract.DECK_ACTIVE)
+        ).use { c ->
+            return if (c.moveToFirst()) c.getString(0) else null
+        }
+    }
+
+    fun isDeckLockedForUser(userId: Long, deckId: Long): Boolean {
+        readableDatabase.rawQuery(
+            """
+            SELECT
+                CASE
+                    WHEN COALESCE(d.${DbContract.D_IS_PREMIUM}, 0)=1
+                         AND COALESCE(u.${DbContract.U_IS_PREMIUM_USER}, 0)=0
+                    THEN 1 ELSE 0
+                END
+            FROM ${DbContract.T_DECKS} d
+            LEFT JOIN ${DbContract.T_USERS} u
+                ON u.${DbContract.U_ID}=?
+            WHERE d.${DbContract.D_ID}=?
+              AND d.${DbContract.D_STATUS}=?
+              AND COALESCE(d.${DbContract.D_IS_PUBLIC}, 0)=1
+            LIMIT 1
+            """.trimIndent(),
+            arrayOf(userId.toString(), deckId.toString(), DbContract.DECK_ACTIVE)
+        ).use { c ->
+            return c.moveToFirst() && c.getInt(0) == 1
+        }
+    }
+
+    fun getPublicDeckCardsForUser(userId: Long, deckId: Long): List<CardRow> {
+        if (isDeckLockedForUser(userId, deckId)) return emptyList()
+
+        val out = mutableListOf<CardRow>()
+        readableDatabase.rawQuery(
+            """
+            SELECT
+                c.${DbContract.C_ID},
+                c.${DbContract.C_FRONT},
+                c.${DbContract.C_BACK},
+                c.${DbContract.C_CREATED_AT}
+            FROM ${DbContract.T_CARDS} c
+            INNER JOIN ${DbContract.T_DECKS} d
+                ON d.${DbContract.D_ID}=c.${DbContract.C_DECK_ID}
+            WHERE d.${DbContract.D_ID}=?
+              AND d.${DbContract.D_STATUS}=?
+              AND COALESCE(d.${DbContract.D_IS_PUBLIC}, 0)=1
+            ORDER BY c.${DbContract.C_CREATED_AT} DESC
+            """.trimIndent(),
+            arrayOf(deckId.toString(), DbContract.DECK_ACTIVE)
+        ).use { c ->
+            while (c.moveToNext()) {
+                out += CardRow(
+                    id = c.getLong(0),
+                    front = c.getString(1),
+                    back = c.getString(2),
+                    createdAt = c.getLong(3)
+                )
+            }
+        }
+        return out
+    }
+
+    // ---------- LAST LOGIN ----------
+    fun getLastLoginAt(userId: Long): Long? {
+        readableDatabase.rawQuery(
+            """
+            SELECT ${DbContract.U_LAST_LOGIN_AT}
+            FROM ${DbContract.T_USERS}
+            WHERE ${DbContract.U_ID}=?
+            LIMIT 1
+            """.trimIndent(),
+            arrayOf(userId.toString())
+        ).use { c ->
+            if (!c.moveToFirst()) return null
+            return if (c.isNull(0)) null else c.getLong(0)
+        }
+    }
+
+    fun updateLastLoginAt(userId: Long, whenMs: Long): Int {
+        val cv = ContentValues().apply { put(DbContract.U_LAST_LOGIN_AT, whenMs) }
+        return writableDatabase.update(
+            DbContract.T_USERS,
+            cv,
+            "${DbContract.U_ID}=?",
+            arrayOf(userId.toString())
+        )
+    }
+
+    fun countMonthlyActiveUsers(): Int {
+        val zone = java.time.ZoneId.systemDefault()
+        val now = java.time.LocalDate.now(zone)
+        val start = now.withDayOfMonth(1).atStartOfDay(zone).toInstant().toEpochMilli()
+        val end = now.plusMonths(1).withDayOfMonth(1).atStartOfDay(zone).toInstant().toEpochMilli()
+
+        readableDatabase.rawQuery(
+            """
+            SELECT COUNT(*)
+            FROM ${DbContract.T_USERS}
+            WHERE ${DbContract.U_ROLE}=?
+              AND ${DbContract.U_STATUS}=?
+              AND ${DbContract.U_LAST_LOGIN_AT} IS NOT NULL
+              AND ${DbContract.U_LAST_LOGIN_AT}>=?
+              AND ${DbContract.U_LAST_LOGIN_AT}<?
+            """.trimIndent(),
+            arrayOf(
+                DbContract.ROLE_USER,
+                DbContract.STATUS_ACTIVE,
+                start.toString(),
+                end.toString()
+            )
+        ).use { c ->
+            return if (c.moveToFirst()) c.getInt(0) else 0
+        }
+    }
+
+    fun countMonthlyInactiveUsers(): Int {
+        val zone = java.time.ZoneId.systemDefault()
+        val now = java.time.LocalDate.now(zone)
+        val start = now.withDayOfMonth(1).atStartOfDay(zone).toInstant().toEpochMilli()
+
+        readableDatabase.rawQuery(
+            """
+            SELECT COUNT(*)
+            FROM ${DbContract.T_USERS}
+            WHERE ${DbContract.U_ROLE}=?
+              AND ${DbContract.U_STATUS}=?
+              AND (${DbContract.U_LAST_LOGIN_AT} IS NULL OR ${DbContract.U_LAST_LOGIN_AT}<?)
+            """.trimIndent(),
+            arrayOf(
+                DbContract.ROLE_USER,
+                DbContract.STATUS_ACTIVE,
+                start.toString()
+            )
+        ).use { c ->
+            return if (c.moveToFirst()) c.getInt(0) else 0
+        }
+    }
+
+    // ---------- TABLES ----------
+    private fun createUsersTable(db: SQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS ${DbContract.T_USERS}(
+                ${DbContract.U_ID} INTEGER PRIMARY KEY AUTOINCREMENT,
+                ${DbContract.U_NAME} TEXT NOT NULL,
+                ${DbContract.U_EMAIL} TEXT NOT NULL UNIQUE,
+                ${DbContract.U_PASSWORD_HASH} TEXT NOT NULL,
+                ${DbContract.U_ROLE} TEXT NOT NULL,
+                ${DbContract.U_STATUS} TEXT NOT NULL,
+                ${DbContract.U_ACCEPTED_TERMS} INTEGER NOT NULL,
+                ${DbContract.U_FORCE_PW_CHANGE} INTEGER NOT NULL,
+                ${DbContract.U_CREATED_AT} INTEGER NOT NULL,
+                ${DbContract.U_IS_PREMIUM_USER} INTEGER NOT NULL DEFAULT 0,
+                ${DbContract.U_LAST_LOGIN_AT} INTEGER
+            )
+            """.trimIndent()
+        )
+    }
+
+    private fun createDecksTable(db: SQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS ${DbContract.T_DECKS}(
+                ${DbContract.D_ID} INTEGER PRIMARY KEY AUTOINCREMENT,
+                ${DbContract.D_OWNER_USER_ID} INTEGER NOT NULL,
+                ${DbContract.D_TITLE} TEXT NOT NULL,
+                ${DbContract.D_DESCRIPTION} TEXT,
+                ${DbContract.D_CREATED_AT} INTEGER NOT NULL,
+                ${DbContract.D_STATUS} TEXT NOT NULL DEFAULT '${DbContract.DECK_ACTIVE}',
+                ${DbContract.D_IS_PREMIUM} INTEGER NOT NULL DEFAULT 0,
+                ${DbContract.D_IS_PUBLIC} INTEGER NOT NULL DEFAULT 0,
+                FOREIGN KEY(${DbContract.D_OWNER_USER_ID})
+                    REFERENCES ${DbContract.T_USERS}(${DbContract.U_ID})
+                    ON DELETE CASCADE
+            )
+            """.trimIndent()
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_decks_owner ON ${DbContract.T_DECKS}(${DbContract.D_OWNER_USER_ID})")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_decks_status ON ${DbContract.T_DECKS}(${DbContract.D_STATUS})")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_decks_public ON ${DbContract.T_DECKS}(${DbContract.D_IS_PUBLIC})")
+    }
+
+    private fun createCardsTable(db: SQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS ${DbContract.T_CARDS}(
+                ${DbContract.C_ID} INTEGER PRIMARY KEY AUTOINCREMENT,
+                ${DbContract.C_DECK_ID} INTEGER NOT NULL,
+                ${DbContract.C_FRONT} TEXT NOT NULL,
+                ${DbContract.C_BACK} TEXT NOT NULL,
+                ${DbContract.C_CREATED_AT} INTEGER NOT NULL,
+                FOREIGN KEY(${DbContract.C_DECK_ID})
+                    REFERENCES ${DbContract.T_DECKS}(${DbContract.D_ID})
+                    ON DELETE CASCADE
+            )
+            """.trimIndent()
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_cards_deck ON ${DbContract.T_CARDS}(${DbContract.C_DECK_ID})")
+    }
+
+    private fun createCardProgressTable(db: SQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS ${DbContract.T_CARD_PROGRESS}(
+                ${DbContract.P_USER_ID} INTEGER NOT NULL,
+                ${DbContract.P_CARD_ID} INTEGER NOT NULL,
+                ${DbContract.P_DUE_AT} INTEGER NOT NULL DEFAULT 0,
+                ${DbContract.P_LAST_REVIEWED_AT} INTEGER,
+                ${DbContract.P_INTERVAL_DAYS} INTEGER NOT NULL DEFAULT 0,
+                ${DbContract.P_EASE_FACTOR} REAL NOT NULL DEFAULT 2.5,
+                ${DbContract.P_REVIEW_COUNT} INTEGER NOT NULL DEFAULT 0,
+                ${DbContract.P_LAPSE_COUNT} INTEGER NOT NULL DEFAULT 0,
+                ${DbContract.P_LAST_RESULT} TEXT,
+                PRIMARY KEY(${DbContract.P_USER_ID}, ${DbContract.P_CARD_ID}),
+                FOREIGN KEY(${DbContract.P_USER_ID})
+                    REFERENCES ${DbContract.T_USERS}(${DbContract.U_ID})
+                    ON DELETE CASCADE,
+                FOREIGN KEY(${DbContract.P_CARD_ID})
+                    REFERENCES ${DbContract.T_CARDS}(${DbContract.C_ID})
+                    ON DELETE CASCADE
+            )
+            """.trimIndent()
+        )
+
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS idx_card_progress_due ON ${DbContract.T_CARD_PROGRESS}(${DbContract.P_USER_ID}, ${DbContract.P_DUE_AT})"
+        )
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS idx_card_progress_card ON ${DbContract.T_CARD_PROGRESS}(${DbContract.P_CARD_ID})"
+        )
+    }
+
+    private fun createStudySessionsTable(db: SQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS ${DbContract.T_STUDY_SESSIONS}(
+                ${DbContract.S_ID} INTEGER PRIMARY KEY AUTOINCREMENT,
+                ${DbContract.S_USER_ID} INTEGER NOT NULL,
+                ${DbContract.S_DECK_ID} INTEGER NOT NULL,
+                ${DbContract.S_RESULT} TEXT NOT NULL,
+                ${DbContract.S_CREATED_AT} INTEGER NOT NULL,
+                FOREIGN KEY(${DbContract.S_USER_ID})
+                    REFERENCES ${DbContract.T_USERS}(${DbContract.U_ID})
+                    ON DELETE CASCADE,
+                FOREIGN KEY(${DbContract.S_DECK_ID})
+                    REFERENCES ${DbContract.T_DECKS}(${DbContract.D_ID})
+                    ON DELETE CASCADE
+            )
+            """.trimIndent()
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_sessions_user ON ${DbContract.T_STUDY_SESSIONS}(${DbContract.S_USER_ID})")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_sessions_deck ON ${DbContract.T_STUDY_SESSIONS}(${DbContract.S_DECK_ID})")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_sessions_created ON ${DbContract.T_STUDY_SESSIONS}(${DbContract.S_CREATED_AT})")
+    }
+
+    private fun createReportsTable(db: SQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS ${DbContract.T_REPORTS}(
+                ${DbContract.R_ID} INTEGER PRIMARY KEY AUTOINCREMENT,
+                ${DbContract.R_REPORTER_USER_ID} INTEGER NOT NULL,
+                ${DbContract.R_DECK_ID} INTEGER NOT NULL,
+                ${DbContract.R_REASON} TEXT NOT NULL,
+                ${DbContract.R_DETAILS} TEXT,
+                ${DbContract.R_STATUS} TEXT NOT NULL DEFAULT '${DbContract.REPORT_OPEN}',
+                ${DbContract.R_CREATED_AT} INTEGER NOT NULL,
+                FOREIGN KEY(${DbContract.R_REPORTER_USER_ID})
+                    REFERENCES ${DbContract.T_USERS}(${DbContract.U_ID})
+                    ON DELETE CASCADE,
+                FOREIGN KEY(${DbContract.R_DECK_ID})
+                    REFERENCES ${DbContract.T_DECKS}(${DbContract.D_ID})
+                    ON DELETE CASCADE
+            )
+            """.trimIndent()
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_reports_status ON ${DbContract.T_REPORTS}(${DbContract.R_STATUS})")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_reports_deck ON ${DbContract.T_REPORTS}(${DbContract.R_DECK_ID})")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_reports_created ON ${DbContract.T_REPORTS}(${DbContract.R_CREATED_AT})")
+    }
+
+    private fun addDeckStatusColumn(db: SQLiteDatabase) {
+        try {
+            db.execSQL(
+                "ALTER TABLE ${DbContract.T_DECKS} ADD COLUMN ${DbContract.D_STATUS} TEXT NOT NULL DEFAULT '${DbContract.DECK_ACTIVE}'"
+            )
+        } catch (_: Exception) {
+        }
+        try {
+            db.execSQL(
+                "UPDATE ${DbContract.T_DECKS} SET ${DbContract.D_STATUS}='${DbContract.DECK_ACTIVE}' WHERE ${DbContract.D_STATUS} IS NULL"
+            )
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun addPremiumColumns(db: SQLiteDatabase) {
+        try {
+            db.execSQL(
+                "ALTER TABLE ${DbContract.T_USERS} ADD COLUMN ${DbContract.U_IS_PREMIUM_USER} INTEGER NOT NULL DEFAULT 0"
+            )
+        } catch (_: Exception) {
+        }
+
+        try {
+            db.execSQL(
+                "ALTER TABLE ${DbContract.T_DECKS} ADD COLUMN ${DbContract.D_IS_PREMIUM} INTEGER NOT NULL DEFAULT 0"
+            )
+        } catch (_: Exception) {
+        }
+
+        try {
+            db.execSQL(
+                "UPDATE ${DbContract.T_USERS} SET ${DbContract.U_IS_PREMIUM_USER}=0 WHERE ${DbContract.U_IS_PREMIUM_USER} IS NULL"
+            )
+        } catch (_: Exception) {
+        }
+
+        try {
+            db.execSQL(
+                "UPDATE ${DbContract.T_DECKS} SET ${DbContract.D_IS_PREMIUM}=0 WHERE ${DbContract.D_IS_PREMIUM} IS NULL"
+            )
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun addLastLoginColumn(db: SQLiteDatabase) {
+        try {
+            db.execSQL("ALTER TABLE ${DbContract.T_USERS} ADD COLUMN ${DbContract.U_LAST_LOGIN_AT} INTEGER")
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun addDeckPublicColumn(db: SQLiteDatabase) {
+        try {
+            db.execSQL(
+                "ALTER TABLE ${DbContract.T_DECKS} ADD COLUMN ${DbContract.D_IS_PUBLIC} INTEGER NOT NULL DEFAULT 0"
+            )
+        } catch (_: Exception) {
+        }
+
+        try {
+            db.execSQL(
+                "UPDATE ${DbContract.T_DECKS} SET ${DbContract.D_IS_PUBLIC}=0 WHERE ${DbContract.D_IS_PUBLIC} IS NULL"
+            )
+        } catch (_: Exception) {
+        }
+
+        try {
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS idx_decks_public ON ${DbContract.T_DECKS}(${DbContract.D_IS_PUBLIC})"
+            )
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun migrateToVersion9(db: SQLiteDatabase) {
+        db.execSQL("PRAGMA foreign_keys=OFF")
+        db.beginTransaction()
+        try {
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS decks_new(
+                    ${DbContract.D_ID} INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ${DbContract.D_OWNER_USER_ID} INTEGER NOT NULL,
+                    ${DbContract.D_TITLE} TEXT NOT NULL,
+                    ${DbContract.D_DESCRIPTION} TEXT,
+                    ${DbContract.D_CREATED_AT} INTEGER NOT NULL,
+                    ${DbContract.D_STATUS} TEXT NOT NULL DEFAULT '${DbContract.DECK_ACTIVE}',
+                    ${DbContract.D_IS_PREMIUM} INTEGER NOT NULL DEFAULT 0,
+                    FOREIGN KEY(${DbContract.D_OWNER_USER_ID})
+                        REFERENCES ${DbContract.T_USERS}(${DbContract.U_ID})
+                        ON DELETE CASCADE
+                )
+                """.trimIndent()
+            )
+
+            db.execSQL(
+                """
+                INSERT INTO decks_new(
+                    ${DbContract.D_ID},
+                    ${DbContract.D_OWNER_USER_ID},
+                    ${DbContract.D_TITLE},
+                    ${DbContract.D_DESCRIPTION},
+                    ${DbContract.D_CREATED_AT},
+                    ${DbContract.D_STATUS},
+                    ${DbContract.D_IS_PREMIUM}
+                )
+                SELECT
+                    d.${DbContract.D_ID},
+                    d.${DbContract.D_OWNER_USER_ID},
+                    d.${DbContract.D_TITLE},
+                    d.${DbContract.D_DESCRIPTION},
+                    d.${DbContract.D_CREATED_AT},
+                    COALESCE(d.${DbContract.D_STATUS}, '${DbContract.DECK_ACTIVE}'),
+                    COALESCE(d.${DbContract.D_IS_PREMIUM}, 0)
+                FROM ${DbContract.T_DECKS} d
+                INNER JOIN ${DbContract.T_USERS} u
+                    ON u.${DbContract.U_ID}=d.${DbContract.D_OWNER_USER_ID}
+                """.trimIndent()
+            )
+
+            db.execSQL("DROP TABLE ${DbContract.T_DECKS}")
+            db.execSQL("ALTER TABLE decks_new RENAME TO ${DbContract.T_DECKS}")
+
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_decks_owner ON ${DbContract.T_DECKS}(${DbContract.D_OWNER_USER_ID})")
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_decks_status ON ${DbContract.T_DECKS}(${DbContract.D_STATUS})")
+
+            createCardProgressTable(db)
+            cleanupOrphanRowsAfterVersion9(db)
+
+            db.setTransactionSuccessful()
+        } finally {
+            db.endTransaction()
+            db.execSQL("PRAGMA foreign_keys=ON")
+        }
+    }
+
+    private fun cleanupOrphanRowsAfterVersion9(db: SQLiteDatabase) {
+        db.execSQL(
+            """
+            DELETE FROM ${DbContract.T_CARDS}
+            WHERE ${DbContract.C_DECK_ID} NOT IN (
+                SELECT ${DbContract.D_ID} FROM ${DbContract.T_DECKS}
+            )
+            """.trimIndent()
+        )
+
+        db.execSQL(
+            """
+            DELETE FROM ${DbContract.T_STUDY_SESSIONS}
+            WHERE ${DbContract.S_DECK_ID} NOT IN (
+                SELECT ${DbContract.D_ID} FROM ${DbContract.T_DECKS}
+            )
+            """.trimIndent()
+        )
+
+        db.execSQL(
+            """
+            DELETE FROM ${DbContract.T_REPORTS}
+            WHERE ${DbContract.R_DECK_ID} NOT IN (
+                SELECT ${DbContract.D_ID} FROM ${DbContract.T_DECKS}
+            )
+            """.trimIndent()
+        )
+
+        db.execSQL(
+            """
+            DELETE FROM ${DbContract.T_CARD_PROGRESS}
+            WHERE ${DbContract.P_USER_ID} NOT IN (
+                SELECT ${DbContract.U_ID} FROM ${DbContract.T_USERS}
+            )
+            """.trimIndent()
+        )
+
+        db.execSQL(
+            """
+            DELETE FROM ${DbContract.T_CARD_PROGRESS}
+            WHERE ${DbContract.P_CARD_ID} NOT IN (
+                SELECT ${DbContract.C_ID} FROM ${DbContract.T_CARDS}
+            )
+            """.trimIndent()
+        )
+    }
+
+    // ---------- SRS ----------
+    data class CardProgressSnapshot(
+        val dueAt: Long,
+        val lastReviewedAt: Long?,
+        val intervalDays: Int,
+        val easeFactor: Float,
+        val reviewCount: Int,
+        val lapseCount: Int,
+        val lastResult: String?
+    )
+
+    data class DueCardRow(
+        val id: Long,
+        val front: String,
+        val back: String,
+        val createdAt: Long,
+        val dueAt: Long,
+        val intervalDays: Int,
+        val reviewCount: Int,
+        val lastResult: String?
+    )
+
+    private data class SrsProgressRow(
+        val dueAt: Long,
+        val lastReviewedAt: Long?,
+        val intervalDays: Int,
+        val easeFactor: Float,
+        val reviewCount: Int,
+        val lapseCount: Int,
+        val lastResult: String?
+    )
+
+    private data class NextSrsState(
+        val dueAt: Long,
+        val lastReviewedAt: Long,
+        val intervalDays: Int,
+        val easeFactor: Float,
+        val reviewCount: Int,
+        val lapseCount: Int,
+        val lastResult: String
+    )
+
+    fun getCardProgressSnapshot(userId: Long, cardId: Long): CardProgressSnapshot? {
+        readableDatabase.rawQuery(
+            """
+            SELECT
+                ${DbContract.P_DUE_AT},
+                ${DbContract.P_LAST_REVIEWED_AT},
+                ${DbContract.P_INTERVAL_DAYS},
+                ${DbContract.P_EASE_FACTOR},
+                ${DbContract.P_REVIEW_COUNT},
+                ${DbContract.P_LAPSE_COUNT},
+                ${DbContract.P_LAST_RESULT}
+            FROM ${DbContract.T_CARD_PROGRESS}
+            WHERE ${DbContract.P_USER_ID}=?
+              AND ${DbContract.P_CARD_ID}=?
+            LIMIT 1
+            """.trimIndent(),
+            arrayOf(userId.toString(), cardId.toString())
+        ).use { c ->
+            if (!c.moveToFirst()) return null
+
+            return CardProgressSnapshot(
+                dueAt = c.getLong(0),
+                lastReviewedAt = if (c.isNull(1)) null else c.getLong(1),
+                intervalDays = c.getInt(2),
+                easeFactor = c.getFloat(3),
+                reviewCount = c.getInt(4),
+                lapseCount = c.getInt(5),
+                lastResult = if (c.isNull(6)) null else c.getString(6)
+            )
+        }
+    }
+
+    fun restoreCardProgressSnapshot(
+        userId: Long,
+        cardId: Long,
+        snapshot: CardProgressSnapshot?
+    ): Boolean {
+        val db = writableDatabase
+
+        if (snapshot == null) {
+            db.delete(
+                DbContract.T_CARD_PROGRESS,
+                "${DbContract.P_USER_ID}=? AND ${DbContract.P_CARD_ID}=?",
+                arrayOf(userId.toString(), cardId.toString())
+            )
+            return true
+        }
+
+        val cv = ContentValues().apply {
+            put(DbContract.P_USER_ID, userId)
+            put(DbContract.P_CARD_ID, cardId)
+            put(DbContract.P_DUE_AT, snapshot.dueAt)
+
+            if (snapshot.lastReviewedAt == null) putNull(DbContract.P_LAST_REVIEWED_AT)
+            else put(DbContract.P_LAST_REVIEWED_AT, snapshot.lastReviewedAt)
+
+            put(DbContract.P_INTERVAL_DAYS, snapshot.intervalDays)
+            put(DbContract.P_EASE_FACTOR, snapshot.easeFactor)
+            put(DbContract.P_REVIEW_COUNT, snapshot.reviewCount)
+            put(DbContract.P_LAPSE_COUNT, snapshot.lapseCount)
+
+            if (snapshot.lastResult == null) putNull(DbContract.P_LAST_RESULT)
+            else put(DbContract.P_LAST_RESULT, snapshot.lastResult)
+        }
+
+        val updated = db.update(
+            DbContract.T_CARD_PROGRESS,
+            cv,
+            "${DbContract.P_USER_ID}=? AND ${DbContract.P_CARD_ID}=?",
+            arrayOf(userId.toString(), cardId.toString())
+        )
+
+        if (updated == 0) {
+            db.insert(DbContract.T_CARD_PROGRESS, null, cv)
+        }
+
+        return true
+    }
+
+    private fun daysToMillis(days: Int): Long {
+        return days.toLong() * 24L * 60L * 60L * 1000L
+    }
+
+    private fun ensureCardProgressRowsForDeck(ownerUserId: Long, deckId: Long) {
+        writableDatabase.execSQL(
+            """
+            INSERT OR IGNORE INTO ${DbContract.T_CARD_PROGRESS}(
+                ${DbContract.P_USER_ID},
+                ${DbContract.P_CARD_ID},
+                ${DbContract.P_DUE_AT},
+                ${DbContract.P_LAST_REVIEWED_AT},
+                ${DbContract.P_INTERVAL_DAYS},
+                ${DbContract.P_EASE_FACTOR},
+                ${DbContract.P_REVIEW_COUNT},
+                ${DbContract.P_LAPSE_COUNT},
+                ${DbContract.P_LAST_RESULT}
+            )
+            SELECT
+                ?, c.${DbContract.C_ID}, 0, NULL, 0, 2.5, 0, 0, NULL
+            FROM ${DbContract.T_CARDS} c
+            INNER JOIN ${DbContract.T_DECKS} d
+                ON d.${DbContract.D_ID}=c.${DbContract.C_DECK_ID}
+            WHERE c.${DbContract.C_DECK_ID}=?
+              AND d.${DbContract.D_OWNER_USER_ID}=?
+              AND d.${DbContract.D_STATUS}='${DbContract.DECK_ACTIVE}'
+            """.trimIndent(),
+            arrayOf(ownerUserId, deckId, ownerUserId)
+        )
+    }
+
+    private fun ensureCardProgressRowForCard(
+        db: SQLiteDatabase,
+        ownerUserId: Long,
+        deckId: Long,
+        cardId: Long
+    ) {
+        db.execSQL(
+            """
+            INSERT OR IGNORE INTO ${DbContract.T_CARD_PROGRESS}(
+                ${DbContract.P_USER_ID},
+                ${DbContract.P_CARD_ID},
+                ${DbContract.P_DUE_AT},
+                ${DbContract.P_LAST_REVIEWED_AT},
+                ${DbContract.P_INTERVAL_DAYS},
+                ${DbContract.P_EASE_FACTOR},
+                ${DbContract.P_REVIEW_COUNT},
+                ${DbContract.P_LAPSE_COUNT},
+                ${DbContract.P_LAST_RESULT}
+            )
+            SELECT
+                ?, c.${DbContract.C_ID}, 0, NULL, 0, 2.5, 0, 0, NULL
+            FROM ${DbContract.T_CARDS} c
+            INNER JOIN ${DbContract.T_DECKS} d
+                ON d.${DbContract.D_ID}=c.${DbContract.C_DECK_ID}
+            WHERE c.${DbContract.C_ID}=?
+              AND c.${DbContract.C_DECK_ID}=?
+              AND d.${DbContract.D_OWNER_USER_ID}=?
+              AND d.${DbContract.D_STATUS}='${DbContract.DECK_ACTIVE}'
+            """.trimIndent(),
+            arrayOf(ownerUserId, cardId, deckId, ownerUserId)
+        )
+    }
+
+    private fun ownsCardForStudy(ownerUserId: Long, deckId: Long, cardId: Long): Boolean {
+        readableDatabase.rawQuery(
+            """
+            SELECT 1
+            FROM ${DbContract.T_CARDS} c
+            INNER JOIN ${DbContract.T_DECKS} d
+                ON d.${DbContract.D_ID}=c.${DbContract.C_DECK_ID}
+            WHERE c.${DbContract.C_ID}=?
+              AND c.${DbContract.C_DECK_ID}=?
+              AND d.${DbContract.D_OWNER_USER_ID}=?
+              AND d.${DbContract.D_STATUS}='${DbContract.DECK_ACTIVE}'
+            LIMIT 1
+            """.trimIndent(),
+            arrayOf(cardId.toString(), deckId.toString(), ownerUserId.toString())
+        ).use { c ->
+            return c.moveToFirst()
+        }
+    }
+
+    private fun readCardProgressRow(
+        db: SQLiteDatabase,
+        userId: Long,
+        cardId: Long
+    ): SrsProgressRow? {
+        db.rawQuery(
+            """
+            SELECT
+                ${DbContract.P_DUE_AT},
+                ${DbContract.P_LAST_REVIEWED_AT},
+                ${DbContract.P_INTERVAL_DAYS},
+                ${DbContract.P_EASE_FACTOR},
+                ${DbContract.P_REVIEW_COUNT},
+                ${DbContract.P_LAPSE_COUNT},
+                ${DbContract.P_LAST_RESULT}
+            FROM ${DbContract.T_CARD_PROGRESS}
+            WHERE ${DbContract.P_USER_ID}=?
+              AND ${DbContract.P_CARD_ID}=?
+            LIMIT 1
+            """.trimIndent(),
+            arrayOf(userId.toString(), cardId.toString())
+        ).use { c ->
+            if (!c.moveToFirst()) return null
+            return SrsProgressRow(
+                dueAt = c.getLong(0),
+                lastReviewedAt = if (c.isNull(1)) null else c.getLong(1),
+                intervalDays = c.getInt(2),
+                easeFactor = c.getFloat(3),
+                reviewCount = c.getInt(4),
+                lapseCount = c.getInt(5),
+                lastResult = if (c.isNull(6)) null else c.getString(6)
+            )
+        }
+    }
+
+    private fun computeNextSrsState(
+        current: SrsProgressRow?,
+        result: String,
+        reviewedAt: Long
+    ): NextSrsState {
+        val currentEase = max(1.30f, current?.easeFactor ?: 2.50f)
+        val currentInterval = current?.intervalDays ?: 0
+        val currentReviewCount = current?.reviewCount ?: 0
+        val currentLapseCount = current?.lapseCount ?: 0
+
+        return when (result) {
+            DbContract.RESULT_KNOWN -> {
+                val nextInterval = when {
+                    currentInterval <= 0 -> 1
+                    currentInterval == 1 -> 3
+                    else -> max(1, (currentInterval * currentEase).roundToInt())
+                }
+                val nextEase = min(2.80f, currentEase + 0.05f)
+
+                NextSrsState(
+                    dueAt = reviewedAt + daysToMillis(nextInterval),
+                    lastReviewedAt = reviewedAt,
+                    intervalDays = nextInterval,
+                    easeFactor = nextEase,
+                    reviewCount = currentReviewCount + 1,
+                    lapseCount = currentLapseCount,
+                    lastResult = result
+                )
+            }
+
+            DbContract.RESULT_HARD -> {
+                val nextEase = max(1.30f, currentEase - 0.20f)
+
+                NextSrsState(
+                    dueAt = reviewedAt + (10L * 60L * 1000L),
+                    lastReviewedAt = reviewedAt,
+                    intervalDays = 0,
+                    easeFactor = nextEase,
+                    reviewCount = currentReviewCount + 1,
+                    lapseCount = currentLapseCount + 1,
+                    lastResult = result
+                )
+            }
+
+            else -> throw IllegalArgumentException("Unsupported study result: $result")
+        }
+    }
+
+    private fun insertStudySessionRow(
+        db: SQLiteDatabase,
+        userId: Long,
+        deckId: Long,
+        result: String,
+        createdAt: Long
+    ): Long {
+        val cv = ContentValues().apply {
+            put(DbContract.S_USER_ID, userId)
+            put(DbContract.S_DECK_ID, deckId)
+            put(DbContract.S_RESULT, result)
+            put(DbContract.S_CREATED_AT, createdAt)
+        }
+        return db.insert(DbContract.T_STUDY_SESSIONS, null, cv)
+    }
+
+    fun getDueCountForDeck(
+        ownerUserId: Long,
+        deckId: Long,
+        nowMs: Long = System.currentTimeMillis()
+    ): Int {
+        ensureCardProgressRowsForDeck(ownerUserId, deckId)
+
+        readableDatabase.rawQuery(
+            """
+            SELECT COUNT(*)
+            FROM ${DbContract.T_CARDS} c
+            INNER JOIN ${DbContract.T_DECKS} d
+                ON d.${DbContract.D_ID}=c.${DbContract.C_DECK_ID}
+            INNER JOIN ${DbContract.T_CARD_PROGRESS} p
+                ON p.${DbContract.P_CARD_ID}=c.${DbContract.C_ID}
+               AND p.${DbContract.P_USER_ID}=?
+            WHERE c.${DbContract.C_DECK_ID}=?
+              AND d.${DbContract.D_OWNER_USER_ID}=?
+              AND d.${DbContract.D_STATUS}='${DbContract.DECK_ACTIVE}'
+              AND p.${DbContract.P_DUE_AT}<=?
+            """.trimIndent(),
+            arrayOf(
+                ownerUserId.toString(),
+                deckId.toString(),
+                ownerUserId.toString(),
+                nowMs.toString()
+            )
+        ).use { c ->
+            return if (c.moveToFirst()) c.getInt(0) else 0
+        }
+    }
+
+    fun getDueCountForUser(
+        userId: Long,
+        nowMs: Long = System.currentTimeMillis()
+    ): Int {
+        readableDatabase.rawQuery(
+            """
+            SELECT COUNT(*)
+            FROM ${DbContract.T_CARD_PROGRESS} p
+            INNER JOIN ${DbContract.T_CARDS} c
+                ON c.${DbContract.C_ID}=p.${DbContract.P_CARD_ID}
+            INNER JOIN ${DbContract.T_DECKS} d
+                ON d.${DbContract.D_ID}=c.${DbContract.C_DECK_ID}
+            WHERE p.${DbContract.P_USER_ID}=?
+              AND d.${DbContract.D_OWNER_USER_ID}=?
+              AND d.${DbContract.D_STATUS}='${DbContract.DECK_ACTIVE}'
+              AND p.${DbContract.P_DUE_AT}<=?
+            """.trimIndent(),
+            arrayOf(userId.toString(), userId.toString(), nowMs.toString())
+        ).use { c ->
+            return if (c.moveToFirst()) c.getInt(0) else 0
+        }
+    }
+
+    fun getDueCardsForDeck(
+        ownerUserId: Long,
+        deckId: Long,
+        nowMs: Long = System.currentTimeMillis(),
+        limit: Int = 999
+    ): List<DueCardRow> {
+        ensureCardProgressRowsForDeck(ownerUserId, deckId)
+
+        val out = mutableListOf<DueCardRow>()
+        readableDatabase.rawQuery(
+            """
+            SELECT
+                c.${DbContract.C_ID},
+                c.${DbContract.C_FRONT},
+                c.${DbContract.C_BACK},
+                c.${DbContract.C_CREATED_AT},
+                p.${DbContract.P_DUE_AT},
+                p.${DbContract.P_INTERVAL_DAYS},
+                p.${DbContract.P_REVIEW_COUNT},
+                p.${DbContract.P_LAST_RESULT}
+            FROM ${DbContract.T_CARDS} c
+            INNER JOIN ${DbContract.T_DECKS} d
+                ON d.${DbContract.D_ID}=c.${DbContract.C_DECK_ID}
+            INNER JOIN ${DbContract.T_CARD_PROGRESS} p
+                ON p.${DbContract.P_CARD_ID}=c.${DbContract.C_ID}
+               AND p.${DbContract.P_USER_ID}=?
+            WHERE c.${DbContract.C_DECK_ID}=?
+              AND d.${DbContract.D_OWNER_USER_ID}=?
+              AND d.${DbContract.D_STATUS}='${DbContract.DECK_ACTIVE}'
+              AND p.${DbContract.P_DUE_AT}<=?
+            ORDER BY p.${DbContract.P_DUE_AT} ASC, c.${DbContract.C_CREATED_AT} ASC
+            LIMIT ?
+            """.trimIndent(),
+            arrayOf(
+                ownerUserId.toString(),
+                deckId.toString(),
+                ownerUserId.toString(),
+                nowMs.toString(),
+                limit.toString()
+            )
+        ).use { c ->
+            while (c.moveToNext()) {
+                out += DueCardRow(
+                    id = c.getLong(0),
+                    front = c.getString(1),
+                    back = c.getString(2),
+                    createdAt = c.getLong(3),
+                    dueAt = c.getLong(4),
+                    intervalDays = c.getInt(5),
+                    reviewCount = c.getInt(6),
+                    lastResult = if (c.isNull(7)) null else c.getString(7)
+                )
+            }
+        }
+
+        return out
+    }
+
+    fun applySrsReview(
+        ownerUserId: Long,
+        deckId: Long,
+        cardId: Long,
+        result: String,
+        reviewedAt: Long = System.currentTimeMillis()
+    ): Long {
+        if (result != DbContract.RESULT_KNOWN && result != DbContract.RESULT_HARD) return -1L
+        if (!ownsCardForStudy(ownerUserId, deckId, cardId)) return -1L
+
+        val db = writableDatabase
+        db.beginTransaction()
+        try {
+            ensureCardProgressRowForCard(db, ownerUserId, deckId, cardId)
+
+            val current = readCardProgressRow(db, ownerUserId, cardId)
+            val next = computeNextSrsState(current, result, reviewedAt)
+
+            val cv = ContentValues().apply {
+                put(DbContract.P_DUE_AT, next.dueAt)
+                put(DbContract.P_LAST_REVIEWED_AT, next.lastReviewedAt)
+                put(DbContract.P_INTERVAL_DAYS, next.intervalDays)
+                put(DbContract.P_EASE_FACTOR, next.easeFactor)
+                put(DbContract.P_REVIEW_COUNT, next.reviewCount)
+                put(DbContract.P_LAPSE_COUNT, next.lapseCount)
+                put(DbContract.P_LAST_RESULT, next.lastResult)
+            }
+
+            db.update(
+                DbContract.T_CARD_PROGRESS,
+                cv,
+                "${DbContract.P_USER_ID}=? AND ${DbContract.P_CARD_ID}=?",
+                arrayOf(ownerUserId.toString(), cardId.toString())
+            )
+
+            val sessionId = insertStudySessionRow(
+                db = db,
+                userId = ownerUserId,
+                deckId = deckId,
+                result = result,
+                createdAt = reviewedAt
+            )
+
+            db.setTransactionSuccessful()
+            return sessionId
+        } finally {
+            db.endTransaction()
+        }
+    }
+
+    // ---------- SEED HELPERS ----------
     private data class SeedDeckBundle(
         val title: String,
         val description: String,
@@ -657,873 +1987,7 @@ class StarDeckDbHelper(context: Context) :
         )
     }
 
-    private fun addDeckPublicColumn(db: SQLiteDatabase) {
-        try {
-            db.execSQL(
-                "ALTER TABLE ${DbContract.T_DECKS} ADD COLUMN ${DbContract.D_IS_PUBLIC} INTEGER NOT NULL DEFAULT 0"
-            )
-        } catch (_: Exception) {
-        }
-
-        try {
-            db.execSQL(
-                "UPDATE ${DbContract.T_DECKS} SET ${DbContract.D_IS_PUBLIC}=0 WHERE ${DbContract.D_IS_PUBLIC} IS NULL"
-            )
-        } catch (_: Exception) {
-        }
-
-        try {
-            db.execSQL(
-                "CREATE INDEX IF NOT EXISTS idx_decks_public ON ${DbContract.T_DECKS}(${DbContract.D_IS_PUBLIC})"
-            )
-        } catch (_: Exception) {
-        }
-    }
-
-    private fun addLastLoginColumn(db: SQLiteDatabase) {
-        try {
-            db.execSQL("ALTER TABLE ${DbContract.T_USERS} ADD COLUMN ${DbContract.U_LAST_LOGIN_AT} INTEGER")
-        } catch (_: Exception) {
-        }
-    }
-
-    fun getLastLoginAt(userId: Long): Long? {
-        readableDatabase.rawQuery(
-            """
-            SELECT ${DbContract.U_LAST_LOGIN_AT}
-            FROM ${DbContract.T_USERS}
-            WHERE ${DbContract.U_ID}=?
-            LIMIT 1
-            """.trimIndent(),
-            arrayOf(userId.toString())
-        ).use { c ->
-            if (!c.moveToFirst()) return null
-            return if (c.isNull(0)) null else c.getLong(0)
-        }
-    }
-
-    fun updateLastLoginAt(userId: Long, whenMs: Long): Int {
-        val cv = ContentValues().apply { put(DbContract.U_LAST_LOGIN_AT, whenMs) }
-        return writableDatabase.update(
-            DbContract.T_USERS,
-            cv,
-            "${DbContract.U_ID}=?",
-            arrayOf(userId.toString())
-        )
-    }
-
-    fun countMonthlyActiveUsers(): Int {
-        val zone = java.time.ZoneId.systemDefault()
-        val now = java.time.LocalDate.now(zone)
-        val start = now.withDayOfMonth(1).atStartOfDay(zone).toInstant().toEpochMilli()
-        val end = now.plusMonths(1).withDayOfMonth(1).atStartOfDay(zone).toInstant().toEpochMilli()
-
-        readableDatabase.rawQuery(
-            """
-            SELECT COUNT(*)
-            FROM ${DbContract.T_USERS}
-            WHERE ${DbContract.U_ROLE}=?
-              AND ${DbContract.U_STATUS}=?
-              AND ${DbContract.U_LAST_LOGIN_AT} IS NOT NULL
-              AND ${DbContract.U_LAST_LOGIN_AT}>=?
-              AND ${DbContract.U_LAST_LOGIN_AT}<?
-            """.trimIndent(),
-            arrayOf(
-                DbContract.ROLE_USER,
-                DbContract.STATUS_ACTIVE,
-                start.toString(),
-                end.toString()
-            )
-        ).use { c ->
-            return if (c.moveToFirst()) c.getInt(0) else 0
-        }
-    }
-
-    fun countMonthlyInactiveUsers(): Int {
-        val zone = java.time.ZoneId.systemDefault()
-        val now = java.time.LocalDate.now(zone)
-        val start = now.withDayOfMonth(1).atStartOfDay(zone).toInstant().toEpochMilli()
-
-        readableDatabase.rawQuery(
-            """
-            SELECT COUNT(*)
-            FROM ${DbContract.T_USERS}
-            WHERE ${DbContract.U_ROLE}=?
-              AND ${DbContract.U_STATUS}=?
-              AND (${DbContract.U_LAST_LOGIN_AT} IS NULL OR ${DbContract.U_LAST_LOGIN_AT}<?)
-            """.trimIndent(),
-            arrayOf(
-                DbContract.ROLE_USER,
-                DbContract.STATUS_ACTIVE,
-                start.toString()
-            )
-        ).use { c ->
-            return if (c.moveToFirst()) c.getInt(0) else 0
-        }
-    }
-
-    // ---------- TABLES ----------
-    private fun createUsersTable(db: SQLiteDatabase) {
-        db.execSQL(
-            """
-            CREATE TABLE IF NOT EXISTS ${DbContract.T_USERS}(
-                ${DbContract.U_ID} INTEGER PRIMARY KEY AUTOINCREMENT,
-                ${DbContract.U_NAME} TEXT NOT NULL,
-                ${DbContract.U_EMAIL} TEXT NOT NULL UNIQUE,
-                ${DbContract.U_PASSWORD_HASH} TEXT NOT NULL,
-                ${DbContract.U_ROLE} TEXT NOT NULL,
-                ${DbContract.U_STATUS} TEXT NOT NULL,
-                ${DbContract.U_ACCEPTED_TERMS} INTEGER NOT NULL,
-                ${DbContract.U_FORCE_PW_CHANGE} INTEGER NOT NULL,
-                ${DbContract.U_CREATED_AT} INTEGER NOT NULL,
-                ${DbContract.U_IS_PREMIUM_USER} INTEGER NOT NULL DEFAULT 0,
-                ${DbContract.U_LAST_LOGIN_AT} INTEGER
-            )
-            """.trimIndent()
-        )
-    }
-
-    private fun createDecksTable(db: SQLiteDatabase) {
-        db.execSQL(
-            """
-            CREATE TABLE IF NOT EXISTS ${DbContract.T_DECKS}(
-                ${DbContract.D_ID} INTEGER PRIMARY KEY AUTOINCREMENT,
-                ${DbContract.D_OWNER_USER_ID} INTEGER NOT NULL,
-                ${DbContract.D_TITLE} TEXT NOT NULL,
-                ${DbContract.D_DESCRIPTION} TEXT,
-                ${DbContract.D_CREATED_AT} INTEGER NOT NULL,
-                ${DbContract.D_STATUS} TEXT NOT NULL DEFAULT '${DbContract.DECK_ACTIVE}',
-                ${DbContract.D_IS_PREMIUM} INTEGER NOT NULL DEFAULT 0,
-                ${DbContract.D_IS_PUBLIC} INTEGER NOT NULL DEFAULT 0,
-                FOREIGN KEY(${DbContract.D_OWNER_USER_ID})
-                    REFERENCES ${DbContract.T_USERS}(${DbContract.U_ID})
-                    ON DELETE CASCADE
-            )
-            """.trimIndent()
-        )
-        db.execSQL("CREATE INDEX IF NOT EXISTS idx_decks_owner ON ${DbContract.T_DECKS}(${DbContract.D_OWNER_USER_ID})")
-        db.execSQL("CREATE INDEX IF NOT EXISTS idx_decks_status ON ${DbContract.T_DECKS}(${DbContract.D_STATUS})")
-        db.execSQL("CREATE INDEX IF NOT EXISTS idx_decks_public ON ${DbContract.T_DECKS}(${DbContract.D_IS_PUBLIC})")
-    }
-
-    private fun addDeckStatusColumn(db: SQLiteDatabase) {
-        try {
-            db.execSQL(
-                "ALTER TABLE ${DbContract.T_DECKS} ADD COLUMN ${DbContract.D_STATUS} TEXT NOT NULL DEFAULT '${DbContract.DECK_ACTIVE}'"
-            )
-        } catch (_: Exception) {
-        }
-        try {
-            db.execSQL(
-                "UPDATE ${DbContract.T_DECKS} SET ${DbContract.D_STATUS}='${DbContract.DECK_ACTIVE}' WHERE ${DbContract.D_STATUS} IS NULL"
-            )
-        } catch (_: Exception) {
-        }
-    }
-
-    private fun addPremiumColumns(db: SQLiteDatabase) {
-        try {
-            db.execSQL(
-                "ALTER TABLE ${DbContract.T_USERS} ADD COLUMN ${DbContract.U_IS_PREMIUM_USER} INTEGER NOT NULL DEFAULT 0"
-            )
-        } catch (_: Exception) {
-        }
-
-        try {
-            db.execSQL(
-                "ALTER TABLE ${DbContract.T_DECKS} ADD COLUMN ${DbContract.D_IS_PREMIUM} INTEGER NOT NULL DEFAULT 0"
-            )
-        } catch (_: Exception) {
-        }
-
-        try {
-            db.execSQL(
-                "UPDATE ${DbContract.T_USERS} SET ${DbContract.U_IS_PREMIUM_USER}=0 WHERE ${DbContract.U_IS_PREMIUM_USER} IS NULL"
-            )
-        } catch (_: Exception) {
-        }
-
-        try {
-            db.execSQL(
-                "UPDATE ${DbContract.T_DECKS} SET ${DbContract.D_IS_PREMIUM}=0 WHERE ${DbContract.D_IS_PREMIUM} IS NULL"
-            )
-        } catch (_: Exception) {
-        }
-    }
-
-    private fun createCardProgressTable(db: SQLiteDatabase) {
-        db.execSQL(
-            """
-            CREATE TABLE IF NOT EXISTS ${DbContract.T_CARD_PROGRESS}(
-                ${DbContract.P_USER_ID} INTEGER NOT NULL,
-                ${DbContract.P_CARD_ID} INTEGER NOT NULL,
-                ${DbContract.P_DUE_AT} INTEGER NOT NULL DEFAULT 0,
-                ${DbContract.P_LAST_REVIEWED_AT} INTEGER,
-                ${DbContract.P_INTERVAL_DAYS} INTEGER NOT NULL DEFAULT 0,
-                ${DbContract.P_EASE_FACTOR} REAL NOT NULL DEFAULT 2.5,
-                ${DbContract.P_REVIEW_COUNT} INTEGER NOT NULL DEFAULT 0,
-                ${DbContract.P_LAPSE_COUNT} INTEGER NOT NULL DEFAULT 0,
-                ${DbContract.P_LAST_RESULT} TEXT,
-                PRIMARY KEY(${DbContract.P_USER_ID}, ${DbContract.P_CARD_ID}),
-                FOREIGN KEY(${DbContract.P_USER_ID})
-                    REFERENCES ${DbContract.T_USERS}(${DbContract.U_ID})
-                    ON DELETE CASCADE,
-                FOREIGN KEY(${DbContract.P_CARD_ID})
-                    REFERENCES ${DbContract.T_CARDS}(${DbContract.C_ID})
-                    ON DELETE CASCADE
-            )
-            """.trimIndent()
-        )
-
-        db.execSQL(
-            "CREATE INDEX IF NOT EXISTS idx_card_progress_due ON ${DbContract.T_CARD_PROGRESS}(${DbContract.P_USER_ID}, ${DbContract.P_DUE_AT})"
-        )
-        db.execSQL(
-            "CREATE INDEX IF NOT EXISTS idx_card_progress_card ON ${DbContract.T_CARD_PROGRESS}(${DbContract.P_CARD_ID})"
-        )
-    }
-
-    private fun migrateToVersion9(db: SQLiteDatabase) {
-        db.execSQL("PRAGMA foreign_keys=OFF")
-        db.beginTransaction()
-        try {
-            db.execSQL(
-                """
-                CREATE TABLE IF NOT EXISTS decks_new(
-                    ${DbContract.D_ID} INTEGER PRIMARY KEY AUTOINCREMENT,
-                    ${DbContract.D_OWNER_USER_ID} INTEGER NOT NULL,
-                    ${DbContract.D_TITLE} TEXT NOT NULL,
-                    ${DbContract.D_DESCRIPTION} TEXT,
-                    ${DbContract.D_CREATED_AT} INTEGER NOT NULL,
-                    ${DbContract.D_STATUS} TEXT NOT NULL DEFAULT '${DbContract.DECK_ACTIVE}',
-                    ${DbContract.D_IS_PREMIUM} INTEGER NOT NULL DEFAULT 0,
-                    FOREIGN KEY(${DbContract.D_OWNER_USER_ID})
-                        REFERENCES ${DbContract.T_USERS}(${DbContract.U_ID})
-                        ON DELETE CASCADE
-                )
-                """.trimIndent()
-            )
-
-            db.execSQL(
-                """
-                INSERT INTO decks_new(
-                    ${DbContract.D_ID},
-                    ${DbContract.D_OWNER_USER_ID},
-                    ${DbContract.D_TITLE},
-                    ${DbContract.D_DESCRIPTION},
-                    ${DbContract.D_CREATED_AT},
-                    ${DbContract.D_STATUS},
-                    ${DbContract.D_IS_PREMIUM}
-                )
-                SELECT
-                    d.${DbContract.D_ID},
-                    d.${DbContract.D_OWNER_USER_ID},
-                    d.${DbContract.D_TITLE},
-                    d.${DbContract.D_DESCRIPTION},
-                    d.${DbContract.D_CREATED_AT},
-                    COALESCE(d.${DbContract.D_STATUS}, '${DbContract.DECK_ACTIVE}'),
-                    COALESCE(d.${DbContract.D_IS_PREMIUM}, 0)
-                FROM ${DbContract.T_DECKS} d
-                INNER JOIN ${DbContract.T_USERS} u
-                    ON u.${DbContract.U_ID} = d.${DbContract.D_OWNER_USER_ID}
-                """.trimIndent()
-            )
-
-            db.execSQL("DROP TABLE ${DbContract.T_DECKS}")
-            db.execSQL("ALTER TABLE decks_new RENAME TO ${DbContract.T_DECKS}")
-
-            db.execSQL(
-                "CREATE INDEX IF NOT EXISTS idx_decks_owner ON ${DbContract.T_DECKS}(${DbContract.D_OWNER_USER_ID})"
-            )
-            db.execSQL(
-                "CREATE INDEX IF NOT EXISTS idx_decks_status ON ${DbContract.T_DECKS}(${DbContract.D_STATUS})"
-            )
-
-            createCardProgressTable(db)
-            cleanupOrphanRowsAfterVersion9(db)
-
-            db.setTransactionSuccessful()
-        } finally {
-            db.endTransaction()
-            db.execSQL("PRAGMA foreign_keys=ON")
-        }
-    }
-
-    private fun cleanupOrphanRowsAfterVersion9(db: SQLiteDatabase) {
-        db.execSQL(
-            """
-            DELETE FROM ${DbContract.T_CARDS}
-            WHERE ${DbContract.C_DECK_ID} NOT IN (
-                SELECT ${DbContract.D_ID} FROM ${DbContract.T_DECKS}
-            )
-            """.trimIndent()
-        )
-
-        db.execSQL(
-            """
-            DELETE FROM ${DbContract.T_STUDY_SESSIONS}
-            WHERE ${DbContract.S_DECK_ID} NOT IN (
-                SELECT ${DbContract.D_ID} FROM ${DbContract.T_DECKS}
-            )
-            """.trimIndent()
-        )
-
-        db.execSQL(
-            """
-            DELETE FROM ${DbContract.T_REPORTS}
-            WHERE ${DbContract.R_DECK_ID} NOT IN (
-                SELECT ${DbContract.D_ID} FROM ${DbContract.T_DECKS}
-            )
-            """.trimIndent()
-        )
-
-        db.execSQL(
-            """
-            DELETE FROM ${DbContract.T_CARD_PROGRESS}
-            WHERE ${DbContract.P_USER_ID} NOT IN (
-                SELECT ${DbContract.U_ID} FROM ${DbContract.T_USERS}
-            )
-            """.trimIndent()
-        )
-
-        db.execSQL(
-            """
-            DELETE FROM ${DbContract.T_CARD_PROGRESS}
-            WHERE ${DbContract.P_CARD_ID} NOT IN (
-                SELECT ${DbContract.C_ID} FROM ${DbContract.T_CARDS}
-            )
-            """.trimIndent()
-        )
-    }
-
-    data class CardProgressSnapshot(
-        val dueAt: Long,
-        val lastReviewedAt: Long?,
-        val intervalDays: Int,
-        val easeFactor: Float,
-        val reviewCount: Int,
-        val lapseCount: Int,
-        val lastResult: String?
-    )
-
-    fun getCardProgressSnapshot(userId: Long, cardId: Long): CardProgressSnapshot? {
-        readableDatabase.rawQuery(
-            """
-            SELECT
-                ${DbContract.P_DUE_AT},
-                ${DbContract.P_LAST_REVIEWED_AT},
-                ${DbContract.P_INTERVAL_DAYS},
-                ${DbContract.P_EASE_FACTOR},
-                ${DbContract.P_REVIEW_COUNT},
-                ${DbContract.P_LAPSE_COUNT},
-                ${DbContract.P_LAST_RESULT}
-            FROM ${DbContract.T_CARD_PROGRESS}
-            WHERE ${DbContract.P_USER_ID} = ?
-              AND ${DbContract.P_CARD_ID} = ?
-            LIMIT 1
-            """.trimIndent(),
-            arrayOf(userId.toString(), cardId.toString())
-        ).use { c ->
-            if (!c.moveToFirst()) return null
-
-            return CardProgressSnapshot(
-                dueAt = c.getLong(0),
-                lastReviewedAt = if (c.isNull(1)) null else c.getLong(1),
-                intervalDays = c.getInt(2),
-                easeFactor = c.getFloat(3),
-                reviewCount = c.getInt(4),
-                lapseCount = c.getInt(5),
-                lastResult = if (c.isNull(6)) null else c.getString(6)
-            )
-        }
-    }
-
-    fun restoreCardProgressSnapshot(
-        userId: Long,
-        cardId: Long,
-        snapshot: CardProgressSnapshot?
-    ): Boolean {
-        val db = writableDatabase
-
-        if (snapshot == null) {
-            db.delete(
-                DbContract.T_CARD_PROGRESS,
-                "${DbContract.P_USER_ID}=? AND ${DbContract.P_CARD_ID}=?",
-                arrayOf(userId.toString(), cardId.toString())
-            )
-            return true
-        }
-
-        val cv = ContentValues().apply {
-            put(DbContract.P_USER_ID, userId)
-            put(DbContract.P_CARD_ID, cardId)
-            put(DbContract.P_DUE_AT, snapshot.dueAt)
-
-            if (snapshot.lastReviewedAt == null) {
-                putNull(DbContract.P_LAST_REVIEWED_AT)
-            } else {
-                put(DbContract.P_LAST_REVIEWED_AT, snapshot.lastReviewedAt)
-            }
-
-            put(DbContract.P_INTERVAL_DAYS, snapshot.intervalDays)
-            put(DbContract.P_EASE_FACTOR, snapshot.easeFactor)
-            put(DbContract.P_REVIEW_COUNT, snapshot.reviewCount)
-            put(DbContract.P_LAPSE_COUNT, snapshot.lapseCount)
-
-            if (snapshot.lastResult == null) {
-                putNull(DbContract.P_LAST_RESULT)
-            } else {
-                put(DbContract.P_LAST_RESULT, snapshot.lastResult)
-            }
-        }
-
-        val updated = db.update(
-            DbContract.T_CARD_PROGRESS,
-            cv,
-            "${DbContract.P_USER_ID}=? AND ${DbContract.P_CARD_ID}=?",
-            arrayOf(userId.toString(), cardId.toString())
-        )
-
-        if (updated == 0) {
-            db.insert(DbContract.T_CARD_PROGRESS, null, cv)
-        }
-
-        return true
-    }
-
-    data class DueCardRow(
-        val id: Long,
-        val front: String,
-        val back: String,
-        val createdAt: Long,
-        val dueAt: Long,
-        val intervalDays: Int,
-        val reviewCount: Int,
-        val lastResult: String?
-    )
-
-    private data class SrsProgressRow(
-        val dueAt: Long,
-        val lastReviewedAt: Long?,
-        val intervalDays: Int,
-        val easeFactor: Float,
-        val reviewCount: Int,
-        val lapseCount: Int,
-        val lastResult: String?
-    )
-
-    private data class NextSrsState(
-        val dueAt: Long,
-        val lastReviewedAt: Long,
-        val intervalDays: Int,
-        val easeFactor: Float,
-        val reviewCount: Int,
-        val lapseCount: Int,
-        val lastResult: String
-    )
-
-    private fun daysToMillis(days: Int): Long {
-        return days.toLong() * 24L * 60L * 60L * 1000L
-    }
-
-    private fun ensureCardProgressRowsForDeck(ownerUserId: Long, deckId: Long) {
-        writableDatabase.execSQL(
-            """
-            INSERT OR IGNORE INTO ${DbContract.T_CARD_PROGRESS}(
-                ${DbContract.P_USER_ID},
-                ${DbContract.P_CARD_ID},
-                ${DbContract.P_DUE_AT},
-                ${DbContract.P_LAST_REVIEWED_AT},
-                ${DbContract.P_INTERVAL_DAYS},
-                ${DbContract.P_EASE_FACTOR},
-                ${DbContract.P_REVIEW_COUNT},
-                ${DbContract.P_LAPSE_COUNT},
-                ${DbContract.P_LAST_RESULT}
-            )
-            SELECT
-                ?, c.${DbContract.C_ID}, 0, NULL, 0, 2.5, 0, 0, NULL
-            FROM ${DbContract.T_CARDS} c
-            INNER JOIN ${DbContract.T_DECKS} d
-                ON d.${DbContract.D_ID} = c.${DbContract.C_DECK_ID}
-            WHERE c.${DbContract.C_DECK_ID} = ?
-              AND d.${DbContract.D_OWNER_USER_ID} = ?
-              AND d.${DbContract.D_STATUS} = '${DbContract.DECK_ACTIVE}'
-            """.trimIndent(),
-            arrayOf(ownerUserId, deckId, ownerUserId)
-        )
-    }
-
-    private fun ensureCardProgressRowForCard(
-        db: SQLiteDatabase,
-        ownerUserId: Long,
-        deckId: Long,
-        cardId: Long
-    ) {
-        db.execSQL(
-            """
-            INSERT OR IGNORE INTO ${DbContract.T_CARD_PROGRESS}(
-                ${DbContract.P_USER_ID},
-                ${DbContract.P_CARD_ID},
-                ${DbContract.P_DUE_AT},
-                ${DbContract.P_LAST_REVIEWED_AT},
-                ${DbContract.P_INTERVAL_DAYS},
-                ${DbContract.P_EASE_FACTOR},
-                ${DbContract.P_REVIEW_COUNT},
-                ${DbContract.P_LAPSE_COUNT},
-                ${DbContract.P_LAST_RESULT}
-            )
-            SELECT
-                ?, c.${DbContract.C_ID}, 0, NULL, 0, 2.5, 0, 0, NULL
-            FROM ${DbContract.T_CARDS} c
-            INNER JOIN ${DbContract.T_DECKS} d
-                ON d.${DbContract.D_ID} = c.${DbContract.C_DECK_ID}
-            WHERE c.${DbContract.C_ID} = ?
-              AND c.${DbContract.C_DECK_ID} = ?
-              AND d.${DbContract.D_OWNER_USER_ID} = ?
-              AND d.${DbContract.D_STATUS} = '${DbContract.DECK_ACTIVE}'
-            """.trimIndent(),
-            arrayOf(ownerUserId, cardId, deckId, ownerUserId)
-        )
-    }
-
-    private fun ownsCardForStudy(ownerUserId: Long, deckId: Long, cardId: Long): Boolean {
-        readableDatabase.rawQuery(
-            """
-            SELECT 1
-            FROM ${DbContract.T_CARDS} c
-            INNER JOIN ${DbContract.T_DECKS} d
-                ON d.${DbContract.D_ID} = c.${DbContract.C_DECK_ID}
-            WHERE c.${DbContract.C_ID} = ?
-              AND c.${DbContract.C_DECK_ID} = ?
-              AND d.${DbContract.D_OWNER_USER_ID} = ?
-              AND d.${DbContract.D_STATUS} = '${DbContract.DECK_ACTIVE}'
-            LIMIT 1
-            """.trimIndent(),
-            arrayOf(cardId.toString(), deckId.toString(), ownerUserId.toString())
-        ).use { c ->
-            return c.moveToFirst()
-        }
-    }
-
-    private fun readCardProgressRow(
-        db: SQLiteDatabase,
-        userId: Long,
-        cardId: Long
-    ): SrsProgressRow? {
-        db.rawQuery(
-            """
-            SELECT
-                ${DbContract.P_DUE_AT},
-                ${DbContract.P_LAST_REVIEWED_AT},
-                ${DbContract.P_INTERVAL_DAYS},
-                ${DbContract.P_EASE_FACTOR},
-                ${DbContract.P_REVIEW_COUNT},
-                ${DbContract.P_LAPSE_COUNT},
-                ${DbContract.P_LAST_RESULT}
-            FROM ${DbContract.T_CARD_PROGRESS}
-            WHERE ${DbContract.P_USER_ID} = ?
-              AND ${DbContract.P_CARD_ID} = ?
-            LIMIT 1
-            """.trimIndent(),
-            arrayOf(userId.toString(), cardId.toString())
-        ).use { c ->
-            if (!c.moveToFirst()) return null
-            return SrsProgressRow(
-                dueAt = c.getLong(0),
-                lastReviewedAt = if (c.isNull(1)) null else c.getLong(1),
-                intervalDays = c.getInt(2),
-                easeFactor = c.getFloat(3),
-                reviewCount = c.getInt(4),
-                lapseCount = c.getInt(5),
-                lastResult = if (c.isNull(6)) null else c.getString(6)
-            )
-        }
-    }
-
-    private fun computeNextSrsState(
-        current: SrsProgressRow?,
-        result: String,
-        reviewedAt: Long
-    ): NextSrsState {
-        val currentEase = max(1.30f, current?.easeFactor ?: 2.50f)
-        val currentInterval = current?.intervalDays ?: 0
-        val currentReviewCount = current?.reviewCount ?: 0
-        val currentLapseCount = current?.lapseCount ?: 0
-
-        return when (result) {
-            DbContract.RESULT_KNOWN -> {
-                val nextInterval = when {
-                    currentInterval <= 0 -> 1
-                    currentInterval == 1 -> 3
-                    else -> max(1, (currentInterval * currentEase).roundToInt())
-                }
-                val nextEase = min(2.80f, currentEase + 0.05f)
-
-                NextSrsState(
-                    dueAt = reviewedAt + daysToMillis(nextInterval),
-                    lastReviewedAt = reviewedAt,
-                    intervalDays = nextInterval,
-                    easeFactor = nextEase,
-                    reviewCount = currentReviewCount + 1,
-                    lapseCount = currentLapseCount,
-                    lastResult = result
-                )
-            }
-
-            DbContract.RESULT_HARD -> {
-                val nextEase = max(1.30f, currentEase - 0.20f)
-
-                NextSrsState(
-                    dueAt = reviewedAt + (10L * 60L * 1000L),
-                    lastReviewedAt = reviewedAt,
-                    intervalDays = 0,
-                    easeFactor = nextEase,
-                    reviewCount = currentReviewCount + 1,
-                    lapseCount = currentLapseCount + 1,
-                    lastResult = result
-                )
-            }
-
-            else -> throw IllegalArgumentException("Unsupported study result: $result")
-        }
-    }
-
-    private fun insertStudySessionRow(
-        db: SQLiteDatabase,
-        userId: Long,
-        deckId: Long,
-        result: String,
-        createdAt: Long
-    ): Long {
-        val cv = ContentValues().apply {
-            put(DbContract.S_USER_ID, userId)
-            put(DbContract.S_DECK_ID, deckId)
-            put(DbContract.S_RESULT, result)
-            put(DbContract.S_CREATED_AT, createdAt)
-        }
-        return db.insert(DbContract.T_STUDY_SESSIONS, null, cv)
-    }
-
-    fun getDueCountForDeck(
-        ownerUserId: Long,
-        deckId: Long,
-        nowMs: Long = System.currentTimeMillis()
-    ): Int {
-        ensureCardProgressRowsForDeck(ownerUserId, deckId)
-
-        readableDatabase.rawQuery(
-            """
-            SELECT COUNT(*)
-            FROM ${DbContract.T_CARDS} c
-            INNER JOIN ${DbContract.T_DECKS} d
-                ON d.${DbContract.D_ID} = c.${DbContract.C_DECK_ID}
-            INNER JOIN ${DbContract.T_CARD_PROGRESS} p
-                ON p.${DbContract.P_CARD_ID} = c.${DbContract.C_ID}
-               AND p.${DbContract.P_USER_ID} = ?
-            WHERE c.${DbContract.C_DECK_ID} = ?
-              AND d.${DbContract.D_OWNER_USER_ID} = ?
-              AND d.${DbContract.D_STATUS} = '${DbContract.DECK_ACTIVE}'
-              AND p.${DbContract.P_DUE_AT} <= ?
-            """.trimIndent(),
-            arrayOf(
-                ownerUserId.toString(),
-                deckId.toString(),
-                ownerUserId.toString(),
-                nowMs.toString()
-            )
-        ).use { c ->
-            return if (c.moveToFirst()) c.getInt(0) else 0
-        }
-    }
-
-    fun getDueCountForUser(
-        userId: Long,
-        nowMs: Long = System.currentTimeMillis()
-    ): Int {
-        readableDatabase.rawQuery(
-            """
-            SELECT COUNT(*)
-            FROM ${DbContract.T_CARD_PROGRESS} p
-            INNER JOIN ${DbContract.T_CARDS} c
-                ON c.${DbContract.C_ID} = p.${DbContract.P_CARD_ID}
-            INNER JOIN ${DbContract.T_DECKS} d
-                ON d.${DbContract.D_ID} = c.${DbContract.C_DECK_ID}
-            WHERE p.${DbContract.P_USER_ID} = ?
-              AND d.${DbContract.D_OWNER_USER_ID} = ?
-              AND d.${DbContract.D_STATUS} = '${DbContract.DECK_ACTIVE}'
-              AND p.${DbContract.P_DUE_AT} <= ?
-            """.trimIndent(),
-            arrayOf(userId.toString(), userId.toString(), nowMs.toString())
-        ).use { c ->
-            return if (c.moveToFirst()) c.getInt(0) else 0
-        }
-    }
-
-    fun getDueCardsForDeck(
-        ownerUserId: Long,
-        deckId: Long,
-        nowMs: Long = System.currentTimeMillis(),
-        limit: Int = 999
-    ): List<DueCardRow> {
-        ensureCardProgressRowsForDeck(ownerUserId, deckId)
-
-        val out = mutableListOf<DueCardRow>()
-
-        readableDatabase.rawQuery(
-            """
-            SELECT
-                c.${DbContract.C_ID},
-                c.${DbContract.C_FRONT},
-                c.${DbContract.C_BACK},
-                c.${DbContract.C_CREATED_AT},
-                p.${DbContract.P_DUE_AT},
-                p.${DbContract.P_INTERVAL_DAYS},
-                p.${DbContract.P_REVIEW_COUNT},
-                p.${DbContract.P_LAST_RESULT}
-            FROM ${DbContract.T_CARDS} c
-            INNER JOIN ${DbContract.T_DECKS} d
-                ON d.${DbContract.D_ID} = c.${DbContract.C_DECK_ID}
-            INNER JOIN ${DbContract.T_CARD_PROGRESS} p
-                ON p.${DbContract.P_CARD_ID} = c.${DbContract.C_ID}
-               AND p.${DbContract.P_USER_ID} = ?
-            WHERE c.${DbContract.C_DECK_ID} = ?
-              AND d.${DbContract.D_OWNER_USER_ID} = ?
-              AND d.${DbContract.D_STATUS} = '${DbContract.DECK_ACTIVE}'
-              AND p.${DbContract.P_DUE_AT} <= ?
-            ORDER BY p.${DbContract.P_DUE_AT} ASC, c.${DbContract.C_CREATED_AT} ASC
-            LIMIT ?
-            """.trimIndent(),
-            arrayOf(
-                ownerUserId.toString(),
-                deckId.toString(),
-                ownerUserId.toString(),
-                nowMs.toString(),
-                limit.toString()
-            )
-        ).use { c ->
-            while (c.moveToNext()) {
-                out += DueCardRow(
-                    id = c.getLong(0),
-                    front = c.getString(1),
-                    back = c.getString(2),
-                    createdAt = c.getLong(3),
-                    dueAt = c.getLong(4),
-                    intervalDays = c.getInt(5),
-                    reviewCount = c.getInt(6),
-                    lastResult = if (c.isNull(7)) null else c.getString(7)
-                )
-            }
-        }
-
-        return out
-    }
-
-    fun applySrsReview(
-        ownerUserId: Long,
-        deckId: Long,
-        cardId: Long,
-        result: String,
-        reviewedAt: Long = System.currentTimeMillis()
-    ): Long {
-        if (result != DbContract.RESULT_KNOWN && result != DbContract.RESULT_HARD) return -1L
-        if (!ownsCardForStudy(ownerUserId, deckId, cardId)) return -1L
-
-        val db = writableDatabase
-        db.beginTransaction()
-        try {
-            ensureCardProgressRowForCard(db, ownerUserId, deckId, cardId)
-
-            val current = readCardProgressRow(db, ownerUserId, cardId)
-            val next = computeNextSrsState(current, result, reviewedAt)
-
-            val cv = ContentValues().apply {
-                put(DbContract.P_DUE_AT, next.dueAt)
-                put(DbContract.P_LAST_REVIEWED_AT, next.lastReviewedAt)
-                put(DbContract.P_INTERVAL_DAYS, next.intervalDays)
-                put(DbContract.P_EASE_FACTOR, next.easeFactor)
-                put(DbContract.P_REVIEW_COUNT, next.reviewCount)
-                put(DbContract.P_LAPSE_COUNT, next.lapseCount)
-                put(DbContract.P_LAST_RESULT, next.lastResult)
-            }
-
-            db.update(
-                DbContract.T_CARD_PROGRESS,
-                cv,
-                "${DbContract.P_USER_ID}=? AND ${DbContract.P_CARD_ID}=?",
-                arrayOf(ownerUserId.toString(), cardId.toString())
-            )
-
-            val sessionId = insertStudySessionRow(
-                db = db,
-                userId = ownerUserId,
-                deckId = deckId,
-                result = result,
-                createdAt = reviewedAt
-            )
-
-            db.setTransactionSuccessful()
-            return sessionId
-        } finally {
-            db.endTransaction()
-        }
-    }
-
-    private fun createCardsTable(db: SQLiteDatabase) {
-        db.execSQL(
-            """
-            CREATE TABLE IF NOT EXISTS ${DbContract.T_CARDS}(
-                ${DbContract.C_ID} INTEGER PRIMARY KEY AUTOINCREMENT,
-                ${DbContract.C_DECK_ID} INTEGER NOT NULL,
-                ${DbContract.C_FRONT} TEXT NOT NULL,
-                ${DbContract.C_BACK} TEXT NOT NULL,
-                ${DbContract.C_CREATED_AT} INTEGER NOT NULL,
-                FOREIGN KEY(${DbContract.C_DECK_ID}) REFERENCES ${DbContract.T_DECKS}(${DbContract.D_ID}) ON DELETE CASCADE
-            )
-            """.trimIndent()
-        )
-        db.execSQL("CREATE INDEX IF NOT EXISTS idx_cards_deck ON ${DbContract.T_CARDS}(${DbContract.C_DECK_ID})")
-    }
-
-    private fun createStudySessionsTable(db: SQLiteDatabase) {
-        db.execSQL(
-            """
-            CREATE TABLE IF NOT EXISTS ${DbContract.T_STUDY_SESSIONS}(
-                ${DbContract.S_ID} INTEGER PRIMARY KEY AUTOINCREMENT,
-                ${DbContract.S_USER_ID} INTEGER NOT NULL,
-                ${DbContract.S_DECK_ID} INTEGER NOT NULL,
-                ${DbContract.S_RESULT} TEXT NOT NULL,
-                ${DbContract.S_CREATED_AT} INTEGER NOT NULL,
-                FOREIGN KEY(${DbContract.S_USER_ID}) REFERENCES ${DbContract.T_USERS}(${DbContract.U_ID}) ON DELETE CASCADE,
-                FOREIGN KEY(${DbContract.S_DECK_ID}) REFERENCES ${DbContract.T_DECKS}(${DbContract.D_ID}) ON DELETE CASCADE
-            )
-            """.trimIndent()
-        )
-        db.execSQL("CREATE INDEX IF NOT EXISTS idx_sessions_user ON ${DbContract.T_STUDY_SESSIONS}(${DbContract.S_USER_ID})")
-        db.execSQL("CREATE INDEX IF NOT EXISTS idx_sessions_deck ON ${DbContract.T_STUDY_SESSIONS}(${DbContract.S_DECK_ID})")
-        db.execSQL("CREATE INDEX IF NOT EXISTS idx_sessions_created ON ${DbContract.T_STUDY_SESSIONS}(${DbContract.S_CREATED_AT})")
-    }
-
-    private fun createReportsTable(db: SQLiteDatabase) {
-        db.execSQL(
-            """
-            CREATE TABLE IF NOT EXISTS ${DbContract.T_REPORTS}(
-                ${DbContract.R_ID} INTEGER PRIMARY KEY AUTOINCREMENT,
-                ${DbContract.R_REPORTER_USER_ID} INTEGER NOT NULL,
-                ${DbContract.R_DECK_ID} INTEGER NOT NULL,
-                ${DbContract.R_REASON} TEXT NOT NULL,
-                ${DbContract.R_DETAILS} TEXT,
-                ${DbContract.R_STATUS} TEXT NOT NULL DEFAULT '${DbContract.REPORT_OPEN}',
-                ${DbContract.R_CREATED_AT} INTEGER NOT NULL,
-                FOREIGN KEY(${DbContract.R_REPORTER_USER_ID}) REFERENCES ${DbContract.T_USERS}(${DbContract.U_ID}) ON DELETE CASCADE,
-                FOREIGN KEY(${DbContract.R_DECK_ID}) REFERENCES ${DbContract.T_DECKS}(${DbContract.D_ID}) ON DELETE CASCADE
-            )
-            """.trimIndent()
-        )
-        db.execSQL("CREATE INDEX IF NOT EXISTS idx_reports_status ON ${DbContract.T_REPORTS}(${DbContract.R_STATUS})")
-        db.execSQL("CREATE INDEX IF NOT EXISTS idx_reports_deck ON ${DbContract.T_REPORTS}(${DbContract.R_DECK_ID})")
-        db.execSQL("CREATE INDEX IF NOT EXISTS idx_reports_created ON ${DbContract.T_REPORTS}(${DbContract.R_CREATED_AT})")
-    }
-
+    // ---------- DEMO / SEED ----------
     fun ensureDemoAccounts() {
         val db = writableDatabase
         db.beginTransaction()
@@ -1533,27 +1997,6 @@ class StarDeckDbHelper(context: Context) :
         } finally {
             db.endTransaction()
         }
-    }
-
-    fun resetPasswordByEmail(email: String, newPassword: CharArray): Boolean {
-        val normalized = email.trim().lowercase()
-        if (normalized.isBlank()) return false
-
-        val newHash = PasswordHasher.hash(newPassword)
-
-        val cv = ContentValues().apply {
-            put(DbContract.U_PASSWORD_HASH, newHash)
-            put(DbContract.U_FORCE_PW_CHANGE, 0)
-        }
-
-        val rows = writableDatabase.update(
-            DbContract.T_USERS,
-            cv,
-            "${DbContract.U_EMAIL}=?",
-            arrayOf(normalized)
-        )
-
-        return rows > 0
     }
 
     private data class SeedDeck(
@@ -1865,7 +2308,6 @@ class StarDeckDbHelper(context: Context) :
         db.insertOrThrow(DbContract.T_CARDS, null, cv)
     }
 
-    // ---------- SEED ----------
     private fun seedStaffAccounts(db: SQLiteDatabase) {
         ensureUserId(db, "Admin", "admin@stardeck.local", "Admin@1234", DbContract.ROLE_ADMIN, true, false)
         ensureUserId(db, "Manager", "manager@stardeck.local", "Manager@1234", DbContract.ROLE_MANAGER, true, false)
@@ -1873,51 +2315,11 @@ class StarDeckDbHelper(context: Context) :
         ensureUserId(db, "Nora", "nora@gmail.com", "nora@1234", DbContract.ROLE_USER, false, false)
     }
 
-    private fun ensureUser(
-        db: SQLiteDatabase,
-        name: String,
-        email: String,
-        password: String,
-        role: String,
-        forcePwChange: Boolean
-    ) {
-        val exists = db.rawQuery(
-            "SELECT 1 FROM ${DbContract.T_USERS} WHERE ${DbContract.U_EMAIL}=? LIMIT 1",
-            arrayOf(email.trim().lowercase())
-        ).use { it.moveToFirst() }
-        if (exists) return
-
-        val cv = ContentValues().apply {
-            put(DbContract.U_NAME, name.trim())
-            put(DbContract.U_EMAIL, email.trim().lowercase())
-            put(DbContract.U_PASSWORD_HASH, PasswordHasher.hash(password.toCharArray()))
-            put(DbContract.U_ROLE, role)
-            put(DbContract.U_STATUS, DbContract.STATUS_ACTIVE)
-            put(DbContract.U_ACCEPTED_TERMS, 1)
-            put(DbContract.U_FORCE_PW_CHANGE, if (forcePwChange) 1 else 0)
-            put(DbContract.U_CREATED_AT, System.currentTimeMillis())
-            put(DbContract.U_IS_PREMIUM_USER, 0)
-        }
-        db.insertOrThrow(DbContract.T_USERS, null, cv)
-    }
-
     // ---------- PREMIUM ----------
-    fun isUserPremium(userId: Long): Boolean {
-        readableDatabase.rawQuery(
-            """
-            SELECT ${DbContract.U_IS_PREMIUM_USER}
-            FROM ${DbContract.T_USERS}
-            WHERE ${DbContract.U_ID}=?
-            LIMIT 1
-            """.trimIndent(),
-            arrayOf(userId.toString())
-        ).use { c ->
-            return c.moveToFirst() && c.getInt(0) == 1
-        }
-    }
-
     fun setUserPremium(userId: Long, enabled: Boolean): Int {
-        val cv = ContentValues().apply { put(DbContract.U_IS_PREMIUM_USER, if (enabled) 1 else 0) }
+        val cv = ContentValues().apply {
+            put(DbContract.U_IS_PREMIUM_USER, if (enabled) 1 else 0)
+        }
         return writableDatabase.update(
             DbContract.T_USERS,
             cv,
@@ -1931,7 +2333,8 @@ class StarDeckDbHelper(context: Context) :
             """
             SELECT ${DbContract.D_ID}
             FROM ${DbContract.T_DECKS}
-            WHERE ${DbContract.D_OWNER_USER_ID}=? AND ${DbContract.D_IS_PREMIUM}=1
+            WHERE ${DbContract.D_OWNER_USER_ID}=?
+              AND ${DbContract.D_IS_PREMIUM}=1
               AND ${DbContract.D_TITLE}='Premium Demo Deck'
             LIMIT 1
             """.trimIndent(),
@@ -1940,7 +2343,6 @@ class StarDeckDbHelper(context: Context) :
             if (c.moveToFirst()) return c.getLong(0)
         }
 
-        val now = System.currentTimeMillis()
         val deckId = writableDatabase.insertOrThrow(
             DbContract.T_DECKS,
             null,
@@ -1948,7 +2350,7 @@ class StarDeckDbHelper(context: Context) :
                 put(DbContract.D_OWNER_USER_ID, ownerUserId)
                 put(DbContract.D_TITLE, "Premium Demo Deck")
                 put(DbContract.D_DESCRIPTION, "Demo premium content (locked until you upgrade).")
-                put(DbContract.D_CREATED_AT, now)
+                put(DbContract.D_CREATED_AT, System.currentTimeMillis())
                 put(DbContract.D_STATUS, DbContract.DECK_ACTIVE)
                 put(DbContract.D_IS_PREMIUM, 1)
                 put(DbContract.D_IS_PUBLIC, 0)
@@ -1994,8 +2396,14 @@ class StarDeckDbHelper(context: Context) :
     fun authenticate(email: String, password: CharArray): UserSession? {
         readableDatabase.rawQuery(
             """
-            SELECT ${DbContract.U_ID}, ${DbContract.U_NAME}, ${DbContract.U_EMAIL}, ${DbContract.U_PASSWORD_HASH},
-                   ${DbContract.U_ROLE}, ${DbContract.U_STATUS}, ${DbContract.U_FORCE_PW_CHANGE}
+            SELECT
+                ${DbContract.U_ID},
+                ${DbContract.U_NAME},
+                ${DbContract.U_EMAIL},
+                ${DbContract.U_PASSWORD_HASH},
+                ${DbContract.U_ROLE},
+                ${DbContract.U_STATUS},
+                ${DbContract.U_FORCE_PW_CHANGE}
             FROM ${DbContract.T_USERS}
             WHERE ${DbContract.U_EMAIL}=?
             LIMIT 1
@@ -2030,6 +2438,27 @@ class StarDeckDbHelper(context: Context) :
         )
     }
 
+    fun resetPasswordByEmail(email: String, newPassword: CharArray): Boolean {
+        val normalized = email.trim().lowercase()
+        if (normalized.isBlank()) return false
+
+        val newHash = PasswordHasher.hash(newPassword)
+
+        val cv = ContentValues().apply {
+            put(DbContract.U_PASSWORD_HASH, newHash)
+            put(DbContract.U_FORCE_PW_CHANGE, 0)
+        }
+
+        val rows = writableDatabase.update(
+            DbContract.T_USERS,
+            cv,
+            "${DbContract.U_EMAIL}=?",
+            arrayOf(normalized)
+        )
+
+        return rows > 0
+    }
+
     // ---------- ADMIN ----------
     data class SimpleUserRow(
         val id: Long,
@@ -2039,11 +2468,15 @@ class StarDeckDbHelper(context: Context) :
         val status: String
     )
 
+    data class AdminUserDependencyRow(
+        val deckCount: Int,
+        val studyCount: Int,
+        val reportCount: Int,
+        val progressCount: Int
+    )
+
     fun adminCountAllUsers(): Int {
-        readableDatabase.rawQuery(
-            "SELECT COUNT(*) FROM ${DbContract.T_USERS}",
-            null
-        ).use { c ->
+        readableDatabase.rawQuery("SELECT COUNT(*) FROM ${DbContract.T_USERS}", null).use { c ->
             return if (c.moveToFirst()) c.getInt(0) else 0
         }
     }
@@ -2078,10 +2511,7 @@ class StarDeckDbHelper(context: Context) :
     }
 
     fun adminCountAllDecks(): Int {
-        readableDatabase.rawQuery(
-            "SELECT COUNT(*) FROM ${DbContract.T_DECKS}",
-            null
-        ).use { c ->
+        readableDatabase.rawQuery("SELECT COUNT(*) FROM ${DbContract.T_DECKS}", null).use { c ->
             return if (c.moveToFirst()) c.getInt(0) else 0
         }
     }
@@ -2108,7 +2538,12 @@ class StarDeckDbHelper(context: Context) :
         val out = mutableListOf<SimpleUserRow>()
         readableDatabase.rawQuery(
             """
-            SELECT ${DbContract.U_ID}, ${DbContract.U_NAME}, ${DbContract.U_EMAIL}, ${DbContract.U_ROLE}, ${DbContract.U_STATUS}
+            SELECT
+                ${DbContract.U_ID},
+                ${DbContract.U_NAME},
+                ${DbContract.U_EMAIL},
+                ${DbContract.U_ROLE},
+                ${DbContract.U_STATUS}
             FROM ${DbContract.T_USERS}
             ORDER BY ${DbContract.U_CREATED_AT} DESC
             """.trimIndent(),
@@ -2166,6 +2601,52 @@ class StarDeckDbHelper(context: Context) :
         updatePassword(userId, tempPassword, forcePwChange = true)
     }
 
+    fun adminGetUserDependencies(userId: Long): AdminUserDependencyRow {
+        fun count(table: String, where: String): Int {
+            readableDatabase.rawQuery(
+                "SELECT COUNT(*) FROM $table WHERE $where",
+                arrayOf(userId.toString())
+            ).use { c ->
+                return if (c.moveToFirst()) c.getInt(0) else 0
+            }
+        }
+
+        return AdminUserDependencyRow(
+            deckCount = count(DbContract.T_DECKS, "${DbContract.D_OWNER_USER_ID}=?"),
+            studyCount = count(DbContract.T_STUDY_SESSIONS, "${DbContract.S_USER_ID}=?"),
+            reportCount = count(DbContract.T_REPORTS, "${DbContract.R_REPORTER_USER_ID}=?"),
+            progressCount = count(DbContract.T_CARD_PROGRESS, "${DbContract.P_USER_ID}=?")
+        )
+    }
+
+    fun adminDeleteUserIfSafe(currentAdminUserId: Long, userId: Long): Int {
+        if (userId <= 0L) return 0
+        if (userId == currentAdminUserId) return 0
+
+        readableDatabase.rawQuery(
+            """
+            SELECT ${DbContract.U_ROLE}
+            FROM ${DbContract.T_USERS}
+            WHERE ${DbContract.U_ID}=?
+            LIMIT 1
+            """.trimIndent(),
+            arrayOf(userId.toString())
+        ).use { c ->
+            if (!c.moveToFirst()) return 0
+        }
+
+        val deps = adminGetUserDependencies(userId)
+        if (deps.deckCount > 0 || deps.studyCount > 0 || deps.reportCount > 0 || deps.progressCount > 0) {
+            return 0
+        }
+
+        return writableDatabase.delete(
+            DbContract.T_USERS,
+            "${DbContract.U_ID}=?",
+            arrayOf(userId.toString())
+        )
+    }
+
     // ---------- DECKS ----------
     data class DeckRow(
         val id: Long,
@@ -2175,6 +2656,44 @@ class StarDeckDbHelper(context: Context) :
         val isPremium: Boolean,
         val isPublic: Boolean
     )
+
+    private fun ownerOwnsActiveDeck(ownerUserId: Long, deckId: Long): Boolean {
+        readableDatabase.rawQuery(
+            """
+            SELECT 1
+            FROM ${DbContract.T_DECKS}
+            WHERE ${DbContract.D_ID}=?
+              AND ${DbContract.D_OWNER_USER_ID}=?
+              AND ${DbContract.D_STATUS}=?
+            LIMIT 1
+            """.trimIndent(),
+            arrayOf(deckId.toString(), ownerUserId.toString(), DbContract.DECK_ACTIVE)
+        ).use { c ->
+            return c.moveToFirst()
+        }
+    }
+
+    private fun ownerHasDeckTitle(ownerUserId: Long, title: String, excludeDeckId: Long? = null): Boolean {
+        val sql = StringBuilder().apply {
+            append(
+                """
+                SELECT 1
+                FROM ${DbContract.T_DECKS}
+                WHERE ${DbContract.D_OWNER_USER_ID}=?
+                  AND LOWER(${DbContract.D_TITLE})=LOWER(?)
+                """.trimIndent()
+            )
+            if (excludeDeckId != null) append(" AND ${DbContract.D_ID}<>?")
+            append(" LIMIT 1")
+        }.toString()
+
+        val args = mutableListOf(ownerUserId.toString(), title.trim())
+        if (excludeDeckId != null) args += excludeDeckId.toString()
+
+        readableDatabase.rawQuery(sql, args.toTypedArray()).use { c ->
+            return c.moveToFirst()
+        }
+    }
 
     fun getDecksForOwner(ownerUserId: Long): List<DeckRow> {
         val out = mutableListOf<DeckRow>()
@@ -2216,9 +2735,13 @@ class StarDeckDbHelper(context: Context) :
         description: String?,
         isPublic: Boolean = false
     ): Long {
+        val cleanTitle = title.trim()
+        if (cleanTitle.isBlank()) return -1L
+        if (ownerHasDeckTitle(ownerUserId, cleanTitle)) return -1L
+
         val cv = ContentValues().apply {
             put(DbContract.D_OWNER_USER_ID, ownerUserId)
-            put(DbContract.D_TITLE, title.trim())
+            put(DbContract.D_TITLE, cleanTitle)
             put(DbContract.D_DESCRIPTION, description?.trim().orEmpty().ifBlank { null })
             put(DbContract.D_CREATED_AT, System.currentTimeMillis())
             put(DbContract.D_STATUS, DbContract.DECK_ACTIVE)
@@ -2236,8 +2759,13 @@ class StarDeckDbHelper(context: Context) :
         description: String?,
         isPublic: Boolean = false
     ): Int {
+        val cleanTitle = title.trim()
+        if (cleanTitle.isBlank()) return 0
+        if (!ownerOwnsActiveDeck(ownerUserId, deckId)) return 0
+        if (ownerHasDeckTitle(ownerUserId, cleanTitle, excludeDeckId = deckId)) return 0
+
         val cv = ContentValues().apply {
-            put(DbContract.D_TITLE, title.trim())
+            put(DbContract.D_TITLE, cleanTitle)
             put(DbContract.D_DESCRIPTION, description?.trim().orEmpty().ifBlank { null })
             put(DbContract.D_IS_PUBLIC, if (isPublic) 1 else 0)
         }
@@ -2251,6 +2779,7 @@ class StarDeckDbHelper(context: Context) :
     }
 
     fun deleteDeck(ownerUserId: Long, deckId: Long): Int {
+        if (!ownerOwnsActiveDeck(ownerUserId, deckId)) return 0
         return writableDatabase.delete(
             DbContract.T_DECKS,
             "${DbContract.D_ID}=? AND ${DbContract.D_OWNER_USER_ID}=?",
@@ -2263,7 +2792,8 @@ class StarDeckDbHelper(context: Context) :
             """
             SELECT ${DbContract.D_TITLE}
             FROM ${DbContract.T_DECKS}
-            WHERE ${DbContract.D_ID}=? AND ${DbContract.D_OWNER_USER_ID}=?
+            WHERE ${DbContract.D_ID}=?
+              AND ${DbContract.D_OWNER_USER_ID}=?
               AND ${DbContract.D_STATUS}='${DbContract.DECK_ACTIVE}'
             LIMIT 1
             """.trimIndent(),
@@ -2285,10 +2815,16 @@ class StarDeckDbHelper(context: Context) :
         val out = mutableListOf<CardRow>()
         readableDatabase.rawQuery(
             """
-            SELECT c.${DbContract.C_ID}, c.${DbContract.C_FRONT}, c.${DbContract.C_BACK}, c.${DbContract.C_CREATED_AT}
+            SELECT
+                c.${DbContract.C_ID},
+                c.${DbContract.C_FRONT},
+                c.${DbContract.C_BACK},
+                c.${DbContract.C_CREATED_AT}
             FROM ${DbContract.T_CARDS} c
-            JOIN ${DbContract.T_DECKS} d ON d.${DbContract.D_ID}=c.${DbContract.C_DECK_ID}
-            WHERE c.${DbContract.C_DECK_ID}=? AND d.${DbContract.D_OWNER_USER_ID}=?
+            JOIN ${DbContract.T_DECKS} d
+                ON d.${DbContract.D_ID}=c.${DbContract.C_DECK_ID}
+            WHERE c.${DbContract.C_DECK_ID}=?
+              AND d.${DbContract.D_OWNER_USER_ID}=?
               AND d.${DbContract.D_STATUS}='${DbContract.DECK_ACTIVE}'
             ORDER BY c.${DbContract.C_CREATED_AT} DESC
             """.trimIndent(),
@@ -2305,7 +2841,11 @@ class StarDeckDbHelper(context: Context) :
         val out = mutableListOf<CardRow>()
         readableDatabase.rawQuery(
             """
-            SELECT ${DbContract.C_ID}, ${DbContract.C_FRONT}, ${DbContract.C_BACK}, ${DbContract.C_CREATED_AT}
+            SELECT
+                ${DbContract.C_ID},
+                ${DbContract.C_FRONT},
+                ${DbContract.C_BACK},
+                ${DbContract.C_CREATED_AT}
             FROM ${DbContract.T_CARDS}
             WHERE ${DbContract.C_DECK_ID}=?
             ORDER BY ${DbContract.C_CREATED_AT} DESC
@@ -2325,19 +2865,29 @@ class StarDeckDbHelper(context: Context) :
     }
 
     fun createCard(ownerUserId: Long, deckId: Long, front: String, back: String): Long {
+        val cleanFront = front.trim()
+        val cleanBack = back.trim()
+        if (cleanFront.isBlank() || cleanBack.isBlank()) return -1L
+        if (!ownerOwnsActiveDeck(ownerUserId, deckId)) return -1L
+
         val cv = ContentValues().apply {
             put(DbContract.C_DECK_ID, deckId)
-            put(DbContract.C_FRONT, front.trim())
-            put(DbContract.C_BACK, back.trim())
+            put(DbContract.C_FRONT, cleanFront)
+            put(DbContract.C_BACK, cleanBack)
             put(DbContract.C_CREATED_AT, System.currentTimeMillis())
         }
         return writableDatabase.insertOrThrow(DbContract.T_CARDS, null, cv)
     }
 
     fun updateCard(ownerUserId: Long, deckId: Long, cardId: Long, front: String, back: String): Int {
+        val cleanFront = front.trim()
+        val cleanBack = back.trim()
+        if (cleanFront.isBlank() || cleanBack.isBlank()) return 0
+        if (!ownerOwnsActiveDeck(ownerUserId, deckId)) return 0
+
         val cv = ContentValues().apply {
-            put(DbContract.C_FRONT, front.trim())
-            put(DbContract.C_BACK, back.trim())
+            put(DbContract.C_FRONT, cleanFront)
+            put(DbContract.C_BACK, cleanBack)
         }
         return writableDatabase.update(
             DbContract.T_CARDS,
@@ -2348,6 +2898,7 @@ class StarDeckDbHelper(context: Context) :
     }
 
     fun deleteCard(ownerUserId: Long, deckId: Long, cardId: Long): Int {
+        if (!ownerOwnsActiveDeck(ownerUserId, deckId)) return 0
         return writableDatabase.delete(
             DbContract.T_CARDS,
             "${DbContract.C_ID}=? AND ${DbContract.C_DECK_ID}=?",
@@ -2402,9 +2953,7 @@ class StarDeckDbHelper(context: Context) :
         ).use { c ->
             return if (c.moveToFirst()) {
                 DeckStudySummary(c.getLong(0), c.getString(1), c.getInt(2), c.getLong(3))
-            } else {
-                null
-            }
+            } else null
         }
     }
 
@@ -2427,9 +2976,7 @@ class StarDeckDbHelper(context: Context) :
         ).use { c ->
             return if (c.moveToFirst()) {
                 DeckStudySummary(c.getLong(0), c.getString(1), c.getInt(2), c.getLong(3))
-            } else {
-                null
-            }
+            } else null
         }
     }
 
@@ -2441,7 +2988,7 @@ class StarDeckDbHelper(context: Context) :
 
         readableDatabase.rawQuery(
             """
-            SELECT COUNT(*) 
+            SELECT COUNT(*)
             FROM ${DbContract.T_STUDY_SESSIONS}
             WHERE ${DbContract.S_USER_ID}=?
               AND ${DbContract.S_CREATED_AT}>=?
@@ -2588,22 +3135,11 @@ class StarDeckDbHelper(context: Context) :
         )
     }
 
-    // ---------- REPORTS ----------
-    fun createDeckReport(reporterUserId: Long, deckId: Long, reason: String, details: String?): Long {
-        if (reason.trim().length < 3) return -1L
-        if (getDeckTitleForOwner(reporterUserId, deckId) == null) return -1L
-
-        val cv = ContentValues().apply {
-            put(DbContract.R_REPORTER_USER_ID, reporterUserId)
-            put(DbContract.R_DECK_ID, deckId)
-            put(DbContract.R_REASON, reason.trim())
-            put(DbContract.R_DETAILS, details?.trim().orEmpty().ifBlank { null })
-            put(DbContract.R_STATUS, DbContract.REPORT_OPEN)
-            put(DbContract.R_CREATED_AT, System.currentTimeMillis())
-        }
-        return writableDatabase.insert(DbContract.T_REPORTS, null, cv)
+    fun managerGetCardsForDeck(deckId: Long): List<CardRow> {
+        return getCardsForDeckAny(deckId)
     }
 
+    // ---------- REPORTS ----------
     data class ReportRow(
         val reportId: Long,
         val deckId: Long,
@@ -2616,6 +3152,36 @@ class StarDeckDbHelper(context: Context) :
         val createdAt: Long,
         val status: String
     )
+
+    fun createDeckReport(reporterUserId: Long, deckId: Long, reason: String, details: String?): Long {
+        if (reason.trim().length < 3) return -1L
+
+        val canReport = readableDatabase.rawQuery(
+            """
+            SELECT 1
+            FROM ${DbContract.T_DECKS}
+            WHERE ${DbContract.D_ID}=?
+              AND ${DbContract.D_STATUS}=?
+              AND (${DbContract.D_OWNER_USER_ID}=? OR ${DbContract.D_IS_PUBLIC}=1)
+            LIMIT 1
+            """.trimIndent(),
+            arrayOf(deckId.toString(), DbContract.DECK_ACTIVE, reporterUserId.toString())
+        ).use { c ->
+            c.moveToFirst()
+        }
+
+        if (!canReport) return -1L
+
+        val cv = ContentValues().apply {
+            put(DbContract.R_REPORTER_USER_ID, reporterUserId)
+            put(DbContract.R_DECK_ID, deckId)
+            put(DbContract.R_REASON, reason.trim())
+            put(DbContract.R_DETAILS, details?.trim().orEmpty().ifBlank { null })
+            put(DbContract.R_STATUS, DbContract.REPORT_OPEN)
+            put(DbContract.R_CREATED_AT, System.currentTimeMillis())
+        }
+        return writableDatabase.insert(DbContract.T_REPORTS, null, cv)
+    }
 
     fun managerGetReports(): List<ReportRow> {
         val out = mutableListOf<ReportRow>()

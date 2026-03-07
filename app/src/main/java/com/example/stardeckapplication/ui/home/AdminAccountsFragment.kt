@@ -7,6 +7,7 @@ import androidx.fragment.app.Fragment
 import com.example.stardeckapplication.R
 import com.example.stardeckapplication.databinding.FragmentAdminAccountsBinding
 import com.example.stardeckapplication.db.DbContract
+import com.example.stardeckapplication.ui.admin.ManageAccountsActivity
 import com.example.stardeckapplication.ui.admin.ManageContentSetupActivity
 import com.example.stardeckapplication.util.SessionManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -27,10 +28,14 @@ class AdminAccountsFragment : Fragment(R.layout.fragment_admin_accounts) {
             return
         }
 
-        b.btnUser.setOnClickListener { showComingSoon("User Management") }
+        b.btnUser.setOnClickListener {
+            startActivity(Intent(requireContext(), ManageAccountsActivity::class.java))
+        }
+
         b.btnContent.setOnClickListener {
             startActivity(Intent(requireContext(), ManageContentSetupActivity::class.java))
         }
+
         b.btnCategory.setOnClickListener { showComingSoon("Category Setup") }
         b.btnSubject.setOnClickListener { showComingSoon("Subject Setup") }
         b.btnLanguage.setOnClickListener { showComingSoon("Language Setup") }

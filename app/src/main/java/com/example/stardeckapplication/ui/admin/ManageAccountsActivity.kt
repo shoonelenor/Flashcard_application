@@ -1,6 +1,5 @@
 package com.example.stardeckapplication.ui.admin
 
-import androidx.appcompat.app.AlertDialog
 import android.database.sqlite.SQLiteException
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -29,14 +28,15 @@ class ManageAccountsActivity : AppCompatActivity() {
     private var all: List<StarDeckDbHelper.SimpleUserRow> = emptyList()
     private var premiumIds: Set<Long> = emptySet()
 
-    private var roleFilter: String? = null      // null = all
-    private var statusFilter: String? = null    // null = all
+    private var roleFilter: String? = null
+    private var statusFilter: String? = null
     private var premiumOnly: Boolean = false
 
     private val adapter = UsersAdapter(
         premiumIds = { premiumIds },
         onEdit = { showEditDialog(it) },
-        onResetPw = { resetPassword(it) }
+        onResetPw = { resetPassword(it) },
+        onDelete = { confirmDelete(it) }
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,7 +46,8 @@ class ManageAccountsActivity : AppCompatActivity() {
 
         val me = session.load()
         if (me == null || me.role != DbContract.ROLE_ADMIN) {
-            finish(); return
+            finish()
+            return
         }
 
         setSupportActionBar(b.toolbar)
@@ -59,7 +60,6 @@ class ManageAccountsActivity : AppCompatActivity() {
 
         b.etSearch.doAfterTextChanged { applyFilters() }
 
-        // Advanced filters
         b.chipRoleGroup.setOnCheckedStateChangeListener { _, _ ->
             roleFilter = when {
                 b.chipRoleUser.isChecked -> DbContract.ROLE_USER
@@ -79,8 +79,8 @@ class ManageAccountsActivity : AppCompatActivity() {
             applyFilters()
         }
 
-        b.swPremiumOnly.setOnCheckedChangeListener { _, isChecked ->
-            premiumOnly = isChecked
+        b.swPremiumOnly.setOnCheckedChangeListener { _, checked ->
+            premiumOnly = checked
             applyFilters()
         }
 
@@ -119,30 +119,17 @@ class ManageAccountsActivity : AppCompatActivity() {
 
     private fun applyFilters() {
         val q = b.etSearch.text?.toString().orEmpty().trim().lowercase()
-
         var filtered = all
 
-        // Text search
         if (q.isNotBlank()) {
             filtered = filtered.filter {
                 it.name.lowercase().contains(q) || it.email.lowercase().contains(q)
             }
         }
 
-        // Role filter
-        roleFilter?.let { role ->
-            filtered = filtered.filter { it.role == role }
-        }
-
-        // Status filter
-        statusFilter?.let { st ->
-            filtered = filtered.filter { it.status == st }
-        }
-
-        // Premium only filter
-        if (premiumOnly) {
-            filtered = filtered.filter { premiumIds.contains(it.id) }
-        }
+        roleFilter?.let { role -> filtered = filtered.filter { it.role == role } }
+        statusFilter?.let { st -> filtered = filtered.filter { it.status == st } }
+        if (premiumOnly) filtered = filtered.filter { premiumIds.contains(it.id) }
 
         adapter.submit(filtered)
         b.tvCount.text = "${filtered.size} account(s)"
@@ -181,11 +168,18 @@ class ManageAccountsActivity : AppCompatActivity() {
                 val tempPw = d.etTempPw.text?.toString().orEmpty()
 
                 var ok = true
-                if (name.isBlank()) { d.tilName.error = "Name required"; ok = false }
-                if (email.isBlank() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                    d.tilEmail.error = "Valid email required"; ok = false
+                if (name.isBlank()) {
+                    d.tilName.error = "Name required"
+                    ok = false
                 }
-                if (tempPw.length < 8) { d.tilTempPw.error = "Min 8 characters"; ok = false }
+                if (email.isBlank() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                    d.tilEmail.error = "Valid email required"
+                    ok = false
+                }
+                if (tempPw.length < 8) {
+                    d.tilTempPw.error = "Min 8 characters"
+                    ok = false
+                }
                 if (!ok) return@setOnClickListener
 
                 try {
@@ -237,7 +231,10 @@ class ManageAccountsActivity : AppCompatActivity() {
             dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 d.tilName.error = null
                 val name = d.etName.text?.toString().orEmpty().trim()
-                if (name.isBlank()) { d.tilName.error = "Name required"; return@setOnClickListener }
+                if (name.isBlank()) {
+                    d.tilName.error = "Name required"
+                    return@setOnClickListener
+                }
 
                 try {
                     db.adminUpdateUser(
@@ -277,6 +274,46 @@ class ManageAccountsActivity : AppCompatActivity() {
             .show()
     }
 
+    private fun confirmDelete(u: StarDeckDbHelper.SimpleUserRow) {
+        val me = session.load() ?: return
+        if (u.id == me.id) {
+            Snackbar.make(b.root, "You can’t delete your own admin account.", Snackbar.LENGTH_LONG).show()
+            return
+        }
+
+        val deps = db.adminGetUserDependencies(u.id)
+        if (deps.deckCount > 0 || deps.studyCount > 0 || deps.reportCount > 0 || deps.progressCount > 0) {
+            MaterialAlertDialogBuilder(this)
+                .setTitle("Delete blocked")
+                .setMessage(
+                    "This account has related data, so hard delete is blocked to keep referential integrity safe.\n\n" +
+                            "Decks: ${deps.deckCount}\n" +
+                            "Study sessions: ${deps.studyCount}\n" +
+                            "Reports: ${deps.reportCount}\n" +
+                            "Card progress: ${deps.progressCount}\n\n" +
+                            "Use Disable instead of Delete."
+                )
+                .setPositiveButton("OK", null)
+                .show()
+            return
+        }
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Delete account?")
+            .setMessage("“${u.name}” will be permanently deleted.\nThis cannot be undone.")
+            .setPositiveButton("Delete") { _, _ ->
+                val rows = db.adminDeleteUserIfSafe(me.id, u.id)
+                if (rows == 1) {
+                    Snackbar.make(b.root, "Account deleted", Snackbar.LENGTH_SHORT).show()
+                    reload()
+                } else {
+                    Snackbar.make(b.root, "Could not delete account", Snackbar.LENGTH_LONG).show()
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
     private fun selectedRole(d: DialogAdminUserBinding): String {
         return when {
             d.chipAdmin.isChecked -> DbContract.ROLE_ADMIN
@@ -305,9 +342,10 @@ class ManageAccountsActivity : AppCompatActivity() {
     }
 
     private class UsersAdapter(
-        val premiumIds: () -> Set<Long>,
-        val onEdit: (StarDeckDbHelper.SimpleUserRow) -> Unit,
-        val onResetPw: (StarDeckDbHelper.SimpleUserRow) -> Unit
+        private val premiumIds: () -> Set<Long>,
+        private val onEdit: (StarDeckDbHelper.SimpleUserRow) -> Unit,
+        private val onResetPw: (StarDeckDbHelper.SimpleUserRow) -> Unit,
+        private val onDelete: (StarDeckDbHelper.SimpleUserRow) -> Unit
     ) : RecyclerView.Adapter<UsersAdapter.VH>() {
 
         private val items = mutableListOf<StarDeckDbHelper.SimpleUserRow>()
@@ -319,18 +357,22 @@ class ManageAccountsActivity : AppCompatActivity() {
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
-            val b = ItemAdminUserBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-            return VH(b, premiumIds, onEdit, onResetPw)
+            val itemBinding = ItemAdminUserBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+            return VH(itemBinding, premiumIds, onEdit, onResetPw, onDelete)
         }
 
         override fun getItemCount(): Int = items.size
-        override fun onBindViewHolder(holder: VH, position: Int) = holder.bind(items[position])
+
+        override fun onBindViewHolder(holder: VH, position: Int) {
+            holder.bind(items[position])
+        }
 
         class VH(
             private val b: ItemAdminUserBinding,
-            val premiumIds: () -> Set<Long>,
-            val onEdit: (StarDeckDbHelper.SimpleUserRow) -> Unit,
-            val onResetPw: (StarDeckDbHelper.SimpleUserRow) -> Unit
+            private val premiumIds: () -> Set<Long>,
+            private val onEdit: (StarDeckDbHelper.SimpleUserRow) -> Unit,
+            private val onResetPw: (StarDeckDbHelper.SimpleUserRow) -> Unit,
+            private val onDelete: (StarDeckDbHelper.SimpleUserRow) -> Unit
         ) : RecyclerView.ViewHolder(b.root) {
 
             fun bind(u: StarDeckDbHelper.SimpleUserRow) {
@@ -342,13 +384,8 @@ class ManageAccountsActivity : AppCompatActivity() {
 
                 b.btnEdit.setOnClickListener { onEdit(u) }
                 b.btnReset.setOnClickListener { onResetPw(u) }
+                b.btnDelete.setOnClickListener { onDelete(u) }
             }
         }
-    }
-
-    private fun setDialogBusy(dialog: AlertDialog, busy: Boolean) {
-        val btn = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
-        btn.isEnabled = !busy
-        btn.alpha = if (busy) 0.6f else 1f
     }
 }

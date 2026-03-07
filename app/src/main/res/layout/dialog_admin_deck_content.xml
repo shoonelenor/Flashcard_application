@@ -9,7 +9,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Edit Premium Content"
+        android:text="Edit Deck Content"
         android:textAppearance="@style/TextAppearance.Material3.TitleLarge" />
 
     <TextView
@@ -58,6 +58,13 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
         android:text="Premium deck" />
+
+    <com.google.android.material.switchmaterial.SwitchMaterial
+        android:id="@+id/swPublic"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Public deck" />
 
     <com.google.android.material.switchmaterial.SwitchMaterial
         android:id="@+id/swHidden"

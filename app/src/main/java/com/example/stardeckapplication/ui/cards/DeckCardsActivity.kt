@@ -1,6 +1,5 @@
 package com.example.stardeckapplication.ui.cards
 
-import androidx.appcompat.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -8,6 +7,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -29,6 +29,7 @@ class DeckCardsActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_DECK_ID = "extra_deck_id"
+        const val EXTRA_READ_ONLY_PUBLIC = "extra_read_only_public"
     }
 
     private lateinit var b: ActivityDeckCardsBinding
@@ -36,15 +37,20 @@ class DeckCardsActivity : AppCompatActivity() {
     private val session by lazy { SessionManager(this) }
 
     private var deckId: Long = -1L
+    private var readOnlyPublic: Boolean = false
     private var all: List<StarDeckDbHelper.CardRow> = emptyList()
 
-    private val adapter = CardsAdapter(
-        onEdit = { showEditDialog(it) },
-        onDelete = { confirmDelete(it) }
-    )
+    private val adapter by lazy {
+        CardsAdapter(
+            canEdit = !readOnlyPublic,
+            onEdit = { showEditDialog(it) },
+            onDelete = { confirmDelete(it) }
+        )
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         b = ActivityDeckCardsBinding.inflate(layoutInflater)
         setContentView(b.root)
 
@@ -58,27 +64,53 @@ class DeckCardsActivity : AppCompatActivity() {
         }
 
         deckId = intent.getLongExtra(EXTRA_DECK_ID, -1L)
-        if (deckId <= 0) {
+        readOnlyPublic = intent.getBooleanExtra(EXTRA_READ_ONLY_PUBLIC, false)
+
+        if (deckId <= 0L) {
             finish()
             return
         }
 
-        val title = db.getDeckTitleForOwner(me.id, deckId)
+        val title = if (readOnlyPublic) {
+            db.getPublicDeckTitleForUser(me.id, deckId)
+        } else {
+            db.getDeckTitleForOwner(me.id, deckId)
+        }
+
         if (title == null) {
-            Snackbar.make(b.root, "Deck not found (or hidden)", Snackbar.LENGTH_LONG).show()
+            Snackbar.make(b.root, "Deck not found", Snackbar.LENGTH_LONG).show()
             finish()
             return
         }
+
+        if (readOnlyPublic && db.isDeckLockedForUser(me.id, deckId)) {
+            Snackbar.make(
+                b.root,
+                "This deck is premium. A premium user can open it.",
+                Snackbar.LENGTH_LONG
+            ).show()
+            finish()
+            return
+        }
+
         supportActionBar?.title = title
 
         b.recycler.layoutManager = LinearLayoutManager(this)
         b.recycler.adapter = adapter
 
-        b.fabAdd.setOnClickListener { showCreateDialog() }
-        b.btnCreateFirst.setOnClickListener { showCreateDialog() }
+        if (readOnlyPublic) {
+            b.fabAdd.visibility = View.GONE
+            b.btnCreateFirst.visibility = View.GONE
+        } else {
+            b.fabAdd.setOnClickListener { showCreateDialog() }
+            b.btnCreateFirst.setOnClickListener { showCreateDialog() }
+        }
 
         b.btnStudy.setOnClickListener {
-            startActivity(Intent(this, StudyActivity::class.java).putExtra(StudyActivity.EXTRA_DECK_ID, deckId))
+            startActivity(
+                Intent(this, StudyActivity::class.java)
+                    .putExtra(StudyActivity.EXTRA_DECK_ID, deckId)
+            )
         }
 
         b.etSearch.doAfterTextChanged { filter(it?.toString().orEmpty()) }
@@ -91,10 +123,22 @@ class DeckCardsActivity : AppCompatActivity() {
         return true
     }
 
+    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
+        super.onPrepareOptionsMenu(menu)
+        menu.findItem(R.id.action_report_deck)?.isVisible = true
+        return true
+    }
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
-            android.R.id.home -> { finish(); true }
-            R.id.action_report_deck -> { showReportDeckDialog(); true }
+            android.R.id.home -> {
+                finish()
+                true
+            }
+            R.id.action_report_deck -> {
+                showReportDeckDialog()
+                true
+            }
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -103,7 +147,7 @@ class DeckCardsActivity : AppCompatActivity() {
         val me = session.load() ?: return
 
         val til = TextInputLayout(this).apply {
-            hint = "Reason (e.g., offensive content, wrong info)"
+            hint = "Reason"
         }
         val et = TextInputEditText(this).apply {
             minLines = 2
@@ -113,7 +157,7 @@ class DeckCardsActivity : AppCompatActivity() {
 
         MaterialAlertDialogBuilder(this)
             .setTitle("Report deck")
-            .setMessage("Describe the issue. A Manager will review this report.")
+            .setMessage("Describe the issue.")
             .setView(til)
             .setPositiveButton("Submit") { _, _ ->
                 val reason = et.text?.toString().orEmpty().trim()
@@ -132,26 +176,27 @@ class DeckCardsActivity : AppCompatActivity() {
             .show()
     }
 
-    override fun onSupportNavigateUp(): Boolean {
-        finish()
-        return true
-    }
-
     private fun reload() {
         val me = session.load() ?: return
-        all = db.getCardsForDeck(me.id, deckId)
+
+        all = if (readOnlyPublic) {
+            db.getPublicDeckCardsForUser(me.id, deckId)
+        } else {
+            db.getCardsForDeck(me.id, deckId)
+        }
 
         val n = all.size
         b.tvCount.text = if (n == 1) "1 card" else "$n cards"
         b.btnStudy.isEnabled = n > 0
-
         filter(b.etSearch.text?.toString().orEmpty())
     }
 
     private fun filter(query: String) {
         val q = query.trim().lowercase()
-        val filtered = if (q.isBlank()) all else all.filter {
-            it.front.lowercase().contains(q) || it.back.lowercase().contains(q)
+        val filtered = if (q.isBlank()) {
+            all
+        } else {
+            all.filter { it.front.lowercase().contains(q) || it.back.lowercase().contains(q) }
         }
 
         adapter.submit(filtered)
@@ -163,6 +208,7 @@ class DeckCardsActivity : AppCompatActivity() {
 
     private fun showCreateDialog() {
         val me = session.load() ?: return
+
         val d = DialogEditCardBinding.inflate(layoutInflater)
         d.tvTitle.text = "Create Card"
 
@@ -173,7 +219,7 @@ class DeckCardsActivity : AppCompatActivity() {
             .create()
 
         dialog.setOnShowListener {
-            dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 d.tilFront.error = null
                 d.tilBack.error = null
 
@@ -192,11 +238,14 @@ class DeckCardsActivity : AppCompatActivity() {
                 }
             }
         }
+
         dialog.show()
     }
 
     private fun showEditDialog(card: StarDeckDbHelper.CardRow) {
+        if (readOnlyPublic) return
         val me = session.load() ?: return
+
         val d = DialogEditCardBinding.inflate(layoutInflater)
         d.tvTitle.text = "Edit Card"
         d.etFront.setText(card.front)
@@ -209,7 +258,7 @@ class DeckCardsActivity : AppCompatActivity() {
             .create()
 
         dialog.setOnShowListener {
-            dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 d.tilFront.error = null
                 d.tilBack.error = null
 
@@ -228,15 +277,17 @@ class DeckCardsActivity : AppCompatActivity() {
                 }
             }
         }
+
         dialog.show()
     }
 
     private fun confirmDelete(card: StarDeckDbHelper.CardRow) {
+        if (readOnlyPublic) return
         val me = session.load() ?: return
 
         MaterialAlertDialogBuilder(this)
             .setTitle("Delete card?")
-            .setMessage("This card will be deleted. You can’t undo this.")
+            .setMessage("This card will be deleted.")
             .setPositiveButton("Delete") { _, _ ->
                 val rows = db.deleteCard(me.id, deckId, card.id)
                 if (rows == 1) {
@@ -254,14 +305,32 @@ class DeckCardsActivity : AppCompatActivity() {
         val f = front.trim()
         val bck = back.trim()
 
-        if (f.isBlank()) { d.tilFront.error = "Front is required"; return false }
-        if (bck.isBlank()) { d.tilBack.error = "Back is required"; return false }
-        if (f.length > 120) { d.tilFront.error = "Max 120 characters"; return false }
-        if (bck.length > 500) { d.tilBack.error = "Max 500 characters"; return false }
+        if (f.isBlank()) {
+            d.tilFront.error = "Front is required"
+            return false
+        }
+        if (bck.isBlank()) {
+            d.tilBack.error = "Back is required"
+            return false
+        }
+        if (f.length > 120) {
+            d.tilFront.error = "Max 120 characters"
+            return false
+        }
+        if (bck.length > 500) {
+            d.tilBack.error = "Max 500 characters"
+            return false
+        }
+        return true
+    }
+
+    override fun onSupportNavigateUp(): Boolean {
+        finish()
         return true
     }
 
     private class CardsAdapter(
+        private val canEdit: Boolean,
         val onEdit: (StarDeckDbHelper.CardRow) -> Unit,
         val onDelete: (StarDeckDbHelper.CardRow) -> Unit
     ) : RecyclerView.Adapter<CardsAdapter.VH>() {
@@ -278,7 +347,7 @@ class DeckCardsActivity : AppCompatActivity() {
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
             val b = ItemCardBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-            return VH(b, expanded, onEdit, onDelete) { id ->
+            return VH(b, expanded, canEdit, onEdit, onDelete) { id ->
                 if (!expanded.add(id)) expanded.remove(id)
                 notifyDataSetChanged()
             }
@@ -293,6 +362,7 @@ class DeckCardsActivity : AppCompatActivity() {
         class VH(
             private val b: ItemCardBinding,
             private val expanded: Set<Long>,
+            private val canEdit: Boolean,
             val onEdit: (StarDeckDbHelper.CardRow) -> Unit,
             val onDelete: (StarDeckDbHelper.CardRow) -> Unit,
             val onToggleId: (Long) -> Unit
@@ -300,22 +370,21 @@ class DeckCardsActivity : AppCompatActivity() {
 
             fun bind(card: StarDeckDbHelper.CardRow) {
                 val isExpanded = expanded.contains(card.id)
+
                 b.tvFront.text = card.front
                 b.tvBack.text = card.back
                 b.tvHint.text = if (isExpanded) "Tap to hide answer" else "Tap to show answer"
+
                 b.divider.visibility = if (isExpanded) View.VISIBLE else View.GONE
                 b.tvBack.visibility = if (isExpanded) View.VISIBLE else View.GONE
+
+                b.btnEdit.visibility = if (canEdit) View.VISIBLE else View.GONE
+                b.btnDelete.visibility = if (canEdit) View.VISIBLE else View.GONE
 
                 b.root.setOnClickListener { onToggleId(card.id) }
                 b.btnEdit.setOnClickListener { onEdit(card) }
                 b.btnDelete.setOnClickListener { onDelete(card) }
             }
         }
-    }
-
-    private fun setDialogBusy(dialog: AlertDialog, busy: Boolean) {
-        val btn = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
-        btn.isEnabled = !busy
-        btn.alpha = if (busy) 0.6f else 1f
     }
 }
