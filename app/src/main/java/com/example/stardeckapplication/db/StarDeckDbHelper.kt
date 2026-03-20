@@ -2468,6 +2468,46 @@ class StarDeckDbHelper(context: Context) :
         val status: String
     )
 
+    data class LeaderboardRow(
+        val userId: Long,
+        val name: String,
+        val email: String,
+        val totalStudy: Int,
+        val streakDays: Int
+    )
+
+    fun getLocalLeaderboard(): List<LeaderboardRow> {
+        val users = adminGetAllUsers()
+        val out = mutableListOf<LeaderboardRow>()
+
+        for (u in users) {
+            // Only active normal users
+            if (u.role != DbContract.ROLE_USER) continue
+            if (u.status != DbContract.STATUS_ACTIVE) continue
+
+            val total = getTotalStudyCount(u.id)
+            val streak = getStudyStreakDays(u.id)
+
+            // Skip users who never studied
+            if (total <= 0 && streak <= 0) continue
+
+            out += LeaderboardRow(
+                userId = u.id,
+                name = u.name,
+                email = u.email,
+                totalStudy = total,
+                streakDays = streak
+            )
+        }
+
+        return out.sortedWith(
+            compareByDescending<LeaderboardRow> { it.totalStudy }
+                .thenByDescending { it.streakDays }
+                .thenBy { it.name.lowercase() }
+        )
+    }
+
+
     data class AdminUserDependencyRow(
         val deckCount: Int,
         val studyCount: Int,

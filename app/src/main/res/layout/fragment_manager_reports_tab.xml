@@ -124,6 +124,15 @@
         android:text="0 report(s)"
         android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
 
+    <!-- NEW: Export button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnExport"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="Export as CSV" />
+
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"

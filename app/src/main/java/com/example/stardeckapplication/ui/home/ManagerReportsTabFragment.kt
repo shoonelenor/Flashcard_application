@@ -3,6 +3,7 @@ package com.example.stardeckapplication.ui.home
 import android.content.Intent
 import android.database.sqlite.SQLiteException
 import android.os.Bundle
+import android.os.Environment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -21,6 +22,9 @@ import com.example.stardeckapplication.ui.manager.ManagerDeckCardsActivity
 import com.example.stardeckapplication.util.SessionManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -34,6 +38,7 @@ class ManagerReportsTabFragment : Fragment(R.layout.fragment_manager_reports_tab
     private val db by lazy { StarDeckDbHelper(requireContext()) }
 
     private var allReports: List<StarDeckDbHelper.ReportRow> = emptyList()
+    private var lastFilteredReports: List<StarDeckDbHelper.ReportRow> = emptyList()
 
     private var reportStatusFilter: String = DbContract.REPORT_OPEN
     private var deckStatusFilter: String = FILTER_ALL
@@ -61,6 +66,7 @@ class ManagerReportsTabFragment : Fragment(R.layout.fragment_manager_reports_tab
         setupRecycler()
         setupSearch()
         setupChips()
+        setupExportButton()
         applySavedUiState()
         safeReload()
     }
@@ -121,6 +127,12 @@ class ManagerReportsTabFragment : Fragment(R.layout.fragment_manager_reports_tab
 
         binding.chipDeckHidden.setOnClickListener {
             setDeckStatusFilter(DbContract.DECK_HIDDEN)
+        }
+    }
+
+    private fun setupExportButton() {
+        binding.btnExport.setOnClickListener {
+            shareReportsCsv()
         }
     }
 
@@ -192,6 +204,8 @@ class ManagerReportsTabFragment : Fragment(R.layout.fragment_manager_reports_tab
             }
         }
 
+        lastFilteredReports = filtered.toList()
+
         reportsAdapter.submitList(filtered.toList())
         binding.tvCount.text = "${filtered.size} report(s)"
 
@@ -208,6 +222,116 @@ class ManagerReportsTabFragment : Fragment(R.layout.fragment_manager_reports_tab
                 binding.tvEmptyDesc.text = "Try changing filters or clearing the search."
             }
         }
+    }
+
+    private fun shareReportsCsv() {
+        val list = lastFilteredReports
+        if (list.isEmpty()) {
+            Snackbar.make(binding.root, "No reports to export for current filters.", Snackbar.LENGTH_LONG).show()
+            return
+        }
+
+        val csv = buildReportsCsv(list)
+
+        // Save to a real file in app's Downloads folder
+        saveReportsCsvToFile(csv)
+
+        // Also open share sheet with CSV text (optional)
+        val sendIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_SUBJECT, "StarDeck reports export")
+            putExtra(Intent.EXTRA_TEXT, csv)
+        }
+
+        val chooser = Intent.createChooser(sendIntent, "Share reports as CSV")
+
+        runCatching {
+            startActivity(chooser)
+        }.onFailure {
+            Snackbar.make(
+                binding.root,
+                "No app found to share data (file is still saved).",
+                Snackbar.LENGTH_LONG
+            ).show()
+        }
+    }
+
+    private fun saveReportsCsvToFile(csv: String) {
+        val context = requireContext()
+        val dir: File? = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+
+        if (dir == null) {
+            Snackbar.make(
+                binding.root,
+                "Could not access Downloads folder.",
+                Snackbar.LENGTH_LONG
+            ).show()
+            return
+        }
+
+        if (!dir.exists()) {
+            dir.mkdirs()
+        }
+
+        val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+        val fileName = "stardeck_reports_$timeStamp.csv"
+        val file = File(dir, fileName)
+
+        try {
+            FileOutputStream(file).use { out ->
+                out.write(csv.toByteArray(Charsets.UTF_8))
+            }
+
+            // Show simple relative path so you know where to find it in Media Manager
+            val msg = "Saved to: Android/data/${context.packageName}/files/Download/$fileName"
+            Snackbar.make(binding.root, msg, Snackbar.LENGTH_LONG).show()
+        } catch (e: IOException) {
+            Snackbar.make(
+                binding.root,
+                "Could not save file: ${e.message}",
+                Snackbar.LENGTH_LONG
+            ).show()
+        }
+    }
+
+    private fun buildReportsCsv(list: List<StarDeckDbHelper.ReportRow>): String {
+        val header = listOf(
+            "Report ID",
+            "Deck title",
+            "Deck status",
+            "Owner email",
+            "Reporter email",
+            "Issue",
+            "Details",
+            "Created at",
+            "Case status"
+        )
+
+        val sb = StringBuilder()
+        sb.appendLine(header.joinToString(",") { escapeCsv(it) })
+
+        for (row in list) {
+            val fields = listOf(
+                row.reportId.toString(),
+                row.deckTitle,
+                row.deckStatus,
+                row.ownerEmail,
+                row.reporterEmail,
+                row.reason,
+                row.details ?: "",
+                formatTime(row.createdAt),
+                caseStatusText(row.status)
+            )
+            sb.appendLine(fields.joinToString(",") { escapeCsv(it) })
+        }
+
+        return sb.toString()
+    }
+
+    private fun escapeCsv(value: String): String {
+        // Simple CSV escaping: wrap in quotes and escape any quote inside
+        val escaped = value.replace("\"", "\"\"")
+        return "\"$escaped\""
     }
 
     private fun openDeck(row: StarDeckDbHelper.ReportRow) {

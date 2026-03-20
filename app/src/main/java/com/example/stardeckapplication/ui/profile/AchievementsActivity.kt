@@ -3,8 +3,11 @@ package com.example.stardeckapplication.ui.profile
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import com.example.stardeckapplication.databinding.ActivityAchievementsBinding
+import com.google.android.material.appbar.MaterialToolbar
+import com.example.stardeckapplication.R
 import com.example.stardeckapplication.databinding.ItemAchievementBinding
 import com.example.stardeckapplication.db.DbContract
 import com.example.stardeckapplication.db.StarDeckDbHelper
@@ -13,7 +16,6 @@ import kotlin.math.min
 
 class AchievementsActivity : AppCompatActivity() {
 
-    private lateinit var b: ActivityAchievementsBinding
     private val session by lazy { SessionManager(this) }
     private val db by lazy { StarDeckDbHelper(this) }
 
@@ -28,12 +30,15 @@ class AchievementsActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        b = ActivityAchievementsBinding.inflate(layoutInflater)
-        setContentView(b.root)
+        setContentView(R.layout.activity_achievements)
 
-        setSupportActionBar(b.toolbar)
+        val toolbar: MaterialToolbar = findViewById(R.id.toolbar)
+        setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = "Achievements"
+
+        val tvSummary: TextView = findViewById(R.id.tvSummary)
+        val container: LinearLayout = findViewById(R.id.container)
 
         val me = session.load()
         if (me == null || me.role != DbContract.ROLE_USER) {
@@ -41,7 +46,7 @@ class AchievementsActivity : AppCompatActivity() {
             return
         }
 
-        // Pull stats (offline, safe)
+        // Stats
         val today = db.getTodayStudyCount(me.id)
         val streak = db.getStudyStreakDays(me.id)
         val totalStudy = db.getTotalStudyCount(me.id)
@@ -59,10 +64,12 @@ class AchievementsActivity : AppCompatActivity() {
             AchDef("Daily Push", "Rate 20 cards in one day.", Metric.TODAY_STUDY, 20)
         )
 
-        val unlockedCount = defs.count { currentFor(it.metric, deckCount, cardCount, totalStudy, today, streak) >= it.target }
-        b.tvSummary.text = "$unlockedCount / ${defs.size} unlocked"
+        val unlockedCount = defs.count {
+            currentFor(it.metric, deckCount, cardCount, totalStudy, today, streak) >= it.target
+        }
+        tvSummary.text = "$unlockedCount / ${defs.size} unlocked"
 
-        render(defs, deckCount, cardCount, totalStudy, today, streak)
+        render(container, defs, deckCount, cardCount, totalStudy, today, streak)
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -71,6 +78,7 @@ class AchievementsActivity : AppCompatActivity() {
     }
 
     private fun render(
+        container: LinearLayout,
         defs: List<AchDef>,
         deckCount: Int,
         cardCount: Int,
@@ -78,36 +86,32 @@ class AchievementsActivity : AppCompatActivity() {
         today: Int,
         streak: Int
     ) {
-        b.container.removeAllViews()
+        container.removeAllViews()
         val inflater = LayoutInflater.from(this)
 
         defs.forEach { def ->
             val current = currentFor(def.metric, deckCount, cardCount, totalStudy, today, streak)
             val unlocked = current >= def.target
 
-            val item = ItemAchievementBinding.inflate(inflater, b.container, false)
+            val item = ItemAchievementBinding.inflate(inflater, container, false)
             item.tvTitle.text = def.title
             item.tvDesc.text = def.description
 
-            // Status chip
             item.chipStatus.text = if (unlocked) "Unlocked" else "Locked"
             item.chipStatus.isClickable = false
             item.chipStatus.isCheckable = false
 
-            // Progress
             item.tvProgress.text = "${min(current, def.target)} / ${def.target}"
             item.progress.max = def.target
             item.progress.progress = min(current, def.target)
 
-            // Visual hierarchy: dim locked items slightly (HCI: recognition)
             item.root.alpha = if (unlocked) 1.0f else 0.78f
 
-            // Optional hint text for motivation
             item.tvHint.visibility = if (unlocked) View.GONE else View.VISIBLE
             val remaining = (def.target - current).coerceAtLeast(0)
             item.tvHint.text = if (remaining == 0) "" else "Only $remaining more to unlock"
 
-            b.container.addView(item.root)
+            container.addView(item.root)
         }
     }
 
