@@ -4,92 +4,119 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="12dp"
-    app:cardCornerRadius="16dp"
+    app:cardCornerRadius="20dp"
     app:strokeWidth="1dp">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="14dp">
-
-        <TextView
-            android:id="@+id/tvDeck"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="Deck"
-            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
-
-        <TextView
-            android:id="@+id/tvMeta"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Owner / Reporter"
-            android:textAppearance="@style/TextAppearance.Material3.BodySmall"
-            app:layout_constraintTop_toBottomOf="@id/tvDeck"
-            app:layout_constraintStart_toStartOf="@id/tvDeck"
-            app:layout_constraintEnd_toEndOf="parent" />
-
-        <TextView
-            android:id="@+id/tvReason"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:text="Reason"
-            android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-            app:layout_constraintTop_toBottomOf="@id/tvMeta"
-            app:layout_constraintStart_toStartOf="@id/tvMeta"
-            app:layout_constraintEnd_toEndOf="parent" />
-
-        <TextView
-            android:id="@+id/tvStatus"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="Status"
-            android:textAppearance="@style/TextAppearance.Material3.BodySmall"
-            app:layout_constraintTop_toBottomOf="@id/tvReason"
-            app:layout_constraintStart_toStartOf="@id/tvReason"
-            app:layout_constraintEnd_toEndOf="parent" />
+        android:orientation="vertical"
+        android:padding="16dp">
 
         <LinearLayout
-            android:id="@+id/actions"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:orientation="horizontal"
-            app:layout_constraintTop_toBottomOf="@id/tvStatus"
-            app:layout_constraintEnd_toEndOf="parent">
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnView"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="wrap_content"
+            <TextView
+                android:id="@+id/tvDeck"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="View"
-                android:contentDescription="View reported deck" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnHide"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:text="Hide"
-                android:contentDescription="Hide or unhide deck" />
+                android:layout_weight="1"
+                android:text="Deck title"
+                android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                android:textStyle="bold" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnResolve"
                 style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:text="Resolve"
+                android:minWidth="0dp"
+                android:minHeight="36dp"
+                android:insetLeft="0dp"
+                android:insetRight="0dp"
+                android:text="Close"
                 android:textAllCaps="false"
-                android:contentDescription="Resolve report" />
+                android:contentDescription="Close report case" />
         </LinearLayout>
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+        <TextView
+            android:id="@+id/tvMeta"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Owner / Reporter"
+            android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
+
+        <TextView
+            android:id="@+id/tvReason"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Issue"
+            android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/statusGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            app:chipSpacingHorizontal="8dp"
+            app:chipSpacingVertical="8dp"
+            app:singleLine="false">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipCase"
+                style="@style/Widget.Material3.Chip.Assist"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checkable="false"
+                android:text="Case: Open" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipDeck"
+                style="@style/Widget.Material3.Chip.Assist"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checkable="false"
+                android:text="Deck: Visible" />
+        </com.google.android.material.chip.ChipGroup>
+
+        <LinearLayout
+            android:id="@+id/actionsRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnView"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:minHeight="44dp"
+                android:text="Review"
+                android:textAllCaps="false"
+                android:contentDescription="Review reported deck" />
+
+            <Space
+                android:layout_width="10dp"
+                android:layout_height="1dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnHide"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:minHeight="44dp"
+                android:text="Hide"
+                android:textAllCaps="false"
+                android:contentDescription="Hide or unhide deck" />
+        </LinearLayout>
+
+    </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

@@ -8,7 +8,9 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.stardeckapplication.R
 import com.example.stardeckapplication.databinding.FragmentManagerReportsTabBinding
@@ -32,13 +34,15 @@ class ManagerReportsTabFragment : Fragment(R.layout.fragment_manager_reports_tab
     private val db by lazy { StarDeckDbHelper(requireContext()) }
 
     private var allReports: List<StarDeckDbHelper.ReportRow> = emptyList()
+
     private var reportStatusFilter: String = DbContract.REPORT_OPEN
-    private var deckStatusFilter: String = "all"
+    private var deckStatusFilter: String = FILTER_ALL
+    private var searchQuery: String = ""
 
     private val reportsAdapter = ReportsAdapter(
         onView = { openDeck(it) },
         onHideToggle = { toggleDeck(it) },
-        onResolve = { resolve(it) },
+        onResolve = { closeCase(it) },
         onDetails = { showDetails(it) }
     )
 
@@ -53,47 +57,101 @@ class ManagerReportsTabFragment : Fragment(R.layout.fragment_manager_reports_tab
             return
         }
 
-        binding.recycler.layoutManager = LinearLayoutManager(requireContext())
-        binding.recycler.adapter = reportsAdapter
-
-        binding.etSearch.doAfterTextChanged { applyFilters() }
-
-        binding.chipOpen.setOnClickListener {
-            reportStatusFilter = DbContract.REPORT_OPEN
-            applyFilters()
-        }
-
-        binding.chipResolved.setOnClickListener {
-            reportStatusFilter = DbContract.REPORT_RESOLVED
-            applyFilters()
-        }
-
-        binding.chipAll.setOnClickListener {
-            reportStatusFilter = "all"
-            applyFilters()
-        }
-
-        binding.chipDeckAll.setOnClickListener {
-            deckStatusFilter = "all"
-            applyFilters()
-        }
-
-        binding.chipDeckActive.setOnClickListener {
-            deckStatusFilter = DbContract.DECK_ACTIVE
-            applyFilters()
-        }
-
-        binding.chipDeckHidden.setOnClickListener {
-            deckStatusFilter = DbContract.DECK_HIDDEN
-            applyFilters()
-        }
-
+        restoreUiState(savedInstanceState)
+        setupRecycler()
+        setupSearch()
+        setupChips()
+        applySavedUiState()
         safeReload()
     }
 
     override fun onResume() {
         super.onResume()
         safeReload()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putString(KEY_REPORT_STATUS_FILTER, reportStatusFilter)
+        outState.putString(KEY_DECK_STATUS_FILTER, deckStatusFilter)
+        outState.putString(KEY_SEARCH_QUERY, searchQuery)
+    }
+
+    private fun restoreUiState(savedInstanceState: Bundle?) {
+        reportStatusFilter =
+            savedInstanceState?.getString(KEY_REPORT_STATUS_FILTER) ?: DbContract.REPORT_OPEN
+        deckStatusFilter =
+            savedInstanceState?.getString(KEY_DECK_STATUS_FILTER) ?: FILTER_ALL
+        searchQuery =
+            savedInstanceState?.getString(KEY_SEARCH_QUERY).orEmpty()
+    }
+
+    private fun setupRecycler() {
+        binding.recycler.layoutManager = LinearLayoutManager(requireContext())
+        binding.recycler.adapter = reportsAdapter
+    }
+
+    private fun setupSearch() {
+        binding.etSearch.doAfterTextChanged {
+            searchQuery = it?.toString().orEmpty()
+            applyFilters()
+        }
+    }
+
+    private fun setupChips() {
+        binding.chipOpen.setOnClickListener {
+            setReportStatusFilter(DbContract.REPORT_OPEN)
+        }
+
+        binding.chipResolved.setOnClickListener {
+            setReportStatusFilter(DbContract.REPORT_RESOLVED)
+        }
+
+        binding.chipAll.setOnClickListener {
+            setReportStatusFilter(FILTER_ALL)
+        }
+
+        binding.chipDeckAll.setOnClickListener {
+            setDeckStatusFilter(FILTER_ALL)
+        }
+
+        binding.chipDeckActive.setOnClickListener {
+            setDeckStatusFilter(DbContract.DECK_ACTIVE)
+        }
+
+        binding.chipDeckHidden.setOnClickListener {
+            setDeckStatusFilter(DbContract.DECK_HIDDEN)
+        }
+    }
+
+    private fun applySavedUiState() {
+        binding.etSearch.setText(searchQuery)
+        updateReportStatusChips()
+        updateDeckStatusChips()
+    }
+
+    private fun setReportStatusFilter(value: String) {
+        reportStatusFilter = value
+        updateReportStatusChips()
+        applyFilters()
+    }
+
+    private fun setDeckStatusFilter(value: String) {
+        deckStatusFilter = value
+        updateDeckStatusChips()
+        applyFilters()
+    }
+
+    private fun updateReportStatusChips() {
+        binding.chipOpen.isChecked = reportStatusFilter == DbContract.REPORT_OPEN
+        binding.chipResolved.isChecked = reportStatusFilter == DbContract.REPORT_RESOLVED
+        binding.chipAll.isChecked = reportStatusFilter == FILTER_ALL
+    }
+
+    private fun updateDeckStatusChips() {
+        binding.chipDeckAll.isChecked = deckStatusFilter == FILTER_ALL
+        binding.chipDeckActive.isChecked = deckStatusFilter == DbContract.DECK_ACTIVE
+        binding.chipDeckHidden.isChecked = deckStatusFilter == DbContract.DECK_HIDDEN
     }
 
     private fun safeReload() {
@@ -108,7 +166,7 @@ class ManagerReportsTabFragment : Fragment(R.layout.fragment_manager_reports_tab
     }
 
     private fun applyFilters() {
-        val q = binding.etSearch.text?.toString().orEmpty().trim().lowercase()
+        val q = searchQuery.trim().lowercase()
 
         var filtered = allReports
 
@@ -134,8 +192,7 @@ class ManagerReportsTabFragment : Fragment(R.layout.fragment_manager_reports_tab
             }
         }
 
-        reportsAdapter.submit(filtered)
-
+        reportsAdapter.submitList(filtered.toList())
         binding.tvCount.text = "${filtered.size} report(s)"
 
         val isEmpty = filtered.isEmpty()
@@ -166,15 +223,29 @@ class ManagerReportsTabFragment : Fragment(R.layout.fragment_manager_reports_tab
             if (row.deckStatus == DbContract.DECK_ACTIVE) DbContract.DECK_HIDDEN
             else DbContract.DECK_ACTIVE
 
-        val actionWord = if (newStatus == DbContract.DECK_HIDDEN) "Hide" else "Unhide"
+        val actionTitle = if (newStatus == DbContract.DECK_HIDDEN) "Hide deck?" else "Unhide deck?"
+        val actionButton = if (newStatus == DbContract.DECK_HIDDEN) "Hide deck" else "Unhide deck"
+        val resultMessage = if (newStatus == DbContract.DECK_HIDDEN) {
+            "Deck hidden"
+        } else {
+            "Deck visible again"
+        }
 
         MaterialAlertDialogBuilder(requireContext())
-            .setTitle("$actionWord deck?")
-            .setMessage("Deck: ${row.deckTitle}\nOwner: ${row.ownerEmail}")
-            .setPositiveButton(actionWord) { _, _ ->
+            .setTitle(actionTitle)
+            .setMessage(
+                "Deck: ${row.deckTitle}\n" +
+                        "Owner: ${row.ownerEmail}\n\n" +
+                        if (newStatus == DbContract.DECK_HIDDEN) {
+                            "This deck will be hidden from users."
+                        } else {
+                            "This deck will become visible to users again."
+                        }
+            )
+            .setPositiveButton(actionButton) { _, _ ->
                 val rows = db.managerSetDeckStatus(row.deckId, newStatus)
                 if (rows == 1) {
-                    Snackbar.make(binding.root, "Deck updated", Snackbar.LENGTH_SHORT).show()
+                    Snackbar.make(binding.root, resultMessage, Snackbar.LENGTH_SHORT).show()
                     safeReload()
                 } else {
                     Snackbar.make(binding.root, "Could not update deck", Snackbar.LENGTH_LONG).show()
@@ -184,17 +255,17 @@ class ManagerReportsTabFragment : Fragment(R.layout.fragment_manager_reports_tab
             .show()
     }
 
-    private fun resolve(row: StarDeckDbHelper.ReportRow) {
+    private fun closeCase(row: StarDeckDbHelper.ReportRow) {
         MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Resolve report?")
-            .setMessage("Mark this report as resolved?")
-            .setPositiveButton("Resolve") { _, _ ->
+            .setTitle("Close report?")
+            .setMessage("This will mark the report as resolved.")
+            .setPositiveButton("Close case") { _, _ ->
                 val rows = db.managerResolveReport(row.reportId)
                 if (rows == 1) {
-                    Snackbar.make(binding.root, "Resolved", Snackbar.LENGTH_SHORT).show()
+                    Snackbar.make(binding.root, "Report closed", Snackbar.LENGTH_SHORT).show()
                     safeReload()
                 } else {
-                    Snackbar.make(binding.root, "Could not resolve", Snackbar.LENGTH_LONG).show()
+                    Snackbar.make(binding.root, "Could not close report", Snackbar.LENGTH_LONG).show()
                 }
             }
             .setNegativeButton("Cancel", null)
@@ -205,14 +276,14 @@ class ManagerReportsTabFragment : Fragment(R.layout.fragment_manager_reports_tab
         val message = buildString {
             append("Deck: ${row.deckTitle}\n")
             append("Owner: ${row.ownerEmail}\n")
-            append("Reporter: ${row.reporterEmail}\n")
-            append("Report status: ${row.status}\n")
-            append("Deck status: ${row.deckStatus}\n\n")
-            append("Reason: ${row.reason}\n")
+            append("Reported by: ${row.reporterEmail}\n")
+            append("Case status: ${caseStatusText(row.status)}\n")
+            append("Deck visibility: ${deckVisibilityText(row.deckStatus)}\n\n")
+            append("Issue: ${row.reason}\n")
             if (!row.details.isNullOrBlank()) {
                 append("\nDetails: ${row.details}")
             }
-            append("\n\nTime: ${formatTime(row.createdAt)}")
+            append("\n\nReported at: ${formatTime(row.createdAt)}")
         }
 
         MaterialAlertDialogBuilder(requireContext())
@@ -220,6 +291,22 @@ class ManagerReportsTabFragment : Fragment(R.layout.fragment_manager_reports_tab
             .setMessage(message)
             .setPositiveButton("OK", null)
             .show()
+    }
+
+    private fun caseStatusText(status: String): String {
+        return when (status) {
+            DbContract.REPORT_OPEN -> "Open"
+            DbContract.REPORT_RESOLVED -> "Resolved"
+            else -> status.replaceFirstChar { it.uppercase() }
+        }
+    }
+
+    private fun deckVisibilityText(status: String): String {
+        return when (status) {
+            DbContract.DECK_ACTIVE -> "Visible"
+            DbContract.DECK_HIDDEN -> "Hidden"
+            else -> status.replaceFirstChar { it.uppercase() }
+        }
     }
 
     private fun formatTime(ms: Long): String {
@@ -246,15 +333,13 @@ class ManagerReportsTabFragment : Fragment(R.layout.fragment_manager_reports_tab
         private val onHideToggle: (StarDeckDbHelper.ReportRow) -> Unit,
         private val onResolve: (StarDeckDbHelper.ReportRow) -> Unit,
         private val onDetails: (StarDeckDbHelper.ReportRow) -> Unit
-    ) : RecyclerView.Adapter<ReportsAdapter.VH>() {
+    ) : ListAdapter<StarDeckDbHelper.ReportRow, ReportsAdapter.VH>(ReportDiffCallback()) {
 
-        private val items = mutableListOf<StarDeckDbHelper.ReportRow>()
-
-        fun submit(newItems: List<StarDeckDbHelper.ReportRow>) {
-            items.clear()
-            items.addAll(newItems)
-            notifyDataSetChanged()
+        init {
+            setHasStableIds(true)
         }
+
+        override fun getItemId(position: Int): Long = getItem(position).reportId
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
             val binding = ItemReportBinding.inflate(
@@ -265,10 +350,8 @@ class ManagerReportsTabFragment : Fragment(R.layout.fragment_manager_reports_tab
             return VH(binding, onView, onHideToggle, onResolve, onDetails)
         }
 
-        override fun getItemCount(): Int = items.size
-
         override fun onBindViewHolder(holder: VH, position: Int) {
-            holder.bind(items[position])
+            holder.bind(getItem(position))
         }
 
         class VH(
@@ -280,25 +363,53 @@ class ManagerReportsTabFragment : Fragment(R.layout.fragment_manager_reports_tab
         ) : RecyclerView.ViewHolder(binding.root) {
 
             fun bind(row: StarDeckDbHelper.ReportRow) {
-                binding.tvDeck.text = row.deckTitle
-                binding.tvMeta.text = "Owner: ${row.ownerEmail} • Reporter: ${row.reporterEmail}"
-                binding.tvReason.text = "Reason: ${row.reason}"
-                binding.tvStatus.text = "Report: ${row.status} • Deck: ${row.deckStatus}"
+                val isVisible = row.deckStatus == DbContract.DECK_ACTIVE
+                val isOpen = row.status == DbContract.REPORT_OPEN
 
+                binding.tvDeck.text = row.deckTitle
+                binding.tvMeta.text = "Owner: ${row.ownerEmail} • Reported by: ${row.reporterEmail}"
+                binding.tvReason.text = "Issue: ${row.reason}"
+
+                binding.chipCase.text = if (isOpen) "Case: Open" else "Case: Resolved"
+                binding.chipDeck.text = if (isVisible) "Deck: Visible" else "Deck: Hidden"
+
+                binding.btnView.text = "Review"
                 binding.btnView.setOnClickListener { onView(row) }
 
-                binding.btnHide.text =
-                    if (row.deckStatus == DbContract.DECK_ACTIVE) "Hide" else "Unhide"
-
+                binding.btnHide.text = if (isVisible) "Hide" else "Unhide"
                 binding.btnHide.setOnClickListener { onHideToggle(row) }
 
-                val canResolve = row.status == DbContract.REPORT_OPEN
-                binding.btnResolve.isEnabled = canResolve
-                binding.btnResolve.alpha = if (canResolve) 1f else 0.5f
+                binding.btnResolve.text = "Close"
+                binding.btnResolve.visibility = if (isOpen) View.VISIBLE else View.GONE
                 binding.btnResolve.setOnClickListener { onResolve(row) }
 
                 binding.root.setOnClickListener { onDetails(row) }
             }
         }
+    }
+
+    private class ReportDiffCallback :
+        DiffUtil.ItemCallback<StarDeckDbHelper.ReportRow>() {
+
+        override fun areItemsTheSame(
+            oldItem: StarDeckDbHelper.ReportRow,
+            newItem: StarDeckDbHelper.ReportRow
+        ): Boolean {
+            return oldItem.reportId == newItem.reportId
+        }
+
+        override fun areContentsTheSame(
+            oldItem: StarDeckDbHelper.ReportRow,
+            newItem: StarDeckDbHelper.ReportRow
+        ): Boolean {
+            return oldItem == newItem
+        }
+    }
+
+    private companion object {
+        private const val FILTER_ALL = "all"
+        private const val KEY_REPORT_STATUS_FILTER = "manager_reports_report_status_filter"
+        private const val KEY_DECK_STATUS_FILTER = "manager_reports_deck_status_filter"
+        private const val KEY_SEARCH_QUERY = "manager_reports_search_query"
     }
 }

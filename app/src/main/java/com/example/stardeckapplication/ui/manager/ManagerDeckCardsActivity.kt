@@ -27,6 +27,13 @@ class ManagerDeckCardsActivity : AppCompatActivity() {
         const val EXTRA_DECK_TITLE = "extra_deck_title"
         const val EXTRA_OWNER_EMAIL = "extra_owner_email"
         const val EXTRA_ADMIN_EDIT_MODE = "extra_admin_edit_mode"
+
+        private const val MENU_ADD_CARD = 1001
+    }
+
+    private enum class ScreenMode {
+        MANAGER_REVIEW,
+        ADMIN_EDIT
     }
 
     private lateinit var b: ActivityManagerDeckCardsBinding
@@ -35,12 +42,12 @@ class ManagerDeckCardsActivity : AppCompatActivity() {
     private val session by lazy { SessionManager(this) }
 
     private var deckId: Long = -1L
-    private var adminEditMode: Boolean = false
-    private var all: List<StarDeckDbHelper.CardRow> = emptyList()
+    private var screenMode: ScreenMode = ScreenMode.MANAGER_REVIEW
+    private var allCards: List<StarDeckDbHelper.CardRow> = emptyList()
 
     private val adapter by lazy {
         CardsAdapter(
-            canEdit = adminEditMode,
+            canEdit = isAdminEditMode(),
             onEdit = { showEditDialog(it) },
             onDelete = { confirmDelete(it) }
         )
@@ -53,15 +60,12 @@ class ManagerDeckCardsActivity : AppCompatActivity() {
         setContentView(b.root)
 
         val me = session.load()
-        adminEditMode = intent.getBooleanExtra(EXTRA_ADMIN_EDIT_MODE, false)
-
-        val allowed = when {
-            me == null -> false
-            adminEditMode -> me.role == DbContract.ROLE_ADMIN
-            else -> me.role == DbContract.ROLE_MANAGER
+        if (me == null) {
+            finish()
+            return
         }
 
-        if (!allowed) {
+        screenMode = resolveScreenMode(me.role) ?: run {
             finish()
             return
         }
@@ -72,26 +76,15 @@ class ManagerDeckCardsActivity : AppCompatActivity() {
             return
         }
 
-        setSupportActionBar(b.toolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = intent.getStringExtra(EXTRA_DECK_TITLE) ?: "Deck"
-
-        val ownerEmail = intent.getStringExtra(EXTRA_OWNER_EMAIL).orEmpty()
-        b.tvSub.text = if (ownerEmail.isBlank()) "" else "Owner: $ownerEmail"
-
-        b.recycler.layoutManager = LinearLayoutManager(this)
-        b.recycler.adapter = adapter
-
-        b.etSearch.doAfterTextChanged {
-            filter(it?.toString().orEmpty())
-        }
-
-        reload()
+        setupToolbar()
+        setupList()
+        setupSearch()
+        reloadCards()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        if (adminEditMode) {
-            menu.add(0, 1001, 0, "Add Card")
+        if (isAdminEditMode()) {
+            menu.add(0, MENU_ADD_CARD, 0, "Add Card")
                 .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
         }
         return true
@@ -103,48 +96,98 @@ class ManagerDeckCardsActivity : AppCompatActivity() {
                 finish()
                 true
             }
-            1001 -> {
+
+            MENU_ADD_CARD -> {
                 showCreateDialog()
                 true
             }
+
             else -> super.onOptionsItemSelected(item)
         }
     }
 
-    private fun reload() {
+    override fun onSupportNavigateUp(): Boolean {
+        finish()
+        return true
+    }
+
+    private fun resolveScreenMode(role: String): ScreenMode? {
+        val wantsAdminEdit = intent.getBooleanExtra(EXTRA_ADMIN_EDIT_MODE, false)
+
+        return when {
+            wantsAdminEdit && role == DbContract.ROLE_ADMIN -> ScreenMode.ADMIN_EDIT
+            !wantsAdminEdit && role == DbContract.ROLE_MANAGER -> ScreenMode.MANAGER_REVIEW
+            else -> null
+        }
+    }
+
+    private fun setupToolbar() {
+        setSupportActionBar(b.toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.title = intent.getStringExtra(EXTRA_DECK_TITLE) ?: "Deck"
+
+        val ownerEmail = intent.getStringExtra(EXTRA_OWNER_EMAIL).orEmpty()
+        val modeText = if (isAdminEditMode()) "Edit mode" else "Review mode"
+
+        b.tvSub.text = buildString {
+            if (ownerEmail.isNotBlank()) {
+                append("Owner: ")
+                append(ownerEmail)
+                append(" • ")
+            }
+            append(modeText)
+        }
+    }
+
+    private fun setupList() {
+        b.recycler.layoutManager = LinearLayoutManager(this)
+        b.recycler.adapter = adapter
+    }
+
+    private fun setupSearch() {
+        b.etSearch.doAfterTextChanged {
+            filterCards(it?.toString().orEmpty())
+        }
+    }
+
+    private fun reloadCards() {
         val me = session.load() ?: return
 
-        all = if (adminEditMode) {
-            db.adminGetCardsForDeck(adminUserId = me.id, deckId = deckId)
+        allCards = if (isAdminEditMode()) {
+            db.adminGetCardsForDeck(
+                adminUserId = me.id,
+                deckId = deckId
+            )
         } else {
             db.managerGetCardsForDeck(deckId)
         }
 
-        b.tvCount.text = if (all.size == 1) "1 card" else "${all.size} cards"
-        filter(b.etSearch.text?.toString().orEmpty())
+        b.tvCount.text = if (allCards.size == 1) "1 card" else "${allCards.size} cards"
+        filterCards(b.etSearch.text?.toString().orEmpty())
     }
 
-    private fun filter(query: String) {
+    private fun filterCards(query: String) {
         val q = query.trim().lowercase()
 
         val filtered = if (q.isBlank()) {
-            all
+            allCards
         } else {
-            all.filter {
-                it.front.lowercase().contains(q) || it.back.lowercase().contains(q)
+            allCards.filter { card ->
+                card.front.lowercase().contains(q) || card.back.lowercase().contains(q)
             }
         }
 
         adapter.submit(filtered)
 
-        val empty = filtered.isEmpty()
-        b.groupEmpty.visibility = if (empty) View.VISIBLE else View.GONE
-        b.recycler.visibility = if (empty) View.GONE else View.VISIBLE
+        val isEmpty = filtered.isEmpty()
+        b.groupEmpty.visibility = if (isEmpty) View.VISIBLE else View.GONE
+        b.recycler.visibility = if (isEmpty) View.GONE else View.VISIBLE
     }
 
     private fun showCreateDialog() {
-        val me = session.load() ?: return
+        if (!isAdminEditMode()) return
 
+        val me = session.load() ?: return
         val d = DialogEditCardBinding.inflate(layoutInflater)
         d.tvTitle.text = "Create Card"
 
@@ -173,7 +216,7 @@ class ManagerDeckCardsActivity : AppCompatActivity() {
 
                 if (id > 0) {
                     Snackbar.make(b.root, "Card created", Snackbar.LENGTH_SHORT).show()
-                    reload()
+                    reloadCards()
                     dialog.dismiss()
                 } else {
                     Snackbar.make(b.root, "Could not create card", Snackbar.LENGTH_LONG).show()
@@ -185,8 +228,9 @@ class ManagerDeckCardsActivity : AppCompatActivity() {
     }
 
     private fun showEditDialog(card: StarDeckDbHelper.CardRow) {
-        val me = session.load() ?: return
+        if (!isAdminEditMode()) return
 
+        val me = session.load() ?: return
         val d = DialogEditCardBinding.inflate(layoutInflater)
         d.tvTitle.text = "Edit Card"
         d.etFront.setText(card.front)
@@ -218,7 +262,7 @@ class ManagerDeckCardsActivity : AppCompatActivity() {
 
                 if (rows == 1) {
                     Snackbar.make(b.root, "Card updated", Snackbar.LENGTH_SHORT).show()
-                    reload()
+                    reloadCards()
                     dialog.dismiss()
                 } else {
                     Snackbar.make(b.root, "Could not update card", Snackbar.LENGTH_LONG).show()
@@ -230,6 +274,8 @@ class ManagerDeckCardsActivity : AppCompatActivity() {
     }
 
     private fun confirmDelete(card: StarDeckDbHelper.CardRow) {
+        if (!isAdminEditMode()) return
+
         val me = session.load() ?: return
 
         MaterialAlertDialogBuilder(this)
@@ -241,9 +287,10 @@ class ManagerDeckCardsActivity : AppCompatActivity() {
                     deckId = deckId,
                     cardId = card.id
                 )
+
                 if (rows == 1) {
                     Snackbar.make(b.root, "Card deleted", Snackbar.LENGTH_SHORT).show()
-                    reload()
+                    reloadCards()
                 } else {
                     Snackbar.make(b.root, "Could not delete card", Snackbar.LENGTH_LONG).show()
                 }
@@ -255,31 +302,32 @@ class ManagerDeckCardsActivity : AppCompatActivity() {
     private fun validate(
         front: String,
         back: String,
-        d: com.example.stardeckapplication.databinding.DialogEditCardBinding
+        d: DialogEditCardBinding
     ): Boolean {
         if (front.isBlank()) {
             d.tilFront.error = "Front is required"
             return false
         }
+
         if (back.isBlank()) {
             d.tilBack.error = "Back is required"
             return false
         }
+
         if (front.length > 120) {
             d.tilFront.error = "Max 120 characters"
             return false
         }
+
         if (back.length > 500) {
             d.tilBack.error = "Max 500 characters"
             return false
         }
+
         return true
     }
 
-    override fun onSupportNavigateUp(): Boolean {
-        finish()
-        return true
-    }
+    private fun isAdminEditMode(): Boolean = screenMode == ScreenMode.ADMIN_EDIT
 
     private class CardsAdapter(
         private val canEdit: Boolean,
@@ -288,21 +336,33 @@ class ManagerDeckCardsActivity : AppCompatActivity() {
     ) : RecyclerView.Adapter<CardsAdapter.VH>() {
 
         private val items = mutableListOf<StarDeckDbHelper.CardRow>()
-        private val expanded = mutableSetOf<Long>()
+        private val expandedIds = mutableSetOf<Long>()
 
         fun submit(newItems: List<StarDeckDbHelper.CardRow>) {
             items.clear()
             items.addAll(newItems)
-            expanded.retainAll(newItems.map { it.id }.toSet())
+            expandedIds.retainAll(newItems.map { it.id }.toSet())
             notifyDataSetChanged()
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
-            val b = ItemCardBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-            return VH(b, expanded, canEdit, onEdit, onDelete) { id ->
-                if (!expanded.add(id)) expanded.remove(id)
-                notifyDataSetChanged()
-            }
+            val binding = ItemCardBinding.inflate(
+                LayoutInflater.from(parent.context),
+                parent,
+                false
+            )
+
+            return VH(
+                b = binding,
+                expandedIds = expandedIds,
+                canEdit = canEdit,
+                onEdit = onEdit,
+                onDelete = onDelete,
+                onToggleId = { id ->
+                    if (!expandedIds.add(id)) expandedIds.remove(id)
+                    notifyDataSetChanged()
+                }
+            )
         }
 
         override fun getItemCount(): Int = items.size
@@ -313,7 +373,7 @@ class ManagerDeckCardsActivity : AppCompatActivity() {
 
         class VH(
             private val b: ItemCardBinding,
-            private val expanded: Set<Long>,
+            private val expandedIds: Set<Long>,
             private val canEdit: Boolean,
             private val onEdit: (StarDeckDbHelper.CardRow) -> Unit,
             private val onDelete: (StarDeckDbHelper.CardRow) -> Unit,
@@ -321,7 +381,7 @@ class ManagerDeckCardsActivity : AppCompatActivity() {
         ) : RecyclerView.ViewHolder(b.root) {
 
             fun bind(card: StarDeckDbHelper.CardRow) {
-                val isExpanded = expanded.contains(card.id)
+                val isExpanded = expandedIds.contains(card.id)
 
                 b.tvFront.text = card.front
                 b.tvBack.text = card.back

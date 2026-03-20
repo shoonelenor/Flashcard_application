@@ -16,25 +16,24 @@
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <activity android:name=".ui.auth.LoginActivity" android:exported="false"/>
-        <activity android:name=".ui.auth.RegisterActivity" android:exported="false"/>
-        <activity android:name=".ui.auth.ChangePasswordActivity" android:exported="false"/>
+        <activity android:name=".ui.auth.LoginActivity" android:exported="false" />
+        <activity android:name=".ui.auth.RegisterActivity" android:exported="false" />
+        <activity android:name=".ui.auth.ChangePasswordActivity" android:exported="false" />
 
-        <activity android:name=".ui.home.UserHomeActivity" android:exported="false"/>
-        <activity android:name=".ui.home.ManagerHomeActivity" android:exported="false"/>
-        <activity android:name=".ui.home.AdminHomeActivity" android:exported="false"/>
+        <activity android:name=".ui.home.UserHomeActivity" android:exported="false" />
+        <activity android:name=".ui.home.ManagerHomeActivity" android:exported="false" />
+        <activity android:name=".ui.home.AdminHomeActivity" android:exported="false" />
 
-        <activity android:name=".ui.admin.ManageAccountsActivity" android:exported="false"/>
-        <activity android:name=".ui.decks.MyDecksActivity" android:exported="false"/>
+        <activity android:name=".ui.admin.ManageAccountsActivity" android:exported="false" />
+        <activity android:name=".ui.decks.MyDecksActivity" android:exported="false" />
         <activity android:name=".ui.cards.DeckCardsActivity" android:exported="false" />
-        <activity android:name=".ui.study.StudyActivity" android:exported="false"/>
+        <activity android:name=".ui.study.StudyActivity" android:exported="false" />
         <activity android:name=".ui.manager.ManagerDeckCardsActivity" android:exported="false" />
-        <activity android:name=".ui.manager.ManagerReportsActivity" android:exported="false" />
         <activity android:name=".ui.profile.AchievementsActivity" android:exported="false" />
         <activity android:name=".ui.profile.PremiumDemoActivity" android:exported="false" />
         <activity android:name=".ui.legal.TermsActivity" />

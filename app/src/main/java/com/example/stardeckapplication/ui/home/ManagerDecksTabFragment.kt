@@ -8,7 +8,9 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.stardeckapplication.R
 import com.example.stardeckapplication.databinding.FragmentManagerDecksTabBinding
@@ -29,7 +31,8 @@ class ManagerDecksTabFragment : Fragment(R.layout.fragment_manager_decks_tab) {
     private val db by lazy { StarDeckDbHelper(requireContext()) }
 
     private var allDecks: List<StarDeckDbHelper.ManagerDeckRow> = emptyList()
-    private var statusFilter: String = "all" // all | active | hidden
+    private var statusFilter: String = FILTER_ALL
+    private var searchQuery: String = ""
 
     private val decksAdapter = DecksAdapter(
         onView = { openDeck(it) },
@@ -47,32 +50,71 @@ class ManagerDecksTabFragment : Fragment(R.layout.fragment_manager_decks_tab) {
             return
         }
 
-        binding.recycler.layoutManager = LinearLayoutManager(requireContext())
-        binding.recycler.adapter = decksAdapter
-
-        binding.etSearch.doAfterTextChanged { applyFilters() }
-
-        binding.chipAll.setOnClickListener {
-            statusFilter = "all"
-            applyFilters()
-        }
-
-        binding.chipActive.setOnClickListener {
-            statusFilter = DbContract.DECK_ACTIVE
-            applyFilters()
-        }
-
-        binding.chipHidden.setOnClickListener {
-            statusFilter = DbContract.DECK_HIDDEN
-            applyFilters()
-        }
-
+        restoreUiState(savedInstanceState)
+        setupRecycler()
+        setupSearch()
+        setupChips()
+        applySavedUiState()
         safeReload()
     }
 
     override fun onResume() {
         super.onResume()
         safeReload()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putString(KEY_STATUS_FILTER, statusFilter)
+        outState.putString(KEY_SEARCH_QUERY, searchQuery)
+    }
+
+    private fun restoreUiState(savedInstanceState: Bundle?) {
+        statusFilter = savedInstanceState?.getString(KEY_STATUS_FILTER) ?: FILTER_ALL
+        searchQuery = savedInstanceState?.getString(KEY_SEARCH_QUERY).orEmpty()
+    }
+
+    private fun setupRecycler() {
+        binding.recycler.layoutManager = LinearLayoutManager(requireContext())
+        binding.recycler.adapter = decksAdapter
+    }
+
+    private fun setupSearch() {
+        binding.etSearch.doAfterTextChanged {
+            searchQuery = it?.toString().orEmpty()
+            applyFilters()
+        }
+    }
+
+    private fun setupChips() {
+        binding.chipAll.setOnClickListener {
+            setStatusFilter(FILTER_ALL)
+        }
+
+        binding.chipActive.setOnClickListener {
+            setStatusFilter(DbContract.DECK_ACTIVE)
+        }
+
+        binding.chipHidden.setOnClickListener {
+            setStatusFilter(DbContract.DECK_HIDDEN)
+        }
+    }
+
+    private fun applySavedUiState() {
+        binding.etSearch.setText(searchQuery)
+        updateStatusChips()
+    }
+
+    private fun setStatusFilter(value: String) {
+        statusFilter = value
+        updateStatusChips()
+        applyFilters()
+    }
+
+    private fun updateStatusChips() {
+        binding.chipAll.isChecked = statusFilter == FILTER_ALL
+        binding.chipActive.isChecked = statusFilter == DbContract.DECK_ACTIVE
+        binding.chipHidden.isChecked = statusFilter == DbContract.DECK_HIDDEN
     }
 
     private fun safeReload() {
@@ -87,7 +129,7 @@ class ManagerDecksTabFragment : Fragment(R.layout.fragment_manager_decks_tab) {
     }
 
     private fun applyFilters() {
-        val q = binding.etSearch.text?.toString().orEmpty().trim().lowercase()
+        val q = searchQuery.trim().lowercase()
 
         var filtered = allDecks
 
@@ -106,7 +148,7 @@ class ManagerDecksTabFragment : Fragment(R.layout.fragment_manager_decks_tab) {
             }
         }
 
-        decksAdapter.submit(filtered)
+        decksAdapter.submitList(filtered.toList())
 
         binding.tvCount.text = "${filtered.size} deck(s)"
 
@@ -181,15 +223,13 @@ class ManagerDecksTabFragment : Fragment(R.layout.fragment_manager_decks_tab) {
     private class DecksAdapter(
         private val onView: (StarDeckDbHelper.ManagerDeckRow) -> Unit,
         private val onToggle: (StarDeckDbHelper.ManagerDeckRow) -> Unit
-    ) : RecyclerView.Adapter<DecksAdapter.VH>() {
+    ) : ListAdapter<StarDeckDbHelper.ManagerDeckRow, DecksAdapter.VH>(DeckDiffCallback()) {
 
-        private val items = mutableListOf<StarDeckDbHelper.ManagerDeckRow>()
-
-        fun submit(newItems: List<StarDeckDbHelper.ManagerDeckRow>) {
-            items.clear()
-            items.addAll(newItems)
-            notifyDataSetChanged()
+        init {
+            setHasStableIds(true)
         }
+
+        override fun getItemId(position: Int): Long = getItem(position).deckId
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
             val binding = ItemManagerDeckTabBinding.inflate(
@@ -200,10 +240,8 @@ class ManagerDecksTabFragment : Fragment(R.layout.fragment_manager_decks_tab) {
             return VH(binding, onView, onToggle)
         }
 
-        override fun getItemCount(): Int = items.size
-
         override fun onBindViewHolder(holder: VH, position: Int) {
-            holder.bind(items[position])
+            holder.bind(getItem(position))
         }
 
         class VH(
@@ -229,5 +267,29 @@ class ManagerDecksTabFragment : Fragment(R.layout.fragment_manager_decks_tab) {
                     if (row.status == DbContract.DECK_ACTIVE) "Active" else "Hidden"
             }
         }
+    }
+
+    private class DeckDiffCallback :
+        DiffUtil.ItemCallback<StarDeckDbHelper.ManagerDeckRow>() {
+
+        override fun areItemsTheSame(
+            oldItem: StarDeckDbHelper.ManagerDeckRow,
+            newItem: StarDeckDbHelper.ManagerDeckRow
+        ): Boolean {
+            return oldItem.deckId == newItem.deckId
+        }
+
+        override fun areContentsTheSame(
+            oldItem: StarDeckDbHelper.ManagerDeckRow,
+            newItem: StarDeckDbHelper.ManagerDeckRow
+        ): Boolean {
+            return oldItem == newItem
+        }
+    }
+
+    private companion object {
+        private const val FILTER_ALL = "all"
+        private const val KEY_STATUS_FILTER = "manager_decks_status_filter"
+        private const val KEY_SEARCH_QUERY = "manager_decks_search_query"
     }
 }
