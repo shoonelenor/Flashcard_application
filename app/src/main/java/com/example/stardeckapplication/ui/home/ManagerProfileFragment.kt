@@ -15,6 +15,7 @@ class ManagerProfileFragment : Fragment(R.layout.fragment_manager_profile) {
 
     private var _b: FragmentManagerProfileBinding? = null
     private val b get() = _b!!
+
     private val session by lazy { SessionManager(requireContext()) }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -22,7 +23,8 @@ class ManagerProfileFragment : Fragment(R.layout.fragment_manager_profile) {
 
         val me = session.load()
         if (me == null || me.role != DbContract.ROLE_MANAGER) {
-            requireActivity().finish(); return
+            requireActivity().finish()
+            return
         }
 
         b.tvName.text = me.name
@@ -34,7 +36,11 @@ class ManagerProfileFragment : Fragment(R.layout.fragment_manager_profile) {
                 .setMessage("You will need to log in again.")
                 .setPositiveButton("Logout") { _, _ ->
                     session.clear()
-                    startActivity(Intent(requireContext(), LoginActivity::class.java))
+                    startActivity(
+                        Intent(requireContext(), LoginActivity::class.java).apply {
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                        }
+                    )
                     requireActivity().finish()
                 }
                 .setNegativeButton("Cancel", null)

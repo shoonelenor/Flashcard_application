@@ -2481,14 +2481,12 @@ class StarDeckDbHelper(context: Context) :
         val out = mutableListOf<LeaderboardRow>()
 
         for (u in users) {
-            // Only active normal users
             if (u.role != DbContract.ROLE_USER) continue
             if (u.status != DbContract.STATUS_ACTIVE) continue
 
             val total = getTotalStudyCount(u.id)
             val streak = getStudyStreakDays(u.id)
 
-            // Skip users who never studied
             if (total <= 0 && streak <= 0) continue
 
             out += LeaderboardRow(
@@ -2506,6 +2504,7 @@ class StarDeckDbHelper(context: Context) :
                 .thenBy { it.name.lowercase() }
         )
     }
+
 
 
     data class AdminUserDependencyRow(

@@ -10,6 +10,7 @@ import com.example.stardeckapplication.db.DbContract
 import com.example.stardeckapplication.db.StarDeckDbHelper
 import com.example.stardeckapplication.ui.auth.LoginActivity
 import com.example.stardeckapplication.ui.profile.AchievementsActivity
+import com.example.stardeckapplication.ui.profile.LeaderboardActivity
 import com.example.stardeckapplication.ui.profile.PremiumDemoActivity
 import com.example.stardeckapplication.util.SessionManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -44,7 +45,11 @@ class UserProfileFragment : Fragment(R.layout.fragment_user_profile) {
         b.btnPrivacyTerms.setOnClickListener { showComingSoon("Privacy & Terms") }
         b.btnHelp.setOnClickListener { showComingSoon("Help / Report Issue") }
         b.btnFriends.setOnClickListener { showComingSoon("Friends") }
-        b.btnLeaderboard.setOnClickListener { showComingSoon("Leaderboard") }
+
+        // Real leaderboard now
+        b.btnLeaderboard.setOnClickListener {
+            startActivity(Intent(requireContext(), LeaderboardActivity::class.java))
+        }
 
         b.btnLogout.setOnClickListener {
             MaterialAlertDialogBuilder(requireContext())
@@ -75,11 +80,7 @@ class UserProfileFragment : Fragment(R.layout.fragment_user_profile) {
         b.tvName.text = me.name
         b.tvEmail.text = me.email
 
-        val isPremium = try {
-            db.isUserPremium(me.id)
-        } catch (_: Exception) {
-            false
-        }
+        val isPremium = runCatching { db.isUserPremium(me.id) }.getOrDefault(false)
 
         b.tvPlanValue.text = if (isPremium) "Premium Plan" else "Free Plan"
         b.tvPlanNote.text = if (isPremium) {

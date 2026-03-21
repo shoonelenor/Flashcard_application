@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.example.stardeckapplication.R
 import com.example.stardeckapplication.databinding.ActivityLeaderboardBinding
 import com.example.stardeckapplication.databinding.ItemLeaderboardUserBinding
 import com.example.stardeckapplication.db.DbContract
@@ -71,8 +72,7 @@ class LeaderboardActivity : AppCompatActivity() {
         ListAdapter<StarDeckDbHelper.LeaderboardRow, LeaderboardAdapter.VH>(Diff) {
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
-            val inflater = LayoutInflater.from(parent.context)
-            val binding = ItemLeaderboardUserBinding.inflate(inflater, parent, false)
+            val binding = ItemLeaderboardUserBinding.inflate(LayoutInflater.from(parent.context), parent, false)
             return VH(binding)
         }
 
@@ -80,9 +80,7 @@ class LeaderboardActivity : AppCompatActivity() {
             holder.bind(position, getItem(position))
         }
 
-        class VH(private val b: ItemLeaderboardUserBinding) :
-            RecyclerView.ViewHolder(b.root) {
-
+        class VH(private val b: ItemLeaderboardUserBinding) : RecyclerView.ViewHolder(b.root) {
             fun bind(position: Int, row: StarDeckDbHelper.LeaderboardRow) {
                 val rank = position + 1
                 b.tvRank.text = rank.toString()
