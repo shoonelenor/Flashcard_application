@@ -47,24 +47,10 @@ class UserHomeActivity : AppCompatActivity() {
                 }
 
                 R.id.nav_explore -> {
-                    showTab(TAG_EXPLORE) {
-                        UserPortalPlaceholderFragment.newInstance(
-                            title = "Explore",
-                            subtitle = "Explore tab framework is ready. Public deck logic will be connected safely in the next step.",
-                            features = arrayListOf(
-                                "Browse public decks",
-                                "Search public decks",
-                                "Trending decks",
-                                "Preview decks",
-                                "Save to library",
-                                "Rate / report content"
-                            ),
-                            primaryText = "Open Library",
-                            targetItemId = R.id.nav_library
-                        )
-                    }
+                    showTab(TAG_EXPLORE) { UserExploreFragment() }
                     true
                 }
+
 
                 R.id.nav_profile -> {
                     showTab(TAG_PROFILE) { UserProfileFragment() }

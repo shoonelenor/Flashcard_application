@@ -6,6 +6,8 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.stardeckapplication.databinding.ActivityPremiumDemoBinding
 import com.example.stardeckapplication.db.DbContract
 import com.example.stardeckapplication.db.StarDeckDbHelper
+import com.example.stardeckapplication.db.UserDao
+import com.example.stardeckapplication.db.UserDeckDao
 import com.example.stardeckapplication.ui.cards.DeckCardsActivity
 import com.example.stardeckapplication.util.SessionManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -18,8 +20,11 @@ class PremiumDemoActivity : AppCompatActivity() {
     }
 
     private lateinit var b: ActivityPremiumDemoBinding
-    private val session by lazy { SessionManager(this) }
-    private val db by lazy { StarDeckDbHelper(this) }
+
+    private val session  by lazy { SessionManager(this) }
+    private val dbHelper by lazy { StarDeckDbHelper(this) }
+    private val userDao  by lazy { UserDao(dbHelper) }     // ✅ isUserPremium, setUserPremium
+    private val deckDao  by lazy { UserDeckDao(dbHelper) } // ✅ createPremiumDemoDeckForUser
 
     private var returnDeckId: Long = -1L
 
@@ -35,16 +40,14 @@ class PremiumDemoActivity : AppCompatActivity() {
         supportActionBar?.title = "Premium (Demo)"
 
         val me = session.load()
-        if (me == null || me.role != DbContract.ROLE_USER) {
-            finish(); return
-        }
+        if (me == null || me.role != DbContract.ROLE_USER) { finish(); return }
 
         b.toolbar.setNavigationOnClickListener { finish() }
-
         b.chipMonthly.isChecked = true
 
         b.btnAddDemoDeck.setOnClickListener {
-            val deckId = db.createPremiumDemoDeckForUser(me.id)
+            // ✅ deckDao.createPremiumDemoDeckForUser
+            val deckId = deckDao.createPremiumDemoDeckForUser(me.id)
             if (deckId > 0) {
                 Snackbar.make(b.root, "Premium demo deck added", Snackbar.LENGTH_SHORT).show()
             } else {
@@ -53,12 +56,14 @@ class PremiumDemoActivity : AppCompatActivity() {
         }
 
         b.btnPay.setOnClickListener { showPaymentDialog(me.id) }
+
         b.btnCancelPremium.setOnClickListener {
             MaterialAlertDialogBuilder(this)
                 .setTitle("Cancel Premium (Demo)?")
                 .setMessage("This will lock premium decks again.")
                 .setPositiveButton("Cancel Premium") { _, _ ->
-                    db.setUserPremium(me.id, false)
+                    // ✅ userDao.setUserPremium
+                    userDao.setUserPremium(me.id, false)
                     render(me.id)
                     Snackbar.make(b.root, "Premium disabled (demo)", Snackbar.LENGTH_SHORT).show()
                 }
@@ -69,32 +74,33 @@ class PremiumDemoActivity : AppCompatActivity() {
         render(me.id)
     }
 
-    private fun render(userId: Long) {
-        val premium = db.isUserPremium(userId)
+    override fun onSupportNavigateUp(): Boolean { finish(); return true }
 
-        b.tvStatus.text = if (premium) "⭐ Premium is active" else "🔒 Premium is locked"
+    private fun render(userId: Long) {
+        // ✅ userDao.isUserPremium
+        val premium = userDao.isUserPremium(userId)
+        b.tvStatus.text          = if (premium) "⭐ Premium is active" else "🔒 Premium is locked"
         b.btnCancelPremium.isEnabled = premium
         b.btnCancelPremium.alpha = if (premium) 1f else 0.5f
-
-        b.btnPay.text = if (premium) "Pay Again (Demo)" else "Upgrade (Demo)"
+        b.btnPay.text            = if (premium) "Pay Again (Demo)" else "Upgrade (Demo)"
     }
 
     private fun showPaymentDialog(userId: Long) {
-        val plan = if (b.chipYearly.isChecked) "Yearly" else "Monthly"
+        val plan  = if (b.chipYearly.isChecked) "Yearly" else "Monthly"
         val price = if (plan == "Yearly") "$19.99/year (demo)" else "$2.99/month (demo)"
 
         MaterialAlertDialogBuilder(this)
             .setTitle("Demo Checkout")
             .setMessage("Plan: $plan\nPrice: $price\n\nChoose the outcome (demo):")
             .setPositiveButton("Pay Success") { _, _ ->
-                db.setUserPremium(userId, true)
+                // ✅ userDao.setUserPremium
+                userDao.setUserPremium(userId, true)
                 render(userId)
 
                 MaterialAlertDialogBuilder(this)
                     .setTitle("Payment Successful ✅")
                     .setMessage("Premium is now active (demo). Premium decks are unlocked.")
                     .setPositiveButton("Continue") { _, _ ->
-                        // If user came here from a locked deck, open it now
                         if (returnDeckId > 0) {
                             startActivity(
                                 Intent(this, DeckCardsActivity::class.java)

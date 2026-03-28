@@ -15,8 +15,11 @@ import com.example.stardeckapplication.R
 import com.example.stardeckapplication.databinding.DialogEditDeckBinding
 import com.example.stardeckapplication.databinding.FragmentUserDecksBinding
 import com.example.stardeckapplication.databinding.ItemDeckBinding
+import com.example.stardeckapplication.db.CardDao
 import com.example.stardeckapplication.db.DbContract
 import com.example.stardeckapplication.db.StarDeckDbHelper
+import com.example.stardeckapplication.db.UserDao
+import com.example.stardeckapplication.db.UserDeckDao
 import com.example.stardeckapplication.ui.cards.DeckCardsActivity
 import com.example.stardeckapplication.ui.profile.PremiumDemoActivity
 import com.example.stardeckapplication.util.SessionManager
@@ -30,22 +33,25 @@ class UserDecksFragment : Fragment(R.layout.fragment_user_decks) {
     private var _b: FragmentUserDecksBinding? = null
     private val b get() = _b!!
 
-    private val db by lazy { StarDeckDbHelper(requireContext()) }
-    private val session by lazy { SessionManager(requireContext()) }
+    private val dbHelper by lazy { StarDeckDbHelper(requireContext()) }
+    private val deckDao  by lazy { UserDeckDao(dbHelper) }
+    private val userDao  by lazy { UserDao(dbHelper) }     // ✅ isUserPremium correct home
+    private val cardDao  by lazy { CardDao(dbHelper) }     // ✅ getTotalCardCountForOwnerAllStatuses
+    private val session  by lazy { SessionManager(requireContext()) }
     private val executor = Executors.newSingleThreadExecutor()
     private val inFlight = AtomicBoolean(false)
 
     private var isPremiumUser = false
-    private var all: List<StarDeckDbHelper.DeckRow> = emptyList()
-    private var filterMode: FilterMode = FilterMode.ALL
-    private var sortMode: SortMode = SortMode.RECENT
+    private var all           : List<UserDeckDao.DeckRow> = emptyList()
+    private var filterMode    : FilterMode = FilterMode.ALL
+    private var sortMode      : SortMode   = SortMode.RECENT
 
     private val adapter = DecksAdapter(
-        onOpen = { deck -> openDeck(deck) },
-        onEdit = { deck -> showEditDialog(deck) },
-        onDelete = { deck -> confirmDelete(deck) },
+        onOpen        = { deck -> openDeck(deck) },
+        onEdit        = { deck -> showEditDialog(deck) },
+        onDelete      = { deck -> confirmDelete(deck) },
         isPremiumUser = { isPremiumUser },
-        onLocked = { deck ->
+        onLocked      = { deck ->
             startActivity(
                 Intent(requireContext(), PremiumDemoActivity::class.java)
                     .putExtra(PremiumDemoActivity.EXTRA_RETURN_DECK_ID, deck.id)
@@ -63,35 +69,22 @@ class UserDecksFragment : Fragment(R.layout.fragment_user_decks) {
         }
 
         b.recycler.layoutManager = LinearLayoutManager(requireContext())
-        b.recycler.adapter = adapter
+        b.recycler.adapter       = adapter
         b.recycler.setHasFixedSize(true)
 
-        b.fabAdd.setOnClickListener { showCreateDialog() }
+        b.fabAdd.setOnClickListener         { showCreateDialog() }
         b.btnCreateFirst.setOnClickListener { showCreateDialog() }
 
-        b.etSearch.addTextChangedListenerCompat {
-            applyFilterSortAndRender()
-        }
+        b.etSearch.addTextChangedListenerCompat { applyFilterSortAndRender() }
 
         b.chipAll.setOnCheckedChangeListener { _, checked ->
-            if (checked) {
-                filterMode = FilterMode.ALL
-                applyFilterSortAndRender()
-            }
+            if (checked) { filterMode = FilterMode.ALL; applyFilterSortAndRender() }
         }
-
         b.chipFreeOnly.setOnCheckedChangeListener { _, checked ->
-            if (checked) {
-                filterMode = FilterMode.FREE
-                applyFilterSortAndRender()
-            }
+            if (checked) { filterMode = FilterMode.FREE; applyFilterSortAndRender() }
         }
-
         b.chipPremiumOnly.setOnCheckedChangeListener { _, checked ->
-            if (checked) {
-                filterMode = FilterMode.PREMIUM
-                applyFilterSortAndRender()
-            }
+            if (checked) { filterMode = FilterMode.PREMIUM; applyFilterSortAndRender() }
         }
 
         b.btnSort.setOnClickListener { showSortDialog() }
@@ -131,13 +124,15 @@ class UserDecksFragment : Fragment(R.layout.fragment_user_decks) {
         if (inFlight.getAndSet(true)) return
 
         executor.execute {
-            val premium = runCatching { db.isUserPremium(me.id) }.getOrDefault(false)
-            val decks = runCatching { db.getDecksForOwner(me.id) }.getOrDefault(emptyList())
-            val cardCount = runCatching { countCardsForOwner(me.id) }.getOrDefault(0)
+            // ✅ UserDao.isUserPremium — correct home
+            val premium   : Boolean              = runCatching { userDao.isUserPremium(me.id) }.getOrDefault(false)
+            val decks     : List<UserDeckDao.DeckRow> = runCatching { deckDao.getDecksForOwner(me.id) }.getOrDefault(emptyList())
+            // ✅ CardDao.getTotalCardCountForOwnerAllStatuses — no more inline SQL in fragment
+            val cardCount : Int                  = runCatching { cardDao.getTotalCardCountForOwnerAllStatuses(me.id) }.getOrDefault(0)
 
             postUi {
                 isPremiumUser = premium
-                all = decks
+                all           = decks
                 b.tvStats.text = "${decks.size} decks • $cardCount cards"
                 applyFilterSortAndRender()
                 inFlight.set(false)
@@ -150,12 +145,12 @@ class UserDecksFragment : Fragment(R.layout.fragment_user_decks) {
 
         val query = b.etSearch.text?.toString().orEmpty().trim().lowercase()
 
-        var list = all
+        var list: List<UserDeckDao.DeckRow> = all
 
         list = when (filterMode) {
-            FilterMode.ALL -> list
-            FilterMode.FREE -> list.filter { !it.isPremium }
-            FilterMode.PREMIUM -> list.filter { it.isPremium }
+            FilterMode.ALL     -> list
+            FilterMode.FREE    -> list.filter { !it.isPremium }
+            FilterMode.PREMIUM -> list.filter {  it.isPremium }
         }
 
         if (query.isNotBlank()) {
@@ -166,10 +161,10 @@ class UserDecksFragment : Fragment(R.layout.fragment_user_decks) {
         }
 
         list = when (sortMode) {
-            SortMode.RECENT -> list.sortedByDescending { it.createdAt }
-            SortMode.A_Z -> list.sortedBy { it.title.lowercase() }
+            SortMode.RECENT        -> list.sortedByDescending { it.createdAt }
+            SortMode.A_Z           -> list.sortedBy { it.title.lowercase() }
             SortMode.PREMIUM_FIRST -> list.sortedWith(
-                compareByDescending<StarDeckDbHelper.DeckRow> { it.isPremium }
+                compareByDescending<UserDeckDao.DeckRow> { it.isPremium }
                     .thenByDescending { it.createdAt }
             )
         }
@@ -178,23 +173,22 @@ class UserDecksFragment : Fragment(R.layout.fragment_user_decks) {
 
         val empty = list.isEmpty()
         b.groupEmpty.visibility = if (empty) View.VISIBLE else View.GONE
-        b.recycler.visibility = if (empty) View.GONE else View.VISIBLE
+        b.recycler.visibility   = if (empty) View.GONE    else View.VISIBLE
     }
 
     private fun showSortDialog() {
         val options = arrayOf("Recent", "A–Z", "Premium first")
         val current = when (sortMode) {
-            SortMode.RECENT -> 0
-            SortMode.A_Z -> 1
+            SortMode.RECENT        -> 0
+            SortMode.A_Z           -> 1
             SortMode.PREMIUM_FIRST -> 2
         }
-
         MaterialAlertDialogBuilder(requireContext())
             .setTitle("Sort decks")
             .setSingleChoiceItems(options, current) { dialog, which ->
                 sortMode = when (which) {
-                    1 -> SortMode.A_Z
-                    2 -> SortMode.PREMIUM_FIRST
+                    1    -> SortMode.A_Z
+                    2    -> SortMode.PREMIUM_FIRST
                     else -> SortMode.RECENT
                 }
                 b.btnSort.text = options[which]
@@ -205,7 +199,7 @@ class UserDecksFragment : Fragment(R.layout.fragment_user_decks) {
             .show()
     }
 
-    private fun openDeck(deck: StarDeckDbHelper.DeckRow) {
+    private fun openDeck(deck: UserDeckDao.DeckRow) {
         if (deck.isPremium && !isPremiumUser) {
             startActivity(
                 Intent(requireContext(), PremiumDemoActivity::class.java)
@@ -213,7 +207,6 @@ class UserDecksFragment : Fragment(R.layout.fragment_user_decks) {
             )
             return
         }
-
         startActivity(
             Intent(requireContext(), DeckCardsActivity::class.java)
                 .putExtra(DeckCardsActivity.EXTRA_DECK_ID, deck.id)
@@ -222,14 +215,11 @@ class UserDecksFragment : Fragment(R.layout.fragment_user_decks) {
 
     private fun showCreateDialog() {
         val me = session.load() ?: return
-        val d = DialogEditDeckBinding.inflate(layoutInflater)
-        d.tvTitle.text = "Create Deck"
+        val d  = DialogEditDeckBinding.inflate(layoutInflater)
+        d.tvTitle.text       = "Create Deck"
         d.swPublic.isChecked = false
         updateVisibilityNote(d)
-
-        d.swPublic.setOnCheckedChangeListener { _, _ ->
-            updateVisibilityNote(d)
-        }
+        d.swPublic.setOnCheckedChangeListener { _, _ -> updateVisibilityNote(d) }
 
         val dialog = MaterialAlertDialogBuilder(requireContext())
             .setView(d.root)
@@ -238,74 +228,66 @@ class UserDecksFragment : Fragment(R.layout.fragment_user_decks) {
             .create()
 
         dialog.setOnShowListener {
-            dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                d.tilTitle.error = null
-                d.tilDescription.error = null
+            dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
+                .setOnClickListener {
+                    d.tilTitle.error       = null
+                    d.tilDescription.error = null
 
-                val title = d.etTitle.text?.toString().orEmpty().trim()
-                val desc = d.etDescription.text?.toString()?.trim()
-                val isPublic = d.swPublic.isChecked
+                    val title    = d.etTitle.text?.toString().orEmpty().trim()
+                    val desc     = d.etDescription.text?.toString()?.trim()
+                    val isPublic = d.swPublic.isChecked
 
-                if (title.isBlank()) {
-                    d.tilTitle.error = "Title is required"
-                    return@setOnClickListener
-                }
+                    when {
+                        title.isBlank()  -> { d.tilTitle.error = "Title is required";    return@setOnClickListener }
+                        title.length > 40 -> { d.tilTitle.error = "Max 40 characters";    return@setOnClickListener }
+                        all.any { it.title.equals(title, ignoreCase = true) } -> {
+                            d.tilTitle.error = "Deck title already exists"; return@setOnClickListener
+                        }
+                        !desc.isNullOrBlank() && desc.length > 200 -> {
+                            d.tilDescription.error = "Max 200 characters"; return@setOnClickListener
+                        }
+                    }
 
-                if (title.length > 40) {
-                    d.tilTitle.error = "Max 40 characters"
-                    return@setOnClickListener
-                }
+                    executor.execute {
+                        val ok: Boolean = runCatching {
+                            deckDao.createDeck(
+                                ownerUserId = me.id,
+                                title       = title,
+                                description = desc,
+                                isPremium   = false,
+                                isPublic    = isPublic
+                            )
+                            true
+                        }.getOrDefault(false)
 
-                if (all.any { it.title.equals(title, ignoreCase = true) }) {
-                    d.tilTitle.error = "Deck title already exists"
-                    return@setOnClickListener
-                }
-
-                if (!desc.isNullOrBlank() && desc.length > 200) {
-                    d.tilDescription.error = "Max 200 characters"
-                    return@setOnClickListener
-                }
-
-                executor.execute {
-                    val ok = runCatching {
-                        db.createDeck(me.id, title, desc, isPublic)
-                        true
-                    }.getOrDefault(false)
-
-                    postUi {
-                        if (ok) {
-                            Snackbar.make(b.root, "Deck created", Snackbar.LENGTH_SHORT).show()
-                            dialog.dismiss()
-                            reload()
-                        } else {
-                            Snackbar.make(b.root, "Could not create deck", Snackbar.LENGTH_LONG).show()
+                        postUi {
+                            if (ok) {
+                                Snackbar.make(b.root, "Deck created", Snackbar.LENGTH_SHORT).show()
+                                dialog.dismiss()
+                                reload()
+                            } else {
+                                Snackbar.make(b.root, "Could not create deck", Snackbar.LENGTH_LONG).show()
+                            }
                         }
                     }
                 }
-            }
         }
-
         dialog.show()
     }
 
-    private fun showEditDialog(deck: StarDeckDbHelper.DeckRow) {
-        val me = session.load() ?: return
-
+    private fun showEditDialog(deck: UserDeckDao.DeckRow) {
         if (deck.isPremium) {
-            Snackbar.make(b.root, "Premium demo deck can’t be edited.", Snackbar.LENGTH_SHORT).show()
+            Snackbar.make(b.root, "Premium demo deck can't be edited.", Snackbar.LENGTH_SHORT).show()
             return
         }
 
         val d = DialogEditDeckBinding.inflate(layoutInflater)
-        d.tvTitle.text = "Edit Deck"
+        d.tvTitle.text       = "Edit Deck"
         d.etTitle.setText(deck.title)
         d.etDescription.setText(deck.description.orEmpty())
         d.swPublic.isChecked = deck.isPublic
         updateVisibilityNote(d)
-
-        d.swPublic.setOnCheckedChangeListener { _, _ ->
-            updateVisibilityNote(d)
-        }
+        d.swPublic.setOnCheckedChangeListener { _, _ -> updateVisibilityNote(d) }
 
         val dialog = MaterialAlertDialogBuilder(requireContext())
             .setView(d.root)
@@ -314,80 +296,64 @@ class UserDecksFragment : Fragment(R.layout.fragment_user_decks) {
             .create()
 
         dialog.setOnShowListener {
-            dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                d.tilTitle.error = null
-                d.tilDescription.error = null
+            dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
+                .setOnClickListener {
+                    d.tilTitle.error       = null
+                    d.tilDescription.error = null
 
-                val title = d.etTitle.text?.toString().orEmpty().trim()
-                val desc = d.etDescription.text?.toString()?.trim()
-                val isPublic = d.swPublic.isChecked
+                    val title    = d.etTitle.text?.toString().orEmpty().trim()
+                    val desc     = d.etDescription.text?.toString()?.trim()
+                    val isPublic = d.swPublic.isChecked
 
-                if (title.isBlank()) {
-                    d.tilTitle.error = "Title is required"
-                    return@setOnClickListener
-                }
+                    when {
+                        title.isBlank()   -> { d.tilTitle.error = "Title is required";    return@setOnClickListener }
+                        title.length > 40 -> { d.tilTitle.error = "Max 40 characters";    return@setOnClickListener }
+                        all.any { it.id != deck.id && it.title.equals(title, ignoreCase = true) } -> {
+                            d.tilTitle.error = "Deck title already exists"; return@setOnClickListener
+                        }
+                        !desc.isNullOrBlank() && desc.length > 200 -> {
+                            d.tilDescription.error = "Max 200 characters"; return@setOnClickListener
+                        }
+                    }
 
-                if (title.length > 40) {
-                    d.tilTitle.error = "Max 40 characters"
-                    return@setOnClickListener
-                }
+                    executor.execute {
+                        val rows: Int = runCatching {
+                            deckDao.updateDeck(deck.id, title, desc, isPublic)
+                        }.getOrDefault(0)
 
-                if (all.any { it.id != deck.id && it.title.equals(title, ignoreCase = true) }) {
-                    d.tilTitle.error = "Deck title already exists"
-                    return@setOnClickListener
-                }
-
-                if (!desc.isNullOrBlank() && desc.length > 200) {
-                    d.tilDescription.error = "Max 200 characters"
-                    return@setOnClickListener
-                }
-
-                executor.execute {
-                    val rows = runCatching {
-                        db.updateDeck(me.id, deck.id, title, desc, isPublic)
-                    }.getOrDefault(0)
-
-                    postUi {
-                        if (rows == 1) {
-                            Snackbar.make(b.root, "Deck updated", Snackbar.LENGTH_SHORT).show()
-                            dialog.dismiss()
-                            reload()
-                        } else {
-                            Snackbar.make(b.root, "Could not update deck", Snackbar.LENGTH_LONG).show()
+                        postUi {
+                            if (rows == 1) {
+                                Snackbar.make(b.root, "Deck updated", Snackbar.LENGTH_SHORT).show()
+                                dialog.dismiss()
+                                reload()
+                            } else {
+                                Snackbar.make(b.root, "Could not update deck", Snackbar.LENGTH_LONG).show()
+                            }
                         }
                     }
                 }
-            }
         }
-
         dialog.show()
     }
 
     private fun updateVisibilityNote(d: DialogEditDeckBinding) {
-        d.tvVisibilityNote.text = if (d.swPublic.isChecked) {
+        d.tvVisibilityNote.text = if (d.swPublic.isChecked)
             "Public decks can be shown later in Explore."
-        } else {
+        else
             "Private decks are only visible to your account."
-        }
     }
 
-    private fun confirmDelete(deck: StarDeckDbHelper.DeckRow) {
-        val me = session.load() ?: return
-
+    private fun confirmDelete(deck: UserDeckDao.DeckRow) {
         if (deck.isPremium) {
-            Snackbar.make(b.root, "Premium demo deck can’t be deleted.", Snackbar.LENGTH_SHORT).show()
+            Snackbar.make(b.root, "Premium demo deck can't be deleted.", Snackbar.LENGTH_SHORT).show()
             return
         }
-
         MaterialAlertDialogBuilder(requireContext())
             .setTitle("Delete deck?")
-            .setMessage("“${deck.title}” and its cards will be deleted.")
+            .setMessage("\"${deck.title}\" and its cards will be deleted.")
             .setPositiveButton("Delete") { _, _ ->
                 executor.execute {
-                    val rows = runCatching {
-                        db.deleteDeck(me.id, deck.id)
-                    }.getOrDefault(0)
-
+                    val rows: Int = runCatching { deckDao.deleteDeck(deck.id) }.getOrDefault(0)
                     postUi {
                         if (rows == 1) {
                             Snackbar.make(b.root, "Deck deleted", Snackbar.LENGTH_SHORT).show()
@@ -402,21 +368,6 @@ class UserDecksFragment : Fragment(R.layout.fragment_user_decks) {
             .show()
     }
 
-    private fun countCardsForOwner(ownerUserId: Long): Int {
-        val sql = """
-            SELECT COUNT(c.${DbContract.C_ID})
-            FROM ${DbContract.T_CARDS} c
-            INNER JOIN ${DbContract.T_DECKS} d
-                ON d.${DbContract.D_ID} = c.${DbContract.C_DECK_ID}
-            WHERE d.${DbContract.D_OWNER_USER_ID} = ?
-              AND d.${DbContract.D_STATUS} = '${DbContract.DECK_ACTIVE}'
-        """.trimIndent()
-
-        db.readableDatabase.rawQuery(sql, arrayOf(ownerUserId.toString())).use { cur ->
-            return if (cur.moveToFirst()) cur.getInt(0) else 0
-        }
-    }
-
     private fun postUi(block: () -> Unit) {
         if (!isAdded) return
         requireActivity().runOnUiThread {
@@ -426,65 +377,63 @@ class UserDecksFragment : Fragment(R.layout.fragment_user_decks) {
     }
 
     private enum class FilterMode { ALL, FREE, PREMIUM }
-    private enum class SortMode { RECENT, A_Z, PREMIUM_FIRST }
+    private enum class SortMode   { RECENT, A_Z, PREMIUM_FIRST }
 
     private class DecksAdapter(
-        private val onOpen: (StarDeckDbHelper.DeckRow) -> Unit,
-        private val onEdit: (StarDeckDbHelper.DeckRow) -> Unit,
-        private val onDelete: (StarDeckDbHelper.DeckRow) -> Unit,
-        private val isPremiumUser: () -> Boolean,
-        private val onLocked: (StarDeckDbHelper.DeckRow) -> Unit
+        private val onOpen        : (UserDeckDao.DeckRow) -> Unit,
+        private val onEdit        : (UserDeckDao.DeckRow) -> Unit,
+        private val onDelete      : (UserDeckDao.DeckRow) -> Unit,
+        private val isPremiumUser : () -> Boolean,
+        private val onLocked      : (UserDeckDao.DeckRow) -> Unit
     ) : RecyclerView.Adapter<DecksAdapter.DeckVH>() {
 
-        private val items = mutableListOf<StarDeckDbHelper.DeckRow>()
+        private val items = mutableListOf<UserDeckDao.DeckRow>()
 
-        fun submit(list: List<StarDeckDbHelper.DeckRow>) {
+        fun submit(list: List<UserDeckDao.DeckRow>) {
             items.clear()
             items.addAll(list)
             notifyDataSetChanged()
         }
 
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DeckVH {
-            val binding = ItemDeckBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-            return DeckVH(binding, onOpen, onEdit, onDelete, isPremiumUser, onLocked)
-        }
-
-        override fun onBindViewHolder(holder: DeckVH, position: Int) {
-            holder.bind(items[position])
-        }
-
         override fun getItemCount(): Int = items.size
 
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DeckVH {
+            val b = ItemDeckBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+            return DeckVH(b, onOpen, onEdit, onDelete, isPremiumUser, onLocked)
+        }
+
+        override fun onBindViewHolder(holder: DeckVH, position: Int) = holder.bind(items[position])
+
         class DeckVH(
-            private val b: ItemDeckBinding,
-            private val onOpen: (StarDeckDbHelper.DeckRow) -> Unit,
-            private val onEdit: (StarDeckDbHelper.DeckRow) -> Unit,
-            private val onDelete: (StarDeckDbHelper.DeckRow) -> Unit,
-            private val isPremiumUser: () -> Boolean,
-            private val onLocked: (StarDeckDbHelper.DeckRow) -> Unit
+            private val b             : ItemDeckBinding,
+            private val onOpen        : (UserDeckDao.DeckRow) -> Unit,
+            private val onEdit        : (UserDeckDao.DeckRow) -> Unit,
+            private val onDelete      : (UserDeckDao.DeckRow) -> Unit,
+            private val isPremiumUser : () -> Boolean,
+            private val onLocked      : (UserDeckDao.DeckRow) -> Unit
         ) : RecyclerView.ViewHolder(b.root) {
 
-            fun bind(deck: StarDeckDbHelper.DeckRow) {
-                b.tvTitle.text = deck.title
-                b.tvDesc.text = deck.description?.takeIf { it.isNotBlank() } ?: "No description"
+            fun bind(deck: UserDeckDao.DeckRow) {
+                b.tvTitle.text        = deck.title
+                b.tvDesc.text         = deck.description?.takeIf { it.isNotBlank() } ?: "No description"
                 b.chipVisibility.text = if (deck.isPublic) "Public" else "Private"
 
                 val premiumUser = isPremiumUser()
 
                 if (deck.isPremium) {
                     b.chipPremium.visibility = View.VISIBLE
-                    b.chipPremium.text = if (premiumUser) "Premium" else "Locked"
-                    b.btnEdit.visibility = View.GONE
-                    b.btnDelete.visibility = View.GONE
+                    b.chipPremium.text       = if (premiumUser) "Premium" else "Locked"
+                    b.btnEdit.visibility     = View.GONE
+                    b.btnDelete.visibility   = View.GONE
                     b.root.setOnClickListener {
                         if (premiumUser) onOpen(deck) else onLocked(deck)
                     }
                 } else {
                     b.chipPremium.visibility = View.GONE
-                    b.btnEdit.visibility = View.VISIBLE
-                    b.btnDelete.visibility = View.VISIBLE
-                    b.root.setOnClickListener { onOpen(deck) }
-                    b.btnEdit.setOnClickListener { onEdit(deck) }
+                    b.btnEdit.visibility     = View.VISIBLE
+                    b.btnDelete.visibility   = View.VISIBLE
+                    b.root.setOnClickListener      { onOpen(deck) }
+                    b.btnEdit.setOnClickListener   { onEdit(deck) }
                     b.btnDelete.setOnClickListener { onDelete(deck) }
                 }
             }
@@ -495,9 +444,7 @@ class UserDecksFragment : Fragment(R.layout.fragment_user_decks) {
 private fun EditText.addTextChangedListenerCompat(onChanged: () -> Unit) {
     addTextChangedListener(object : TextWatcher {
         override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
-        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
-        override fun afterTextChanged(s: Editable?) {
-            onChanged()
-        }
+        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int)    = Unit
+        override fun afterTextChanged(s: Editable?) { onChanged() }
     })
 }

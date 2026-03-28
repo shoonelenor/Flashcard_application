@@ -9,19 +9,21 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.example.stardeckapplication.R
 import com.example.stardeckapplication.databinding.ActivityLeaderboardBinding
 import com.example.stardeckapplication.databinding.ItemLeaderboardUserBinding
 import com.example.stardeckapplication.db.DbContract
 import com.example.stardeckapplication.db.StarDeckDbHelper
+import com.example.stardeckapplication.db.StatsDao
 import com.example.stardeckapplication.util.SessionManager
 import com.google.android.material.snackbar.Snackbar
 
 class LeaderboardActivity : AppCompatActivity() {
 
     private lateinit var b: ActivityLeaderboardBinding
-    private val session by lazy { SessionManager(this) }
-    private val db by lazy { StarDeckDbHelper(this) }
+
+    private val session  by lazy { SessionManager(this) }
+    private val dbHelper by lazy { StarDeckDbHelper(this) }
+    private val statsDao by lazy { StatsDao(dbHelper) }   // ✅ getLocalLeaderboard, LeaderboardRow
 
     private val adapter = LeaderboardAdapter()
 
@@ -41,7 +43,7 @@ class LeaderboardActivity : AppCompatActivity() {
         }
 
         b.recycler.layoutManager = LinearLayoutManager(this)
-        b.recycler.adapter = adapter
+        b.recycler.adapter       = adapter
 
         loadData()
     }
@@ -52,7 +54,8 @@ class LeaderboardActivity : AppCompatActivity() {
     }
 
     private fun loadData() {
-        val rows = runCatching { db.getLocalLeaderboard() }
+        // ✅ statsDao.getLocalLeaderboard — correct home
+        val rows: List<StatsDao.LeaderboardRow> = runCatching { statsDao.getLocalLeaderboard() }
             .getOrElse {
                 Snackbar.make(b.root, "Could not load leaderboard.", Snackbar.LENGTH_LONG).show()
                 emptyList()
@@ -60,47 +63,50 @@ class LeaderboardActivity : AppCompatActivity() {
 
         if (rows.isEmpty()) {
             b.groupEmpty.visibility = View.VISIBLE
-            b.recycler.visibility = View.GONE
+            b.recycler.visibility   = View.GONE
         } else {
             b.groupEmpty.visibility = View.GONE
-            b.recycler.visibility = View.VISIBLE
+            b.recycler.visibility   = View.VISIBLE
             adapter.submitList(rows)
         }
     }
 
+    // ══════════════════════════════════════════════════════════════════════
+    //  ADAPTER — uses StatsDao.LeaderboardRow throughout
+    // ══════════════════════════════════════════════════════════════════════
+
     private class LeaderboardAdapter :
-        ListAdapter<StarDeckDbHelper.LeaderboardRow, LeaderboardAdapter.VH>(Diff) {
+        ListAdapter<StatsDao.LeaderboardRow, LeaderboardAdapter.VH>(Diff) {
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
-            val binding = ItemLeaderboardUserBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+            val binding = ItemLeaderboardUserBinding.inflate(
+                LayoutInflater.from(parent.context), parent, false
+            )
             return VH(binding)
         }
 
-        override fun onBindViewHolder(holder: VH, position: Int) {
+        override fun onBindViewHolder(holder: VH, position: Int) =
             holder.bind(position, getItem(position))
-        }
 
         class VH(private val b: ItemLeaderboardUserBinding) : RecyclerView.ViewHolder(b.root) {
-            fun bind(position: Int, row: StarDeckDbHelper.LeaderboardRow) {
-                val rank = position + 1
-                b.tvRank.text = rank.toString()
-                b.tvName.text = row.name
+            fun bind(position: Int, row: StatsDao.LeaderboardRow) {
+                b.tvRank.text  = (position + 1).toString()
+                b.tvName.text  = row.name
                 b.tvEmail.text = row.email
-
                 val streakText = if (row.streakDays == 1) "1 day" else "${row.streakDays} days"
                 b.tvStats.text = "Total: ${row.totalStudy} • Streak: $streakText"
             }
         }
 
-        private object Diff : DiffUtil.ItemCallback<StarDeckDbHelper.LeaderboardRow>() {
+        private object Diff : DiffUtil.ItemCallback<StatsDao.LeaderboardRow>() {
             override fun areItemsTheSame(
-                oldItem: StarDeckDbHelper.LeaderboardRow,
-                newItem: StarDeckDbHelper.LeaderboardRow
+                oldItem: StatsDao.LeaderboardRow,
+                newItem: StatsDao.LeaderboardRow
             ): Boolean = oldItem.userId == newItem.userId
 
             override fun areContentsTheSame(
-                oldItem: StarDeckDbHelper.LeaderboardRow,
-                newItem: StarDeckDbHelper.LeaderboardRow
+                oldItem: StatsDao.LeaderboardRow,
+                newItem: StatsDao.LeaderboardRow
             ): Boolean = oldItem == newItem
         }
     }

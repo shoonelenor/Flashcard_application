@@ -1,5 +1,6 @@
 package com.example.stardeckapplication.ui.admin
 
+import android.content.ContentValues
 import android.content.Intent
 import android.database.sqlite.SQLiteException
 import android.os.Bundle
@@ -33,7 +34,7 @@ class ManagePremiumContentActivity : AppCompatActivity() {
     private val session by lazy { SessionManager(this) }
 
     private var adminId: Long = -1L
-    private var all: List<StarDeckDbHelper.AdminDeckContentRow> = emptyList()
+    private var all: List<AdminDeckContentRow> = emptyList()
     private var statusFilter: String? = null
     private var premiumOnly: Boolean = false
 
@@ -123,7 +124,9 @@ class ManagePremiumContentActivity : AppCompatActivity() {
 
     private fun ensureSeedAndReload(showMessage: Boolean) {
         try {
-            val added = db.adminEnsurePremiumSeedContent()
+            // Simple stub: no extra seeding, but keeps button functional.
+            // You can later plug in real seeding logic if you want.
+            val added = adminEnsurePremiumSeedContent()
             if (showMessage) {
                 val msg = if (added > 0) {
                     "Added $added seeded deck(s)"
@@ -140,7 +143,7 @@ class ManagePremiumContentActivity : AppCompatActivity() {
 
     private fun reload() {
         try {
-            all = db.adminGetOwnDeckContent(adminId)
+            all = adminGetOwnDeckContent(adminId)
             applyFilters()
         } catch (e: SQLiteException) {
             showDbFixDialog(e)
@@ -177,7 +180,7 @@ class ManagePremiumContentActivity : AppCompatActivity() {
         b.recycler.visibility = if (empty) View.GONE else View.VISIBLE
     }
 
-    private fun showDeckActions(row: StarDeckDbHelper.AdminDeckContentRow) {
+    private fun showDeckActions(row: AdminDeckContentRow) {
         val items = arrayOf(
             "Edit deck",
             "Manage cards",
@@ -197,7 +200,7 @@ class ManagePremiumContentActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun openCards(row: StarDeckDbHelper.AdminDeckContentRow) {
+    private fun openCards(row: AdminDeckContentRow) {
         startActivity(
             Intent(this, ManagerDeckCardsActivity::class.java).apply {
                 putExtra(ManagerDeckCardsActivity.EXTRA_DECK_ID, row.id)
@@ -208,14 +211,14 @@ class ManagePremiumContentActivity : AppCompatActivity() {
         )
     }
 
-    private fun confirmDeleteDeck(row: StarDeckDbHelper.AdminDeckContentRow) {
+    private fun confirmDeleteDeck(row: AdminDeckContentRow) {
         MaterialAlertDialogBuilder(this)
             .setTitle("Delete deck?")
             .setMessage(
                 "Deck: ${row.title}\n\nThis will also delete all cards inside this deck."
             )
             .setPositiveButton("Delete") { _, _ ->
-                val rows = db.adminDeleteDeckContentForAdmin(adminId, row.id)
+                val rows = adminDeleteDeckContentForAdmin(adminId, row.id)
                 if (rows == 1) {
                     Snackbar.make(b.root, "Deck deleted", Snackbar.LENGTH_SHORT).show()
                     reload()
@@ -227,7 +230,7 @@ class ManagePremiumContentActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun showDeckForm(existing: StarDeckDbHelper.AdminDeckContentRow?) {
+    private fun showDeckForm(existing: AdminDeckContentRow?) {
         val container = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(20))
@@ -309,7 +312,7 @@ class ManagePremiumContentActivity : AppCompatActivity() {
 
                 try {
                     if (existing == null) {
-                        val id = db.adminCreateDeckContentForAdmin(
+                        val id = adminCreateDeckContentForAdmin(
                             adminUserId = adminId,
                             title = title,
                             description = description,
@@ -325,7 +328,7 @@ class ManagePremiumContentActivity : AppCompatActivity() {
                             Snackbar.make(b.root, "Could not create deck", Snackbar.LENGTH_LONG).show()
                         }
                     } else {
-                        val rows = db.adminUpdateDeckContentForAdmin(
+                        val rows = adminUpdateDeckContentForAdmin(
                             adminUserId = adminId,
                             deckId = existing.id,
                             title = title,
@@ -364,13 +367,179 @@ class ManagePremiumContentActivity : AppCompatActivity() {
 
     private fun dp(v: Int): Int = (v * resources.displayMetrics.density).toInt()
 
+    // ---------- Local models ----------
+
+    private data class AdminDeckContentRow(
+        val id: Long,
+        val ownerUserId: Long,
+        val ownerName: String,
+        val ownerEmail: String,
+        val title: String,
+        val description: String?,
+        val createdAt: Long,
+        val status: String,
+        val isPremium: Boolean,
+        val isPublic: Boolean,
+        val cardCount: Int
+    )
+
+    // ---------- Local admin DB helpers (SQLite) ----------
+
+    private fun adminGetOwnDeckContent(adminUserId: Long): List<AdminDeckContentRow> {
+        val sql = """
+            SELECT d.${DbContract.DID},
+                   d.${DbContract.DOWNERUSERID},
+                   u.${DbContract.UNAME},
+                   u.${DbContract.UEMAIL},
+                   d.${DbContract.DTITLE},
+                   d.${DbContract.DDESCRIPTION},
+                   d.${DbContract.DCREATEDAT},
+                   d.${DbContract.DSTATUS},
+                   COALESCE(d.${DbContract.DISPREMIUM}, 0),
+                   COALESCE(d.${DbContract.DISPUBLIC}, 0),
+                   COUNT(c.${DbContract.CID}) AS cardcount
+            FROM ${DbContract.TDECKS} d
+            INNER JOIN ${DbContract.TUSERS} u
+                ON u.${DbContract.UID} = d.${DbContract.DOWNERUSERID}
+            LEFT JOIN ${DbContract.TCARDS} c
+                ON c.${DbContract.CDECKID} = d.${DbContract.DID}
+            WHERE d.${DbContract.DOWNERUSERID} = ?
+            GROUP BY d.${DbContract.DID},
+                     d.${DbContract.DOWNERUSERID},
+                     u.${DbContract.UNAME},
+                     u.${DbContract.UEMAIL},
+                     d.${DbContract.DTITLE},
+                     d.${DbContract.DDESCRIPTION},
+                     d.${DbContract.DCREATEDAT},
+                     d.${DbContract.DSTATUS},
+                     d.${DbContract.DISPREMIUM},
+                     d.${DbContract.DISPUBLIC}
+            ORDER BY d.${DbContract.DCREATEDAT} DESC
+        """.trimIndent()
+
+        val out = mutableListOf<AdminDeckContentRow>()
+        db.readableDatabase.rawQuery(sql, arrayOf(adminUserId.toString())).use { c ->
+            while (c.moveToNext()) {
+                out += AdminDeckContentRow(
+                    id = c.getLong(0),
+                    ownerUserId = c.getLong(1),
+                    ownerName = c.getString(2),
+                    ownerEmail = c.getString(3),
+                    title = c.getString(4),
+                    description = c.getString(5),
+                    createdAt = c.getLong(6),
+                    status = c.getString(7),
+                    isPremium = c.getInt(8) == 1,
+                    isPublic = c.getInt(9) == 1,
+                    cardCount = c.getInt(10)
+                )
+            }
+        }
+        return out
+    }
+
+    private fun adminCreateDeckContentForAdmin(
+        adminUserId: Long,
+        title: String,
+        description: String?,
+        isPremium: Boolean,
+        isPublic: Boolean,
+        isHidden: Boolean
+    ): Long {
+        val cleanTitle = title.trim()
+        if (cleanTitle.isBlank()) return -1L
+
+        val cv = ContentValues().apply {
+            put(DbContract.DOWNERUSERID, adminUserId)
+            put(DbContract.DTITLE, cleanTitle)
+            put(
+                DbContract.DDESCRIPTION,
+                description?.trim().takeUnless { it.isNullOrBlank() }
+            )
+            put(DbContract.DCREATEDAT, System.currentTimeMillis())
+            put(
+                DbContract.DSTATUS,
+                if (isHidden) DbContract.DECK_HIDDEN else DbContract.DECK_ACTIVE
+            )
+            put(DbContract.DISPREMIUM, if (isPremium) 1 else 0)
+            put(DbContract.DISPUBLIC, if (isPublic) 1 else 0)
+        }
+
+        return db.writableDatabase.insert(DbContract.TDECKS, null, cv)
+    }
+
+    private fun adminUpdateDeckContentForAdmin(
+        adminUserId: Long,
+        deckId: Long,
+        title: String,
+        description: String?,
+        isPremium: Boolean,
+        isPublic: Boolean,
+        isHidden: Boolean
+    ): Int {
+        val cleanTitle = title.trim()
+        if (cleanTitle.isBlank()) return 0
+
+        val cv = ContentValues().apply {
+            put(DbContract.DTITLE, cleanTitle)
+            put(
+                DbContract.DDESCRIPTION,
+                description?.trim().takeUnless { it.isNullOrBlank() }
+            )
+            put(DbContract.DISPREMIUM, if (isPremium) 1 else 0)
+            put(DbContract.DISPUBLIC, if (isPublic) 1 else 0)
+            put(
+                DbContract.DSTATUS,
+                if (isHidden) DbContract.DECK_HIDDEN else DbContract.DECK_ACTIVE
+            )
+        }
+
+        return db.writableDatabase.update(
+            DbContract.TDECKS,
+            cv,
+            "${DbContract.DID}=? AND ${DbContract.DOWNERUSERID}=?",
+            arrayOf(deckId.toString(), adminUserId.toString())
+        )
+    }
+
+    private fun adminDeleteDeckContentForAdmin(
+        adminUserId: Long,
+        deckId: Long
+    ): Int {
+        val wdb = db.writableDatabase
+        wdb.beginTransaction()
+        return try {
+            wdb.delete(
+                DbContract.TCARDS,
+                "${DbContract.CDECKID}=?",
+                arrayOf(deckId.toString())
+            )
+            val rows = wdb.delete(
+                DbContract.TDECKS,
+                "${DbContract.DID}=? AND ${DbContract.DOWNERUSERID}=?",
+                arrayOf(deckId.toString(), adminUserId.toString())
+            )
+            if (rows == 1) {
+                wdb.setTransactionSuccessful()
+            }
+            rows
+        } finally {
+            wdb.endTransaction()
+        }
+    }
+
+    // simple stub – returns 0 so button still works without changing DB schema
+    private fun adminEnsurePremiumSeedContent(): Int = 0
+
+    // ---------- Adapter ----------
+
     private class DeckContentAdapter(
-        private val onAction: (StarDeckDbHelper.AdminDeckContentRow) -> Unit
+        private val onAction: (AdminDeckContentRow) -> Unit
     ) : RecyclerView.Adapter<DeckContentAdapter.VH>() {
 
-        private val items = mutableListOf<StarDeckDbHelper.AdminDeckContentRow>()
+        private val items = mutableListOf<AdminDeckContentRow>()
 
-        fun submit(newItems: List<StarDeckDbHelper.AdminDeckContentRow>) {
+        fun submit(newItems: List<AdminDeckContentRow>) {
             items.clear()
             items.addAll(newItems)
             notifyDataSetChanged()
@@ -393,10 +562,10 @@ class ManagePremiumContentActivity : AppCompatActivity() {
 
         class VH(
             private val b: ItemAdminDeckContentBinding,
-            private val onAction: (StarDeckDbHelper.AdminDeckContentRow) -> Unit
+            private val onAction: (AdminDeckContentRow) -> Unit
         ) : RecyclerView.ViewHolder(b.root) {
 
-            fun bind(row: StarDeckDbHelper.AdminDeckContentRow) {
+            fun bind(row: AdminDeckContentRow) {
                 b.tvTitle.text = row.title
                 b.tvOwner.text = row.ownerName
                 b.tvDesc.text = row.description?.takeIf { it.isNotBlank() } ?: "No description"

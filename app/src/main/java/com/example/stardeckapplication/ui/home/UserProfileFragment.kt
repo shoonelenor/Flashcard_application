@@ -8,6 +8,7 @@ import com.example.stardeckapplication.R
 import com.example.stardeckapplication.databinding.FragmentUserProfileBinding
 import com.example.stardeckapplication.db.DbContract
 import com.example.stardeckapplication.db.StarDeckDbHelper
+import com.example.stardeckapplication.db.UserDao
 import com.example.stardeckapplication.ui.auth.LoginActivity
 import com.example.stardeckapplication.ui.profile.AchievementsActivity
 import com.example.stardeckapplication.ui.profile.LeaderboardActivity
@@ -20,8 +21,9 @@ class UserProfileFragment : Fragment(R.layout.fragment_user_profile) {
     private var _b: FragmentUserProfileBinding? = null
     private val b get() = _b!!
 
-    private val session by lazy { SessionManager(requireContext()) }
-    private val db by lazy { StarDeckDbHelper(requireContext()) }
+    private val session  by lazy { SessionManager(requireContext()) }
+    private val dbHelper by lazy { StarDeckDbHelper(requireContext()) }
+    private val userDao  by lazy { UserDao(dbHelper) }  // ✅ isUserPremium correct home
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         _b = FragmentUserProfileBinding.bind(view)
@@ -32,24 +34,15 @@ class UserProfileFragment : Fragment(R.layout.fragment_user_profile) {
             return
         }
 
-        b.btnPremium.setOnClickListener {
-            startActivity(Intent(requireContext(), PremiumDemoActivity::class.java))
-        }
+        b.btnPremium.setOnClickListener      { startActivity(Intent(requireContext(), PremiumDemoActivity::class.java)) }
+        b.btnAchievements.setOnClickListener { startActivity(Intent(requireContext(), AchievementsActivity::class.java)) }
+        b.btnLeaderboard.setOnClickListener  { startActivity(Intent(requireContext(), LeaderboardActivity::class.java)) }
 
-        b.btnAchievements.setOnClickListener {
-            startActivity(Intent(requireContext(), AchievementsActivity::class.java))
-        }
-
-        b.btnSettings.setOnClickListener { showComingSoon("Change Password") }
+        b.btnSettings.setOnClickListener      { showComingSoon("Change Password") }
         b.btnNotifications.setOnClickListener { showComingSoon("Notification Settings") }
-        b.btnPrivacyTerms.setOnClickListener { showComingSoon("Privacy & Terms") }
-        b.btnHelp.setOnClickListener { showComingSoon("Help / Report Issue") }
-        b.btnFriends.setOnClickListener { showComingSoon("Friends") }
-
-        // Real leaderboard now
-        b.btnLeaderboard.setOnClickListener {
-            startActivity(Intent(requireContext(), LeaderboardActivity::class.java))
-        }
+        b.btnPrivacyTerms.setOnClickListener  { showComingSoon("Privacy & Terms") }
+        b.btnHelp.setOnClickListener          { showComingSoon("Help / Report Issue") }
+        b.btnFriends.setOnClickListener       { showComingSoon("Friends") }
 
         b.btnLogout.setOnClickListener {
             MaterialAlertDialogBuilder(requireContext())
@@ -74,20 +67,24 @@ class UserProfileFragment : Fragment(R.layout.fragment_user_profile) {
         bindProfile()
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _b = null
+    }
+
     private fun bindProfile() {
         val me = session.load() ?: return
-
-        b.tvName.text = me.name
+        b.tvName.text  = me.name
         b.tvEmail.text = me.email
 
-        val isPremium = runCatching { db.isUserPremium(me.id) }.getOrDefault(false)
+        // ✅ UserDao.isUserPremium — correct home
+        val isPremium: Boolean = try { userDao.isUserPremium(me.id) } catch (e: Exception) { false }
 
         b.tvPlanValue.text = if (isPremium) "Premium Plan" else "Free Plan"
-        b.tvPlanNote.text = if (isPremium) {
+        b.tvPlanNote.text  = if (isPremium)
             "Premium access is currently active."
-        } else {
+        else
             "Upgrade to unlock premium decks and future AI tools."
-        }
     }
 
     private fun showComingSoon(title: String) {
@@ -96,10 +93,5 @@ class UserProfileFragment : Fragment(R.layout.fragment_user_profile) {
             .setMessage("This framework is ready. We will connect the real logic step by step.")
             .setPositiveButton("OK", null)
             .show()
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _b = null
     }
 }

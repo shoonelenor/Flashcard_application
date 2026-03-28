@@ -1,7 +1,7 @@
 package com.example.stardeckapplication.ui.auth
 
-import android.content.Intent
 import android.content.Context
+import android.content.Intent
 import android.database.sqlite.SQLiteConstraintException
 import android.os.Bundle
 import android.text.SpannableString
@@ -16,6 +16,7 @@ import androidx.core.widget.addTextChangedListener
 import com.example.stardeckapplication.R
 import com.example.stardeckapplication.databinding.ActivityRegisterBinding
 import com.example.stardeckapplication.db.StarDeckDbHelper
+import com.example.stardeckapplication.db.UserDao
 import com.google.android.material.snackbar.Snackbar
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
@@ -23,8 +24,9 @@ import java.util.concurrent.atomic.AtomicBoolean
 class RegisterActivity : AppCompatActivity() {
 
     private lateinit var b: ActivityRegisterBinding
-    private val db by lazy { StarDeckDbHelper(this) }
 
+    // Use UserDao (which has registerUser), backed by StarDeckDbHelper
+    private val userDao  by lazy { UserDao(StarDeckDbHelper(this)) }
     private val executor = Executors.newSingleThreadExecutor()
     private val inFlight = AtomicBoolean(false)
 
@@ -33,18 +35,17 @@ class RegisterActivity : AppCompatActivity() {
         b = ActivityRegisterBinding.inflate(layoutInflater)
         setContentView(b.root)
 
-        b.etName.addTextChangedListener { b.tilName.error = null }
-        b.etEmail.addTextChangedListener { b.tilEmail.error = null }
+        b.etName.addTextChangedListener     { b.tilName.error     = null }
+        b.etEmail.addTextChangedListener    { b.tilEmail.error    = null }
         b.etPassword.addTextChangedListener { b.tilPassword.error = null }
-        b.etConfirm.addTextChangedListener { b.tilConfirm.error = null }
+        b.etConfirm.addTextChangedListener  { b.tilConfirm.error  = null }
 
         setupTermsClickableText()
         updateCreateButtonEnabled()
 
         b.cbTerms.setOnCheckedChangeListener { _, _ -> updateCreateButtonEnabled() }
-
         b.btnCreateAccount.setOnClickListener { attemptRegister() }
-        b.btnGoLogin.setOnClickListener { finish() }
+        b.btnGoLogin.setOnClickListener       { finish() }
     }
 
     override fun onDestroy() {
@@ -53,15 +54,13 @@ class RegisterActivity : AppCompatActivity() {
     }
 
     private fun setupTermsClickableText() {
-        val full = "I agree to Terms and Privacy"
-        val spannable = SpannableString(full)
-
-        val termsStart = full.indexOf("Terms")
-        val termsEnd = termsStart + "Terms".length
+        val full         = "I agree to Terms and Privacy"
+        val spannable    = SpannableString(full)
+        val termsStart   = full.indexOf("Terms")
+        val termsEnd     = termsStart + "Terms".length
         val privacyStart = full.indexOf("Privacy")
-        val privacyEnd = privacyStart + "Privacy".length
-
-        val linkColor = ContextCompat.getColor(this, R.color.stardeck_link)
+        val privacyEnd   = privacyStart + "Privacy".length
+        val linkColor    = ContextCompat.getColor(this, R.color.stardeck_link)
 
         val termsSpan = object : ClickableSpan() {
             override fun onClick(widget: View) {
@@ -84,10 +83,20 @@ class RegisterActivity : AppCompatActivity() {
             }
         }
 
-        spannable.setSpan(termsSpan, termsStart, termsEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        spannable.setSpan(privacySpan, privacyStart, privacyEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        spannable.setSpan(
+            termsSpan,
+            termsStart,
+            termsEnd,
+            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+        )
+        spannable.setSpan(
+            privacySpan,
+            privacyStart,
+            privacyEnd,
+            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+        )
 
-        b.cbTerms.text = spannable
+        b.cbTerms.text           = spannable
         b.cbTerms.movementMethod = LinkMovementMethod.getInstance()
         b.cbTerms.highlightColor = android.graphics.Color.TRANSPARENT
         b.cbTerms.setLinkTextColor(linkColor)
@@ -100,15 +109,15 @@ class RegisterActivity : AppCompatActivity() {
     private fun attemptRegister() {
         if (inFlight.get()) return
 
-        b.tilName.error = null
-        b.tilEmail.error = null
+        b.tilName.error     = null
+        b.tilEmail.error    = null
         b.tilPassword.error = null
-        b.tilConfirm.error = null
+        b.tilConfirm.error  = null
 
-        val name = b.etName.text?.toString().orEmpty().trim()
-        val email = b.etEmail.text?.toString().orEmpty().trim().lowercase()
-        val pw = b.etPassword.text?.toString().orEmpty()
-        val confirm = b.etConfirm.text?.toString().orEmpty()
+        val name     = b.etName.text?.toString().orEmpty().trim()
+        val email    = b.etEmail.text?.toString().orEmpty().trim().lowercase()
+        val pw       = b.etPassword.text?.toString().orEmpty()
+        val confirm  = b.etConfirm.text?.toString().orEmpty()
         val accepted = b.cbTerms.isChecked
 
         var ok = true
@@ -116,11 +125,12 @@ class RegisterActivity : AppCompatActivity() {
             b.tilName.error = "Enter your name"
             ok = false
         }
-        if (email.isBlank() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+        if (email.isBlank() ||
+            !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+        ) {
             b.tilEmail.error = "Enter a valid email"
             ok = false
         }
-
         val pwErr = strongPasswordError(pw)
         if (pwErr != null) {
             b.tilPassword.error = pwErr
@@ -130,12 +140,14 @@ class RegisterActivity : AppCompatActivity() {
             b.tilConfirm.error = "Passwords do not match"
             ok = false
         }
-
         if (!accepted) {
-            Snackbar.make(b.root, "Please accept Terms and Privacy", Snackbar.LENGTH_SHORT).show()
+            Snackbar.make(
+                b.root,
+                "Please accept Terms and Privacy",
+                Snackbar.LENGTH_SHORT
+            ).show()
             ok = false
         }
-
         if (!ok) return
 
         hideKeyboard()
@@ -144,11 +156,16 @@ class RegisterActivity : AppCompatActivity() {
         val pwChars = pw.toCharArray()
         executor.execute {
             try {
-                db.registerUser(name, email, pwChars, acceptedTerms = accepted)
+                // call into UserDao, not StarDeckDbHelper
+                userDao.registerUser(name, email, pwChars, acceptedTerms = accepted)
                 pwChars.fill('\u0000')
                 runOnUiThread {
                     setLoading(false)
-                    Snackbar.make(b.root, "Account created. Please log in.", Snackbar.LENGTH_SHORT).show()
+                    Snackbar.make(
+                        b.root,
+                        "Account created. Please log in.",
+                        Snackbar.LENGTH_SHORT
+                    ).show()
                     startActivity(Intent(this, LoginActivity::class.java))
                     finish()
                 }
@@ -162,43 +179,41 @@ class RegisterActivity : AppCompatActivity() {
                 pwChars.fill('\u0000')
                 runOnUiThread {
                     setLoading(false)
-                    Snackbar.make(b.root, "Registration failed. Please try again.", Snackbar.LENGTH_LONG).show()
+                    Snackbar.make(
+                        b.root,
+                        "Registration failed. Please try again.",
+                        Snackbar.LENGTH_LONG
+                    ).show()
                 }
             }
         }
     }
 
     private fun strongPasswordError(pw: String): String? {
-        if (pw.length < 8) return "At least 8 characters"
-        if (pw.any { it.isWhitespace() }) return "No spaces allowed"
-        val hasUpper = pw.any { it.isUpperCase() }
-        val hasLower = pw.any { it.isLowerCase() }
-        val hasDigit = pw.any { it.isDigit() }
-        val hasSymbol = pw.any { !it.isLetterOrDigit() }
-        if (!hasUpper) return "Add 1 uppercase letter (A-Z)"
-        if (!hasLower) return "Add 1 lowercase letter (a-z)"
-        if (!hasDigit) return "Add 1 number (0-9)"
-        if (!hasSymbol) return "Add 1 symbol (!@#)"
+        if (pw.length < 8)                     return "At least 8 characters"
+        if (pw.any { it.isWhitespace() })      return "No spaces allowed"
+        if (!pw.any { it.isUpperCase() })      return "Add 1 uppercase letter (A-Z)"
+        if (!pw.any { it.isLowerCase() })      return "Add 1 lowercase letter (a-z)"
+        if (!pw.any { it.isDigit() })          return "Add 1 number (0-9)"
+        if (!pw.any { !it.isLetterOrDigit() }) return "Add 1 symbol (!@#)"
         return null
     }
 
     private fun setLoading(loading: Boolean) {
         inFlight.set(loading)
         b.progressRegister.visibility = if (loading) View.VISIBLE else View.GONE
-
-        b.btnGoLogin.isEnabled = !loading
-        b.etName.isEnabled = !loading
-        b.etEmail.isEnabled = !loading
-        b.etPassword.isEnabled = !loading
-        b.etConfirm.isEnabled = !loading
-        b.cbTerms.isEnabled = !loading
-
+        b.btnGoLogin.isEnabled        = !loading
+        b.etName.isEnabled            = !loading
+        b.etEmail.isEnabled           = !loading
+        b.etPassword.isEnabled        = !loading
+        b.etConfirm.isEnabled         = !loading
+        b.cbTerms.isEnabled           = !loading
         updateCreateButtonEnabled()
     }
 
     private fun hideKeyboard() {
         val v = currentFocus ?: return
-        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-        imm.hideSoftInputFromWindow(v.windowToken, 0)
+        (getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager)
+            .hideSoftInputFromWindow(v.windowToken, 0)
     }
 }

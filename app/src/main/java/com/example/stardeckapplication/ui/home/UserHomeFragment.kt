@@ -8,8 +8,13 @@ import androidx.fragment.app.Fragment
 import com.example.stardeckapplication.R
 import com.example.stardeckapplication.databinding.DialogEditDeckBinding
 import com.example.stardeckapplication.databinding.FragmentUserHomeBinding
+import com.example.stardeckapplication.db.CardDao
 import com.example.stardeckapplication.db.DbContract
 import com.example.stardeckapplication.db.StarDeckDbHelper
+import com.example.stardeckapplication.db.StatsDao
+import com.example.stardeckapplication.db.StudyDao
+import com.example.stardeckapplication.db.UserDao
+import com.example.stardeckapplication.db.UserDeckDao
 import com.example.stardeckapplication.ui.cards.DeckCardsActivity
 import com.example.stardeckapplication.ui.study.StudyActivity
 import com.example.stardeckapplication.util.RuleBasedFlashcardGenerator
@@ -26,8 +31,13 @@ class UserHomeFragment : Fragment(R.layout.fragment_user_home) {
     private var _b: FragmentUserHomeBinding? = null
     private val b get() = _b!!
 
-    private val session by lazy { SessionManager(requireContext()) }
-    private val db by lazy { StarDeckDbHelper(requireContext()) }
+    private val session  by lazy { SessionManager(requireContext()) }
+    private val dbHelper by lazy { StarDeckDbHelper(requireContext()) }
+    private val statsDao by lazy { StatsDao(dbHelper) }
+    private val studyDao by lazy { StudyDao(dbHelper) }   // ✅ getDueCountForUser
+    private val userDao  by lazy { UserDao(dbHelper) }    // ✅ isUserPremium
+    private val deckDao  by lazy { UserDeckDao(dbHelper) }
+    private val cardDao  by lazy { CardDao(dbHelper) }
 
     private var canContinueStudy = false
 
@@ -42,45 +52,19 @@ class UserHomeFragment : Fragment(R.layout.fragment_user_home) {
 
         b.tvSubtitle.text = "Welcome back, ${me.name}. Keep your learning progress going today."
 
-        // Continue study / open library
         b.btnContinue.setOnClickListener {
-            if (canContinueStudy) {
-                openContinueDeck()
-            } else {
-                (activity as? UserHomeActivity)?.openTab(R.id.nav_library)
-            }
+            if (canContinueStudy) openContinueDeck()
+            else (activity as? UserHomeActivity)?.openTab(R.id.nav_library)
         }
-
-        // Tap recent card to continue study
-        b.cardRecent.setOnClickListener {
-            if (canContinueStudy) {
-                openContinueDeck()
-            }
-        }
-
-        // Create new deck from Library tab
+        b.cardRecent.setOnClickListener { if (canContinueStudy) openContinueDeck() }
         b.btnNewDeck.setOnClickListener {
             (activity as? UserHomeActivity)?.openTab(R.id.nav_library)
-            Snackbar.make(
-                b.root,
-                "Open Library and tap + to create a deck.",
-                Snackbar.LENGTH_SHORT
-            ).show()
+            Snackbar.make(b.root, "Open Library and tap + to create a deck.", Snackbar.LENGTH_SHORT).show()
         }
-
-        // Import placeholder (real import comes later)
         b.btnImportHome.setOnClickListener {
-            Snackbar.make(
-                b.root,
-                "Import feature is coming. For now, you can manually create decks.",
-                Snackbar.LENGTH_SHORT
-            ).show()
+            Snackbar.make(b.root, "Import feature is coming. For now, you can manually create decks.", Snackbar.LENGTH_SHORT).show()
         }
-
-        // AI generator button
-        b.btnAiHome.setOnClickListener {
-            showAiGeneratorDialog()
-        }
+        b.btnAiHome.setOnClickListener { showAiGeneratorDialog() }
     }
 
     override fun onResume() {
@@ -88,39 +72,35 @@ class UserHomeFragment : Fragment(R.layout.fragment_user_home) {
         refresh()
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _b = null
+    }
+
     private fun refresh() {
         val me = session.load() ?: return
 
-        val todayCount = db.getTodayStudyCount(me.id)
-        val streakDays = db.getStudyStreakDays(me.id)
-        val recent = db.getRecentlyStudiedDeck(me.id)
-        val most = db.getMostStudiedDeck(me.id)
+        val todayCount                           = statsDao.getTodayStudyCount(me.id)
+        val streakDays                           = statsDao.getStudyStreakDays(me.id)
+        val recent: StatsDao.RecentDeckRow?      = statsDao.getRecentlyStudiedDeck(me.id)
+        val most:   StatsDao.MostStudiedDeckRow? = statsDao.getMostStudiedDeck(me.id)
 
-        // Today
-        b.tvTodayValue.text =
-            if (todayCount == 1) "1 card reviewed" else "$todayCount cards reviewed"
+        b.tvTodayValue.text = if (todayCount == 1) "1 card reviewed" else "$todayCount cards reviewed"
+        b.tvStreakValue.text = if (streakDays == 1) "1 day" else "$streakDays days"
 
-        // Streak
-        b.tvStreakValue.text =
-            if (streakDays == 1) "1 day" else "$streakDays days"
-
-        // Daily goal bar
         val goal = 10
-        b.progressDailyGoal.max = goal
+        b.progressDailyGoal.max      = goal
         b.progressDailyGoal.progress = min(todayCount, goal)
-        b.tvDailyGoalValue.text = "${min(todayCount, goal)} / $goal cards"
+        b.tvDailyGoalValue.text      = "${min(todayCount, goal)} / $goal cards"
 
-        // Safe due count
-        val dueCount = runCatching { db.getDueCountForUser(me.id) }
-            .getOrElse { 0 }
-
+        // ✅ StudyDao.getDueCountForUser — correct home
+        val dueCount: Int = try { studyDao.getDueCountForUser(me.id) } catch (e: Exception) { 0 }
         b.tvDueValue.text = when {
             dueCount <= 0 -> "No cards due now"
             dueCount == 1 -> "1 card due now"
-            else -> "$dueCount cards due now"
+            else          -> "$dueCount cards due now"
         }
 
-        // Recent deck
         if (recent == null) {
             b.tvRecentDeck.text = "No recent study session"
             b.tvRecentMeta.text = "Start with a deck from your library."
@@ -131,7 +111,6 @@ class UserHomeFragment : Fragment(R.layout.fragment_user_home) {
             b.tvRecentHint.text = "Tap here or the button above to continue."
         }
 
-        // Most studied deck
         if (most == null) {
             b.tvMostDeck.text = "No favorite deck yet"
             b.tvMostMeta.text = "Your most-studied deck will appear here."
@@ -140,19 +119,17 @@ class UserHomeFragment : Fragment(R.layout.fragment_user_home) {
             b.tvMostMeta.text = "${most.studyCount} ratings recorded"
         }
 
-        // Continue button label
-        canContinueStudy = (recent != null || most != null)
+        canContinueStudy   = (recent != null || most != null)
         b.btnContinue.text = if (canContinueStudy) "Continue Study" else "Open Library"
     }
 
     private fun showAiGeneratorDialog() {
         val context = requireContext()
         val input = EditText(context).apply {
-            hint = "Paste your notes here.\nExample:\nPhotosynthesis - process by which plants make food.\nOxygen: gas needed for breathing."
+            hint     = "Paste your notes here.\nExample:\nPhotosynthesis - process by which plants make food."
             minLines = 4
             maxLines = 8
         }
-
         MaterialAlertDialogBuilder(context)
             .setTitle("Generate flashcards from text")
             .setMessage("Paste your notes. The app will try to create draft Q&A cards.")
@@ -160,43 +137,29 @@ class UserHomeFragment : Fragment(R.layout.fragment_user_home) {
             .setPositiveButton("Generate") { _, _ ->
                 val text = input.text?.toString().orEmpty().trim()
                 if (text.length < 10) {
-                    Snackbar.make(
-                        b.root,
-                        "Please paste a bit more text (at least one or two sentences).",
-                        Snackbar.LENGTH_LONG
-                    ).show()
+                    Snackbar.make(b.root, "Please paste a bit more text.", Snackbar.LENGTH_LONG).show()
                     return@setPositiveButton
                 }
+                val cards: List<RuleBasedFlashcardGenerator.GeneratedCard> = try {
+                    RuleBasedFlashcardGenerator().generate(text)
+                } catch (e: Exception) { emptyList() }
 
-                val generator = RuleBasedFlashcardGenerator()
-                val cards = runCatching { generator.generate(text) }
-                    .getOrElse { emptyList() }
-
-                if (cards.isEmpty()) {
-                    Snackbar.make(
-                        b.root,
-                        "Could not find any good flashcards. Try clearer notes (Term - definition).",
-                        Snackbar.LENGTH_LONG
-                    ).show()
-                } else {
+                if (cards.isEmpty())
+                    Snackbar.make(b.root, "Could not find flashcards. Try clearer notes (Term - definition).", Snackbar.LENGTH_LONG).show()
+                else
                     showAiResultDialog(cards)
-                }
             }
             .setNegativeButton("Cancel", null)
             .show()
     }
 
     private fun showAiResultDialog(cards: List<RuleBasedFlashcardGenerator.GeneratedCard>) {
-        val context = requireContext()
-        val first = cards.first()
+        val first  = cards.first()
         val sample = "Example:\nQ: ${first.front}\nA: ${first.back}"
-
-        MaterialAlertDialogBuilder(context)
+        MaterialAlertDialogBuilder(requireContext())
             .setTitle("Generated ${cards.size} card(s)")
             .setMessage(sample)
-            .setPositiveButton("Save as new deck") { _, _ ->
-                showSaveAiDeckDialog(cards)
-            }
+            .setPositiveButton("Save as new deck") { _, _ -> showSaveAiDeckDialog(cards) }
             .setNegativeButton("Close", null)
             .show()
     }
@@ -208,8 +171,7 @@ class UserHomeFragment : Fragment(R.layout.fragment_user_home) {
             return
         }
 
-        val inflater = layoutInflater
-        val d = DialogEditDeckBinding.inflate(inflater)
+        val d = DialogEditDeckBinding.inflate(layoutInflater)
         d.tvTitle.text = "Save AI Deck"
         d.etTitle.setText("")
         d.etDescription.setText("Generated from notes")
@@ -221,85 +183,54 @@ class UserHomeFragment : Fragment(R.layout.fragment_user_home) {
             .create()
 
         dialog.setOnShowListener {
-            dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                d.tilTitle.error = null
+            dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
+                .setOnClickListener {
+                    d.tilTitle.error = null
+                    val t    = d.etTitle.text?.toString().orEmpty().trim()
+                    val desc = d.etDescription.text?.toString()
 
-                val title = d.etTitle.text?.toString().orEmpty()
-                val desc = d.etDescription.text?.toString()
+                    when {
+                        t.isBlank()   -> { d.tilTitle.error = "Title is required"; return@setOnClickListener }
+                        t.length > 40 -> { d.tilTitle.error = "Max 40 characters";  return@setOnClickListener }
+                    }
 
-                val t = title.trim()
-                when {
-                    t.isBlank() -> {
-                        d.tilTitle.error = "Title is required"
+                    val deckId: Long = try {
+                        deckDao.createDeck(me.id, t, desc, false, false)
+                    } catch (e: Exception) { -1L }
+
+                    if (deckId <= 0L) {
+                        Snackbar.make(b.root, "Could not create deck. Try a different title.", Snackbar.LENGTH_LONG).show()
                         return@setOnClickListener
                     }
-                    t.length > 40 -> {
-                        d.tilTitle.error = "Max 40 characters"
-                        return@setOnClickListener
+
+                    var created = 0
+                    for (card in cards) {
+                        val id: Long = try { cardDao.createCardAny(deckId, card.front, card.back) } catch (e: Exception) { -1L }
+                        if (id > 0L) created++
                     }
+
+                    Snackbar.make(b.root, "AI deck created with $created card(s).", Snackbar.LENGTH_LONG).show()
+                    startActivity(
+                        Intent(requireContext(), DeckCardsActivity::class.java)
+                            .putExtra(DeckCardsActivity.EXTRA_DECK_ID, deckId)
+                    )
+                    dialog.dismiss()
                 }
-
-                // Create deck
-                val deckId = runCatching {
-                    db.createDeck(me.id, t, desc)
-                }.getOrDefault(-1L)
-
-                if (deckId <= 0L) {
-                    Snackbar.make(
-                        b.root,
-                        "Could not create deck. Try a different title.",
-                        Snackbar.LENGTH_LONG
-                    ).show()
-                    return@setOnClickListener
-                }
-
-                // Create cards
-                var created = 0
-                for (c in cards) {
-                    val id = runCatching {
-                        db.createCard(me.id, deckId, c.front, c.back)
-                    }.getOrDefault(-1L)
-                    if (id > 0L) created++
-                }
-
-                Snackbar.make(
-                    b.root,
-                    "AI deck created with $created card(s).",
-                    Snackbar.LENGTH_LONG
-                ).show()
-
-                // Open the new deck so user can edit / study
-                startActivity(
-                    Intent(requireContext(), DeckCardsActivity::class.java)
-                        .putExtra(DeckCardsActivity.EXTRA_DECK_ID, deckId)
-                )
-
-                dialog.dismiss()
-            }
         }
-
         dialog.show()
     }
 
     private fun openContinueDeck() {
-        val me = session.load() ?: return
-        val recent = db.getRecentlyStudiedDeck(me.id)
-        val most = db.getMostStudiedDeck(me.id)
-        val deckId = recent?.deckId ?: most?.deckId ?: return
-
+        val me     = session.load() ?: return
+        val recent = statsDao.getRecentlyStudiedDeck(me.id)
+        val most   = statsDao.getMostStudiedDeck(me.id)
+        val deckId: Long = recent?.deckId ?: most?.deckId ?: return
         startActivity(
             Intent(requireContext(), StudyActivity::class.java)
                 .putExtra(StudyActivity.EXTRA_DECK_ID, deckId)
         )
     }
 
-    private fun formatTime(ms: Long): String {
-        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
-        return sdf.format(Date(ms))
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _b = null
-    }
+    private fun formatTime(ms: Long): String =
+        SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(ms))
 }
