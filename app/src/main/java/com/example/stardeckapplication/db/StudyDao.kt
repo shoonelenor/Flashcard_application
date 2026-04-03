@@ -189,19 +189,21 @@ class StudyDao(private val dbHelper: StarDeckDbHelper) {
         userId: Long,
         nowMs: Long = System.currentTimeMillis()
     ): Int {
+        ensureCardProgressRowsForUser(userId)
+
         readable.rawQuery(
             """
-            SELECT COUNT(*)
-            FROM ${DbContract.TCARDPROGRESS} p
-            INNER JOIN ${DbContract.TCARDS} c
-                ON c.${DbContract.CID} = p.${DbContract.PCARDID}
-            INNER JOIN ${DbContract.TDECKS} d
-                ON d.${DbContract.DID} = c.${DbContract.CDECKID}
-            WHERE p.${DbContract.PUSERID} = ?
-              AND d.${DbContract.DOWNERUSERID} = ?
-              AND d.${DbContract.DSTATUS} = ?
-              AND p.${DbContract.PDUEAT} <= ?
-            """.trimIndent(),
+        SELECT COUNT(*)
+        FROM ${DbContract.TCARDPROGRESS} p
+        INNER JOIN ${DbContract.TCARDS} c
+            ON c.${DbContract.CID} = p.${DbContract.PCARDID}
+        INNER JOIN ${DbContract.TDECKS} d
+            ON d.${DbContract.DID} = c.${DbContract.CDECKID}
+        WHERE p.${DbContract.PUSERID} = ?
+          AND d.${DbContract.DOWNERUSERID} = ?
+          AND d.${DbContract.DSTATUS} = ?
+          AND p.${DbContract.PDUEAT} <= ?
+        """.trimIndent(),
             arrayOf(
                 userId.toString(),
                 userId.toString(),
@@ -361,6 +363,40 @@ class StudyDao(private val dbHelper: StarDeckDbHelper) {
 
     private fun daysToMillis(days: Int): Long =
         days.toLong() * 24L * 60L * 60L * 1000L
+
+    private fun ensureCardProgressRowsForUser(ownerUserId: Long) {
+        writable.execSQL(
+            """
+        INSERT OR IGNORE INTO ${DbContract.TCARDPROGRESS} (
+            ${DbContract.PUSERID},
+            ${DbContract.PCARDID},
+            ${DbContract.PDUEAT},
+            ${DbContract.PLASTREVIEWEDAT},
+            ${DbContract.PINTERVALDAYS},
+            ${DbContract.PEASEFACTOR},
+            ${DbContract.PREVIEWCOUNT},
+            ${DbContract.PLAPSECOUNT},
+            ${DbContract.PLASTRESULT}
+        )
+        SELECT
+            ?,
+            c.${DbContract.CID},
+            0,
+            NULL,
+            0,
+            2.5,
+            0,
+            0,
+            NULL
+        FROM ${DbContract.TCARDS} c
+        INNER JOIN ${DbContract.TDECKS} d
+            ON d.${DbContract.DID} = c.${DbContract.CDECKID}
+        WHERE d.${DbContract.DOWNERUSERID} = ?
+          AND d.${DbContract.DSTATUS} = ?
+        """.trimIndent(),
+            arrayOf(ownerUserId, ownerUserId, DbContract.DECKACTIVE)
+        )
+    }
 
     private fun ensureCardProgressRowsForDeck(ownerUserId: Long, deckId: Long) {
         writable.execSQL(

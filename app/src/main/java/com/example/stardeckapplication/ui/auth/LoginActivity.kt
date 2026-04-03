@@ -14,9 +14,9 @@ import androidx.core.widget.addTextChangedListener
 import com.example.stardeckapplication.R
 import com.example.stardeckapplication.databinding.ActivityLoginBinding
 import com.example.stardeckapplication.db.DbContract
-import com.example.stardeckapplication.db.UserDao.ResetPasswordResult
 import com.example.stardeckapplication.db.StarDeckDbHelper
 import com.example.stardeckapplication.db.UserDao
+import com.example.stardeckapplication.db.UserDao.ResetPasswordResult
 import com.example.stardeckapplication.ui.home.AdminHomeActivity
 import com.example.stardeckapplication.ui.home.ManagerHomeActivity
 import com.example.stardeckapplication.ui.home.UserHomeActivity
@@ -207,12 +207,10 @@ class LoginActivity : AppCompatActivity() {
         val view = layoutInflater.inflate(R.layout.dialog_reset_password, null)
 
         val tilEmail = view.findViewById<TextInputLayout>(R.id.tilResetEmail)
-        val tilFullName = view.findViewById<TextInputLayout>(R.id.tilResetFullName)
         val tilNewPw = view.findViewById<TextInputLayout>(R.id.tilResetNewPw)
         val tilConfirmPw = view.findViewById<TextInputLayout>(R.id.tilResetConfirmPw)
 
         val etEmail = view.findViewById<TextInputEditText>(R.id.etResetEmail)
-        val etFullName = view.findViewById<TextInputEditText>(R.id.etResetFullName)
         val etNewPw = view.findViewById<TextInputEditText>(R.id.etResetNewPw)
         val etConfirmPw = view.findViewById<TextInputEditText>(R.id.etResetConfirmPw)
 
@@ -223,7 +221,6 @@ class LoginActivity : AppCompatActivity() {
         etEmail.setText(b.etEmail.text?.toString().orEmpty().trim())
 
         etEmail.addTextChangedListener { tilEmail.error = null }
-        etFullName.addTextChangedListener { tilFullName.error = null }
         etNewPw.addTextChangedListener { tilNewPw.error = null }
         etConfirmPw.addTextChangedListener { tilConfirmPw.error = null }
 
@@ -242,7 +239,6 @@ class LoginActivity : AppCompatActivity() {
             btnReset.isEnabled = !loading
 
             etEmail.isEnabled = !loading
-            etFullName.isEnabled = !loading
             etNewPw.isEnabled = !loading
             etConfirmPw.isEnabled = !loading
         }
@@ -251,12 +247,10 @@ class LoginActivity : AppCompatActivity() {
 
         btnReset.setOnClickListener {
             tilEmail.error = null
-            tilFullName.error = null
             tilNewPw.error = null
             tilConfirmPw.error = null
 
             val email = etEmail.text?.toString().orEmpty().trim()
-            val fullName = etFullName.text?.toString().orEmpty().trim()
             val p1 = etNewPw.text?.toString().orEmpty()
             val p2 = etConfirmPw.text?.toString().orEmpty()
 
@@ -264,11 +258,6 @@ class LoginActivity : AppCompatActivity() {
 
             if (email.isBlank() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
                 tilEmail.error = getString(R.string.error_valid_email)
-                ok = false
-            }
-
-            if (fullName.isBlank()) {
-                tilFullName.error = getString(R.string.error_enter_full_name)
                 ok = false
             }
 
@@ -289,10 +278,9 @@ class LoginActivity : AppCompatActivity() {
             val pwChars = p1.toCharArray()
 
             executor.execute {
-                val result = try {
-                    userDao.resetPasswordWithIdentity(
+                val result: ResetPasswordResult = try {
+                    userDao.resetPasswordByEmailOnly(
                         email = email,
-                        fullName = fullName,
                         newPassword = pwChars
                     )
                 } catch (_: Exception) {
@@ -320,7 +308,7 @@ class LoginActivity : AppCompatActivity() {
                         }
 
                         ResetPasswordResult.NOT_FOUND -> {
-                            tilFullName.error = getString(R.string.error_email_name_not_match)
+                            tilEmail.error = getString(R.string.error_email_not_found)
                         }
                     }
                 }

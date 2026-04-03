@@ -171,6 +171,56 @@ class UserDao(private val dbHelper: StarDeckDbHelper) {
         }
     }
 
+    fun resetPasswordByEmailOnly(
+        email: String,
+        newPassword: CharArray
+    ): ResetPasswordResult {
+        val normalizedEmail = email.trim().lowercase()
+
+        if (normalizedEmail.isBlank()) {
+            return ResetPasswordResult.NOT_FOUND
+        }
+
+        readable.rawQuery(
+            """
+            SELECT
+                ${DbContract.U_ID},
+                ${DbContract.U_STATUS}
+            FROM ${DbContract.T_USERS}
+            WHERE ${DbContract.U_EMAIL} = ?
+            LIMIT 1
+            """.trimIndent(),
+            arrayOf(normalizedEmail)
+        ).use { c ->
+            if (!c.moveToFirst()) return ResetPasswordResult.NOT_FOUND
+
+            val userId = c.getLong(0)
+            val status = c.getString(1)
+
+            if (status == DbContract.STATUS_DISABLED) {
+                return ResetPasswordResult.DISABLED
+            }
+
+            val cv = ContentValues().apply {
+                put(DbContract.U_PASSWORD_HASH, PasswordHasher.hash(newPassword))
+                put(DbContract.U_FORCE_PW_CHANGE, 0)
+            }
+
+            val rows = writable.update(
+                DbContract.T_USERS,
+                cv,
+                "${DbContract.U_ID} = ?",
+                arrayOf(userId.toString())
+            )
+
+            return if (rows > 0) {
+                ResetPasswordResult.SUCCESS
+            } else {
+                ResetPasswordResult.NOT_FOUND
+            }
+        }
+    }
+
     /**
      * Called from LoginActivity on startup to guarantee demo/staff accounts
      * and sample decks exist (wraps SeederDao).

@@ -9,7 +9,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="16dp"
+        android:paddingBottom="24dp">
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
@@ -43,7 +44,6 @@
                     android:layout_marginTop="16dp"
                     android:text="Continue Study"
                     android:textAllCaps="false" />
-
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -54,6 +54,7 @@
             android:orientation="horizontal">
 
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardToday"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -86,6 +87,7 @@
                 android:layout_height="wrap_content" />
 
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardStreak"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -267,9 +269,13 @@
             android:orientation="horizontal">
 
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardDue"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
                 app:cardCornerRadius="20dp">
 
                 <LinearLayout
@@ -289,8 +295,16 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="Framework ready"
+                        android:text="No cards due now"
                         android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+
+                    <TextView
+                        android:id="@+id/tvDueMeta"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Your best due deck will appear here."
+                        android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -299,9 +313,13 @@
                 android:layout_height="wrap_content" />
 
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardMost"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
                 app:cardCornerRadius="20dp">
 
                 <LinearLayout

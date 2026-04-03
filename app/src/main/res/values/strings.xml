@@ -22,7 +22,7 @@
     <string name="x_sign_in">X sign in</string>
 
     <string name="reset_password">Reset password</string>
-    <string name="reset_password_subtitle">Enter your email, full name, and choose a new password.</string>
+    <string name="reset_password_subtitle">Enter your email, and choose a new password.</string>
     <string name="full_name">Full name</string>
     <string name="new_password">New password</string>
     <string name="confirm_password">Confirm password</string>
@@ -40,7 +40,7 @@
     <string name="error_password_number">Add 1 number (0-9)</string>
     <string name="error_password_symbol">Add 1 symbol (!@#)</string>
     <string name="error_account_disabled">This account is disabled</string>
-    <string name="error_email_name_not_match">Email or full name does not match</string>
+    <string name="error_email_not_found">Email address not found</string>
 
     <string name="msg_wrong_email_or_password">Wrong email or password</string>
     <string name="msg_account_disabled_contact_admin">This account is disabled. Contact support.</string>
