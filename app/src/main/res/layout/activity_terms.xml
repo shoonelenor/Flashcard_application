@@ -3,62 +3,165 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_login_space"
-    android:padding="18dp">
+    android:background="@drawable/bg_login_space">
 
-    <ImageButton
+    <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/btnBack"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:background="@android:color/transparent"
-        android:contentDescription="Back"
-        android:src="@android:drawable/ic_media_previous"
-        app:tint="@color/stardeck_text_primary"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <TextView
-        android:id="@+id/tvTitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Terms &amp; Conditions"
-        android:textColor="@color/stardeck_text_primary"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        app:layout_constraintStart_toEndOf="@id/btnBack"
+        android:background="@android:color/transparent"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@id/btnBack"
-        app:layout_constraintBottom_toBottomOf="@id/btnBack"
-        android:paddingStart="10dp" />
+        app:navigationIcon="@android:drawable/ic_media_previous"
+        app:navigationIconTint="@color/stardeck_text_primary"
+        app:title="@string/terms"
+        app:titleCentered="true"
+        app:titleTextColor="@color/stardeck_text_primary" />
 
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/card"
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/scrollTerms"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="14dp"
-        app:cardCornerRadius="18dp"
-        app:cardBackgroundColor="@color/stardeck_field_bg"
-        app:cardElevation="0dp"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:paddingStart="20dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="24dp"
         app:layout_constraintTop_toBottomOf="@id/btnBack"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <ScrollView
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:padding="16dp">
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
             <TextView
-                android:id="@+id/tvBody"
+                android:id="@+id/tvTermsHeading"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/terms_title"
+                android:textColor="@color/stardeck_text_primary"
+                android:textSize="28sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvTermsSubtitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/terms_subtitle"
                 android:textColor="@color/stardeck_text_secondary"
-                android:textSize="13sp"
-                android:lineSpacingExtra="3dp"
-                android:text="1. Use StarDeck respectfully.\n\n2. Do not upload harmful content.\n\n3. Your account may be disabled for abuse.\n\n4. Study data is stored on your device for learning features.\n\n5. Premium features are demo-only for this school project.\n\n6. By using StarDeck, you agree to these terms." />
-        </ScrollView>
+                android:textSize="14sp" />
 
-    </com.google.android.material.card.MaterialCardView>
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardTerms"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                app:cardBackgroundColor="@color/stardeck_field_bg"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/stardeck_field_stroke"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/terms_section_account"
+                        android:textColor="@color/stardeck_text_primary"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvTermsLine1"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:lineSpacingExtra="6dp"
+                        android:text="@string/terms_line_1"
+                        android:textColor="@color/stardeck_text_secondary"
+                        android:textSize="15sp" />
+
+                    <TextView
+                        android:id="@+id/tvTermsLine2"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:lineSpacingExtra="6dp"
+                        android:text="@string/terms_line_2"
+                        android:textColor="@color/stardeck_text_secondary"
+                        android:textSize="15sp" />
+
+                    <TextView
+                        android:id="@+id/tvTermsLine3"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:lineSpacingExtra="6dp"
+                        android:text="@string/terms_line_3"
+                        android:textColor="@color/stardeck_text_secondary"
+                        android:textSize="15sp" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginTop="18dp"
+                        android:layout_marginBottom="18dp"
+                        android:background="@color/stardeck_field_stroke" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/terms_section_content"
+                        android:textColor="@color/stardeck_text_primary"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvTermsLine4"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:lineSpacingExtra="6dp"
+                        android:text="@string/terms_line_4"
+                        android:textColor="@color/stardeck_text_secondary"
+                        android:textSize="15sp" />
+
+                    <TextView
+                        android:id="@+id/tvTermsLine5"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:lineSpacingExtra="6dp"
+                        android:text="@string/terms_line_5"
+                        android:textColor="@color/stardeck_text_secondary"
+                        android:textSize="15sp" />
+
+                    <TextView
+                        android:id="@+id/tvTermsLine6"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:lineSpacingExtra="6dp"
+                        android:text="@string/terms_line_6"
+                        android:textColor="@color/stardeck_text_secondary"
+                        android:textSize="15sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

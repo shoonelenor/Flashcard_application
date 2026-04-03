@@ -13,6 +13,12 @@ class TermsActivity : AppCompatActivity() {
         b = ActivityTermsBinding.inflate(layoutInflater)
         setContentView(b.root)
 
-        b.btnBack.setOnClickListener { finish() }
+        b.btnBack.setNavigationOnClickListener {
+            finish()
+        }
+
+        b.btnBack.setOnClickListener {
+            finish()
+        }
     }
 }

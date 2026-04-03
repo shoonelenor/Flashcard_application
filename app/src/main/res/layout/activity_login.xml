@@ -6,8 +6,8 @@
     android:layout_height="match_parent"
     android:background="@drawable/bg_login_space"
     android:paddingStart="24dp"
-    android:paddingEnd="24dp"
     android:paddingTop="24dp"
+    android:paddingEnd="24dp"
     android:paddingBottom="24dp">
 
     <androidx.core.widget.NestedScrollView
@@ -46,7 +46,7 @@
                         android:layout_width="42dp"
                         android:layout_height="42dp"
                         android:layout_gravity="center"
-                        android:contentDescription="StarDeck logo"
+                        android:contentDescription="@string/cd_app_logo"
                         android:src="@drawable/ic_stardeck_star" />
                 </FrameLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -56,18 +56,18 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
-                android:text="STARDECK"
+                android:letterSpacing="0.22"
+                android:text="@string/login_brand_name"
                 android:textColor="@color/stardeck_text_primary"
                 android:textSize="28sp"
-                android:textStyle="bold"
-                android:letterSpacing="0.22" />
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/tvHint"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
-                android:text="Your voyage to knowledge begins here."
+                android:text="@string/login_tagline"
                 android:textColor="@color/stardeck_text_secondary"
                 android:textSize="14sp" />
 
@@ -78,7 +78,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Email Address"
+                android:text="@string/email_address"
                 android:textColor="@color/stardeck_text_primary"
                 android:textSize="14sp"
                 android:textStyle="bold" />
@@ -104,7 +104,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:autofillHints="emailAddress"
-                    android:hint="user@gmail.com"
+                    android:hint="@string/email_address_hint"
                     android:imeOptions="actionNext"
                     android:inputType="textEmailAddress"
                     android:paddingTop="16dp"
@@ -120,7 +120,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Password"
+                android:text="@string/password"
                 android:textColor="@color/stardeck_text_primary"
                 android:textSize="14sp"
                 android:textStyle="bold" />
@@ -139,6 +139,7 @@
                 app:boxStrokeColor="@color/stardeck_field_stroke"
                 app:boxStrokeWidth="1dp"
                 app:boxStrokeWidthFocused="2dp"
+                app:endIconContentDescription="@string/cd_toggle_password_visibility"
                 app:endIconMode="password_toggle"
                 app:hintEnabled="false">
 
@@ -147,7 +148,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:autofillHints="password"
-                    android:hint="••••••••"
+                    android:hint="@string/password_hint"
                     android:imeOptions="actionDone"
                     android:inputType="textPassword"
                     android:paddingTop="16dp"
@@ -163,7 +164,7 @@
                 android:layout_gravity="end"
                 android:layout_marginTop="10dp"
                 android:padding="6dp"
-                android:text="Forgot password?"
+                android:text="@string/forgot_password"
                 android:textColor="@color/stardeck_link"
                 android:textSize="13sp" />
 
@@ -176,7 +177,7 @@
                     android:id="@+id/btnLogin"
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
-                    android:text="Log in"
+                    android:text="@string/log_in"
                     android:textAllCaps="false"
                     android:textColor="@android:color/white"
                     android:textSize="16sp"
@@ -204,7 +205,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="New explorer?"
+                    android:text="@string/new_explorer"
                     android:textColor="@color/stardeck_text_secondary"
                     android:textSize="13sp" />
 
@@ -213,7 +214,7 @@
                     style="@style/Widget.Material3.Button.TextButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Create account"
+                    android:text="@string/create_account"
                     android:textAllCaps="false"
                     android:textColor="@color/stardeck_link" />
             </LinearLayout>
@@ -222,9 +223,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
+                android:alpha="0.9"
                 android:gravity="center"
-                android:orientation="horizontal"
-                android:alpha="0.9">
+                android:orientation="horizontal">
 
                 <View
                     android:layout_width="0dp"
@@ -237,7 +238,7 @@
                     android:layout_height="wrap_content"
                     android:paddingStart="10dp"
                     android:paddingEnd="10dp"
-                    android:text="Sign in with"
+                    android:text="@string/sign_in_with"
                     android:textColor="@color/stardeck_text_secondary"
                     android:textSize="12sp" />
 
@@ -260,6 +261,7 @@
                     android:layout_width="52dp"
                     android:layout_height="52dp"
                     android:clickable="true"
+                    android:contentDescription="@string/google_sign_in"
                     android:focusable="true"
                     android:foreground="?attr/selectableItemBackgroundBorderless"
                     app:cardBackgroundColor="@android:color/transparent"
@@ -272,17 +274,20 @@
                         android:layout_width="22dp"
                         android:layout_height="22dp"
                         android:layout_gravity="center"
-                        android:contentDescription="Google"
+                        android:contentDescription="@string/google_sign_in"
                         android:src="@drawable/ic_google" />
                 </com.google.android.material.card.MaterialCardView>
 
-                <View android:layout_width="14dp" android:layout_height="1dp" />
+                <View
+                    android:layout_width="14dp"
+                    android:layout_height="1dp" />
 
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/btnFacebook"
                     android:layout_width="52dp"
                     android:layout_height="52dp"
                     android:clickable="true"
+                    android:contentDescription="@string/facebook_sign_in"
                     android:focusable="true"
                     android:foreground="?attr/selectableItemBackgroundBorderless"
                     app:cardBackgroundColor="@android:color/transparent"
@@ -295,17 +300,20 @@
                         android:layout_width="22dp"
                         android:layout_height="22dp"
                         android:layout_gravity="center"
-                        android:contentDescription="Facebook"
+                        android:contentDescription="@string/facebook_sign_in"
                         android:src="@drawable/ic_facebook" />
                 </com.google.android.material.card.MaterialCardView>
 
-                <View android:layout_width="14dp" android:layout_height="1dp" />
+                <View
+                    android:layout_width="14dp"
+                    android:layout_height="1dp" />
 
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/btnX"
                     android:layout_width="52dp"
                     android:layout_height="52dp"
                     android:clickable="true"
+                    android:contentDescription="@string/x_sign_in"
                     android:focusable="true"
                     android:foreground="?attr/selectableItemBackgroundBorderless"
                     app:cardBackgroundColor="@android:color/transparent"
@@ -318,7 +326,7 @@
                         android:layout_width="22dp"
                         android:layout_height="22dp"
                         android:layout_gravity="center"
-                        android:contentDescription="X"
+                        android:contentDescription="@string/x_sign_in"
                         android:src="@drawable/ic_x" />
                 </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
@@ -341,7 +349,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:padding="6dp"
-                    android:text="Terms"
+                    android:text="@string/terms"
                     android:textColor="@color/stardeck_link"
                     android:textSize="13sp" />
 
@@ -358,7 +366,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:padding="6dp"
-                    android:text="Privacy"
+                    android:text="@string/privacy"
                     android:textColor="@color/stardeck_link"
                     android:textSize="13sp" />
             </LinearLayout>
@@ -369,7 +377,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:paddingBottom="6dp"
-                android:text="© 2026 StarDeck. All rights reserved."
+                android:text="@string/copyright_text"
                 android:textColor="@color/stardeck_text_secondary"
                 android:textSize="12sp" />
 

@@ -14,6 +14,7 @@ import androidx.core.widget.addTextChangedListener
 import com.example.stardeckapplication.R
 import com.example.stardeckapplication.databinding.ActivityLoginBinding
 import com.example.stardeckapplication.db.DbContract
+import com.example.stardeckapplication.db.UserDao.ResetPasswordResult
 import com.example.stardeckapplication.db.StarDeckDbHelper
 import com.example.stardeckapplication.db.UserDao
 import com.example.stardeckapplication.ui.home.AdminHomeActivity
@@ -52,7 +53,7 @@ class LoginActivity : AppCompatActivity() {
             }
         }
 
-        b.etEmail.addTextChangedListener    { b.tilEmail.error    = null }
+        b.etEmail.addTextChangedListener { b.tilEmail.error = null }
         b.etPassword.addTextChangedListener { b.tilPassword.error = null }
 
         b.etPassword.setOnEditorActionListener { _, actionId, _ ->
@@ -64,15 +65,19 @@ class LoginActivity : AppCompatActivity() {
             }
         }
 
-        b.btnLogin.setOnClickListener          { attemptLogin() }
-        b.btnGoRegister.setOnClickListener     {
+        b.btnLogin.setOnClickListener { attemptLogin() }
+
+        b.btnGoRegister.setOnClickListener {
             startActivity(Intent(this, RegisterActivity::class.java))
         }
-        b.btnForgotPassword.setOnClickListener { showResetPasswordDialog() }
 
-        b.btnGoogle.setOnClickListener   { openLink("https://accounts.google.com/") }
+        b.btnForgotPassword.setOnClickListener {
+            showResetPasswordDialog()
+        }
+
+        b.btnGoogle.setOnClickListener { openLink("https://accounts.google.com/") }
         b.btnFacebook.setOnClickListener { openLink("https://www.facebook.com/login/") }
-        b.btnX.setOnClickListener        { openLink("https://x.com/login") }
+        b.btnX.setOnClickListener { openLink("https://x.com/login") }
 
         b.btnTerms.setOnClickListener {
             startActivity(
@@ -82,6 +87,7 @@ class LoginActivity : AppCompatActivity() {
                 )
             )
         }
+
         b.btnPrivacy.setOnClickListener {
             startActivity(
                 Intent(
@@ -100,29 +106,31 @@ class LoginActivity : AppCompatActivity() {
     private fun attemptLogin() {
         if (inFlight.get()) return
 
-        b.tilEmail.error    = null
+        b.tilEmail.error = null
         b.tilPassword.error = null
 
         val email = b.etEmail.text?.toString().orEmpty().trim()
-        val pw    = b.etPassword.text?.toString().orEmpty()
+        val pw = b.etPassword.text?.toString().orEmpty()
 
         var ok = true
-        if (email.isBlank() ||
-            !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
-        ) {
-            b.tilEmail.error = "Enter a valid email"
+
+        if (email.isBlank() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            b.tilEmail.error = getString(R.string.error_valid_email)
             ok = false
         }
+
         if (pw.isBlank()) {
-            b.tilPassword.error = "Enter your password"
+            b.tilPassword.error = getString(R.string.error_enter_password)
             ok = false
         }
+
         if (!ok) return
 
         hideKeyboard()
         setLoading(true)
 
         val pwChars = pw.toCharArray()
+
         executor.execute {
             try {
                 val user = userDao.authenticate(email, pwChars)
@@ -133,7 +141,7 @@ class LoginActivity : AppCompatActivity() {
                         setLoading(false)
                         Snackbar.make(
                             b.root,
-                            "Wrong email or password",
+                            getString(R.string.msg_wrong_email_or_password),
                             Snackbar.LENGTH_SHORT
                         ).show()
                     }
@@ -145,7 +153,7 @@ class LoginActivity : AppCompatActivity() {
                         setLoading(false)
                         Snackbar.make(
                             b.root,
-                            "This account is disabled. Contact Admin.",
+                            getString(R.string.msg_account_disabled_contact_admin),
                             Snackbar.LENGTH_LONG
                         ).show()
                     }
@@ -153,29 +161,32 @@ class LoginActivity : AppCompatActivity() {
                 }
 
                 val previous = userDao.getLastLoginAt(user.id)
-                val now      = System.currentTimeMillis()
+                val now = System.currentTimeMillis()
                 userDao.updateLastLoginAt(user.id, now)
 
                 postUi {
                     setLoading(false)
+
                     val msg = if (previous == null) {
-                        "Welcome! First login."
+                        getString(R.string.msg_first_login)
                     } else {
-                        "Welcome back! Last login: ${fmt(previous)}"
+                        getString(R.string.msg_welcome_back, fmt(previous))
                     }
+
                     Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
 
                     session.save(user)
 
                     if (user.forcePasswordChange) {
-                        val i = Intent(this, ChangePasswordActivity::class.java).apply {
+                        val intent = Intent(this, ChangePasswordActivity::class.java).apply {
                             putExtra(ChangePasswordActivity.EXTRA_SESSION, user)
                             putExtra(ChangePasswordActivity.EXTRA_FORCE_MODE, true)
                         }
-                        startActivity(i)
+                        startActivity(intent)
                         finish()
                         return@postUi
                     }
+
                     goHome(user.role)
                 }
             } catch (_: Exception) {
@@ -184,7 +195,7 @@ class LoginActivity : AppCompatActivity() {
                     setLoading(false)
                     Snackbar.make(
                         b.root,
-                        "Login failed. Please try again.",
+                        getString(R.string.msg_login_failed),
                         Snackbar.LENGTH_LONG
                     ).show()
                 }
@@ -195,19 +206,25 @@ class LoginActivity : AppCompatActivity() {
     private fun showResetPasswordDialog() {
         val view = layoutInflater.inflate(R.layout.dialog_reset_password, null)
 
-        val tilEmail     = view.findViewById<TextInputLayout>(R.id.tilResetEmail)
-        val tilNewPw     = view.findViewById<TextInputLayout>(R.id.tilResetNewPw)
+        val tilEmail = view.findViewById<TextInputLayout>(R.id.tilResetEmail)
+        val tilFullName = view.findViewById<TextInputLayout>(R.id.tilResetFullName)
+        val tilNewPw = view.findViewById<TextInputLayout>(R.id.tilResetNewPw)
         val tilConfirmPw = view.findViewById<TextInputLayout>(R.id.tilResetConfirmPw)
-        val etEmail      = view.findViewById<TextInputEditText>(R.id.etResetEmail)
-        val etNewPw      = view.findViewById<TextInputEditText>(R.id.etResetNewPw)
-        val etConfirmPw  = view.findViewById<TextInputEditText>(R.id.etResetConfirmPw)
-        val btnCancel    = view.findViewById<View>(R.id.btnResetCancel)
-        val btnReset     = view.findViewById<View>(R.id.btnResetDo)
-        val progress     = view.findViewById<View>(R.id.progressReset)
+
+        val etEmail = view.findViewById<TextInputEditText>(R.id.etResetEmail)
+        val etFullName = view.findViewById<TextInputEditText>(R.id.etResetFullName)
+        val etNewPw = view.findViewById<TextInputEditText>(R.id.etResetNewPw)
+        val etConfirmPw = view.findViewById<TextInputEditText>(R.id.etResetConfirmPw)
+
+        val btnCancel = view.findViewById<View>(R.id.btnResetCancel)
+        val btnReset = view.findViewById<View>(R.id.btnResetDo)
+        val progress = view.findViewById<View>(R.id.progressReset)
 
         etEmail.setText(b.etEmail.text?.toString().orEmpty().trim())
-        etEmail.addTextChangedListener     { tilEmail.error     = null }
-        etNewPw.addTextChangedListener     { tilNewPw.error     = null }
+
+        etEmail.addTextChangedListener { tilEmail.error = null }
+        etFullName.addTextChangedListener { tilFullName.error = null }
+        etNewPw.addTextChangedListener { tilNewPw.error = null }
         etConfirmPw.addTextChangedListener { tilConfirmPw.error = null }
 
         val dialog = MaterialAlertDialogBuilder(this)
@@ -219,11 +236,14 @@ class LoginActivity : AppCompatActivity() {
         }
 
         fun setResetLoading(loading: Boolean) {
-            progress.visibility   = if (loading) View.VISIBLE else View.GONE
-            btnCancel.isEnabled   = !loading
-            btnReset.isEnabled    = !loading
-            etEmail.isEnabled     = !loading
-            etNewPw.isEnabled     = !loading
+            progress.visibility = if (loading) View.VISIBLE else View.GONE
+
+            btnCancel.isEnabled = !loading
+            btnReset.isEnabled = !loading
+
+            etEmail.isEnabled = !loading
+            etFullName.isEnabled = !loading
+            etNewPw.isEnabled = !loading
             etConfirmPw.isEnabled = !loading
         }
 
@@ -231,52 +251,77 @@ class LoginActivity : AppCompatActivity() {
 
         btnReset.setOnClickListener {
             tilEmail.error = null
+            tilFullName.error = null
             tilNewPw.error = null
             tilConfirmPw.error = null
 
             val email = etEmail.text?.toString().orEmpty().trim()
-            val p1    = etNewPw.text?.toString().orEmpty()
-            val p2    = etConfirmPw.text?.toString().orEmpty()
+            val fullName = etFullName.text?.toString().orEmpty().trim()
+            val p1 = etNewPw.text?.toString().orEmpty()
+            val p2 = etConfirmPw.text?.toString().orEmpty()
 
             var ok = true
-            if (email.isBlank() ||
-                !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
-            ) {
-                tilEmail.error = "Enter a valid email"
+
+            if (email.isBlank() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                tilEmail.error = getString(R.string.error_valid_email)
                 ok = false
             }
+
+            if (fullName.isBlank()) {
+                tilFullName.error = getString(R.string.error_enter_full_name)
+                ok = false
+            }
+
             val strongMsg = strongPasswordError(p1)
             if (strongMsg != null) {
                 tilNewPw.error = strongMsg
                 ok = false
             }
+
             if (p1 != p2) {
-                tilConfirmPw.error = "Passwords do not match"
+                tilConfirmPw.error = getString(R.string.error_password_mismatch)
                 ok = false
             }
+
             if (!ok) return@setOnClickListener
 
             setResetLoading(true)
             val pwChars = p1.toCharArray()
+
             executor.execute {
-                val success = try {
-                    userDao.resetPasswordByEmail(email, pwChars)
+                val result = try {
+                    userDao.resetPasswordWithIdentity(
+                        email = email,
+                        fullName = fullName,
+                        newPassword = pwChars
+                    )
                 } catch (_: Exception) {
+                    ResetPasswordResult.NOT_FOUND
+                } finally {
                     pwChars.fill('\u0000')
-                    false
                 }
+
                 postUi {
                     setResetLoading(false)
-                    if (success) {
-                        Snackbar.make(
-                            b.root,
-                            "Password updated. Please log in.",
-                            Snackbar.LENGTH_LONG
-                        ).show()
-                        b.etPassword.setText("")
-                        dialog.dismiss()
-                    } else {
-                        tilEmail.error = "Email not found"
+
+                    when (result) {
+                        ResetPasswordResult.SUCCESS -> {
+                            Snackbar.make(
+                                b.root,
+                                getString(R.string.msg_password_updated),
+                                Snackbar.LENGTH_LONG
+                            ).show()
+                            b.etPassword.setText("")
+                            dialog.dismiss()
+                        }
+
+                        ResetPasswordResult.DISABLED -> {
+                            tilEmail.error = getString(R.string.error_account_disabled)
+                        }
+
+                        ResetPasswordResult.NOT_FOUND -> {
+                            tilFullName.error = getString(R.string.error_email_name_not_match)
+                        }
                     }
                 }
             }
@@ -286,40 +331,45 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun strongPasswordError(pw: String): String? {
-        if (pw.length < 8)                     return "At least 8 characters"
-        if (pw.any { it.isWhitespace() })      return "No spaces allowed"
-        if (!pw.any { it.isUpperCase() })      return "Add 1 uppercase letter (A-Z)"
-        if (!pw.any { it.isLowerCase() })      return "Add 1 lowercase letter (a-z)"
-        if (!pw.any { it.isDigit() })          return "Add 1 number (0-9)"
-        if (!pw.any { !it.isLetterOrDigit() }) return "Add 1 symbol (!@#)"
+        if (pw.length < 8) return getString(R.string.error_password_min_length)
+        if (pw.any { it.isWhitespace() }) return getString(R.string.error_password_no_spaces)
+        if (!pw.any { it.isUpperCase() }) return getString(R.string.error_password_uppercase)
+        if (!pw.any { it.isLowerCase() }) return getString(R.string.error_password_lowercase)
+        if (!pw.any { it.isDigit() }) return getString(R.string.error_password_number)
+        if (!pw.any { !it.isLetterOrDigit() }) return getString(R.string.error_password_symbol)
         return null
     }
 
     private fun setLoading(loading: Boolean) {
         inFlight.set(loading)
-        b.progressLogin.visibility    = if (loading) View.VISIBLE else View.GONE
-        b.btnLogin.isEnabled          = !loading
-        b.btnGoRegister.isEnabled     = !loading
+
+        b.progressLogin.visibility = if (loading) View.VISIBLE else View.GONE
+        b.btnLogin.isEnabled = !loading
+        b.btnGoRegister.isEnabled = !loading
         b.btnForgotPassword.isEnabled = !loading
-        b.btnGoogle.isEnabled         = !loading
-        b.btnFacebook.isEnabled       = !loading
-        b.btnX.isEnabled              = !loading
-        b.etEmail.isEnabled           = !loading
-        b.etPassword.isEnabled        = !loading
+        b.btnGoogle.isEnabled = !loading
+        b.btnFacebook.isEnabled = !loading
+        b.btnX.isEnabled = !loading
+        b.etEmail.isEnabled = !loading
+        b.etPassword.isEnabled = !loading
     }
 
     private fun openLink(url: String) {
         try {
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
         } catch (_: ActivityNotFoundException) {
-            Snackbar.make(b.root, "No browser app found.", Snackbar.LENGTH_LONG).show()
+            Snackbar.make(
+                b.root,
+                getString(R.string.msg_no_browser),
+                Snackbar.LENGTH_LONG
+            ).show()
         }
     }
 
     private fun hideKeyboard() {
-        val v = currentFocus ?: return
+        val view = currentFocus ?: return
         (getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager)
-            .hideSoftInputFromWindow(v.windowToken, 0)
+            .hideSoftInputFromWindow(view.windowToken, 0)
     }
 
     private fun postUi(block: () -> Unit) {
@@ -328,15 +378,17 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
-    private fun fmt(ms: Long): String =
-        SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(ms))
+    private fun fmt(ms: Long): String {
+        return SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(ms))
+    }
 
     private fun goHome(role: String) {
         val next = when (role) {
-            DbContract.ROLE_ADMIN   -> AdminHomeActivity::class.java
+            DbContract.ROLE_ADMIN -> AdminHomeActivity::class.java
             DbContract.ROLE_MANAGER -> ManagerHomeActivity::class.java
-            else                    -> UserHomeActivity::class.java
+            else -> UserHomeActivity::class.java
         }
+
         startActivity(Intent(this, next))
         finish()
     }

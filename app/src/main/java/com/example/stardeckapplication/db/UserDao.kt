@@ -1,7 +1,7 @@
 package com.example.stardeckapplication.db
 
-import android.database.sqlite.SQLiteDatabase
 import android.content.ContentValues
+import android.database.sqlite.SQLiteDatabase
 import com.example.stardeckapplication.model.UserSession
 import com.example.stardeckapplication.util.PasswordHasher
 import java.time.LocalDate
@@ -29,6 +29,12 @@ class UserDao(private val dbHelper: StarDeckDbHelper) {
         get() = dbHelper.writableDatabase
 
     // ---------- AUTH ----------
+
+    enum class ResetPasswordResult {
+        SUCCESS,
+        NOT_FOUND,
+        DISABLED
+    }
 
     fun registerUser(
         name: String,
@@ -69,13 +75,13 @@ class UserDao(private val dbHelper: StarDeckDbHelper) {
         ).use { c ->
             if (!c.moveToFirst()) return null
 
-            val id     = c.getLong(0)
-            val name   = c.getString(1)
-            val em     = c.getString(2)
+            val id = c.getLong(0)
+            val name = c.getString(1)
+            val em = c.getString(2)
             val stored = c.getString(3)
-            val role   = c.getString(4)
+            val role = c.getString(4)
             val status = c.getString(5)
-            val force  = c.getInt(6) == 1
+            val force = c.getInt(6) == 1
 
             if (!PasswordHasher.verify(password, stored)) return null
 
@@ -107,27 +113,62 @@ class UserDao(private val dbHelper: StarDeckDbHelper) {
         )
     }
 
-    fun resetPasswordByEmail(
+    fun resetPasswordWithIdentity(
         email: String,
+        fullName: String,
         newPassword: CharArray
-    ): Boolean {
-        val normalized = email.trim().lowercase()
-        if (normalized.isBlank()) return false
+    ): ResetPasswordResult {
+        val normalizedEmail = email.trim().lowercase()
+        val normalizedName = fullName.trim().lowercase()
 
-        val newHash = PasswordHasher.hash(newPassword)
-
-        val cv = ContentValues().apply {
-            put(DbContract.U_PASSWORD_HASH, newHash)
-            put(DbContract.U_FORCE_PW_CHANGE, 0)
+        if (normalizedEmail.isBlank() || normalizedName.isBlank()) {
+            return ResetPasswordResult.NOT_FOUND
         }
 
-        val rows = writable.update(
-            DbContract.T_USERS,
-            cv,
-            "${DbContract.U_EMAIL} = ?",
-            arrayOf(normalized)
-        )
-        return rows > 0
+        readable.rawQuery(
+            """
+            SELECT
+                ${DbContract.U_ID},
+                ${DbContract.U_STATUS},
+                ${DbContract.U_NAME}
+            FROM ${DbContract.T_USERS}
+            WHERE ${DbContract.U_EMAIL} = ?
+            LIMIT 1
+            """.trimIndent(),
+            arrayOf(normalizedEmail)
+        ).use { c ->
+            if (!c.moveToFirst()) return ResetPasswordResult.NOT_FOUND
+
+            val userId = c.getLong(0)
+            val status = c.getString(1)
+            val storedName = c.getString(2).trim().lowercase()
+
+            if (status == DbContract.STATUS_DISABLED) {
+                return ResetPasswordResult.DISABLED
+            }
+
+            if (storedName != normalizedName) {
+                return ResetPasswordResult.NOT_FOUND
+            }
+
+            val cv = ContentValues().apply {
+                put(DbContract.U_PASSWORD_HASH, PasswordHasher.hash(newPassword))
+                put(DbContract.U_FORCE_PW_CHANGE, 0)
+            }
+
+            val rows = writable.update(
+                DbContract.T_USERS,
+                cv,
+                "${DbContract.U_ID} = ?",
+                arrayOf(userId.toString())
+            )
+
+            return if (rows > 0) {
+                ResetPasswordResult.SUCCESS
+            } else {
+                ResetPasswordResult.NOT_FOUND
+            }
+        }
     }
 
     /**
@@ -167,7 +208,7 @@ class UserDao(private val dbHelper: StarDeckDbHelper) {
     }
 
     /**
-     * Backwards‑compatible name (if old code calls isUserPremium).
+     * Backwards-compatible name (if old code calls isUserPremium).
      */
     fun isUserPremium(userId: Long): Boolean = isPremiumUser(userId)
 

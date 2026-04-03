@@ -1,3 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">StarDeck Application</string>
+    <string name="app_name">StarDeckApplication</string>
+
+    <string name="login_brand_name">STARDECK</string>
+    <string name="login_tagline">Your voyage to knowledge begins here.</string>
+    <string name="email_address">Email Address</string>
+    <string name="email_address_hint">user@gmail.com</string>
+    <string name="password">Password</string>
+    <string name="password_hint">••••••••</string>
+    <string name="forgot_password">Forgot password?</string>
+    <string name="log_in">Log in</string>
+    <string name="new_explorer">New explorer?</string>
+    <string name="create_account">Create account</string>
+    <string name="sign_in_with">Sign in with</string>
+    <string name="terms">Terms</string>
+    <string name="privacy">Privacy</string>
+    <string name="copyright_text">© 2026 StarDeck. All rights reserved.</string>
+
+    <string name="google_sign_in">Google sign in</string>
+    <string name="facebook_sign_in">Facebook sign in</string>
+    <string name="x_sign_in">X sign in</string>
+
+    <string name="reset_password">Reset password</string>
+    <string name="reset_password_subtitle">Enter your email, full name, and choose a new password.</string>
+    <string name="full_name">Full name</string>
+    <string name="new_password">New password</string>
+    <string name="confirm_password">Confirm password</string>
+    <string name="cancel">Cancel</string>
+    <string name="reset">Reset</string>
+
+    <string name="error_valid_email">Enter a valid email</string>
+    <string name="error_enter_password">Enter your password</string>
+    <string name="error_enter_full_name">Enter your full name</string>
+    <string name="error_password_mismatch">Passwords do not match</string>
+    <string name="error_password_min_length">At least 8 characters</string>
+    <string name="error_password_no_spaces">No spaces allowed</string>
+    <string name="error_password_uppercase">Add 1 uppercase letter (A-Z)</string>
+    <string name="error_password_lowercase">Add 1 lowercase letter (a-z)</string>
+    <string name="error_password_number">Add 1 number (0-9)</string>
+    <string name="error_password_symbol">Add 1 symbol (!@#)</string>
+    <string name="error_account_disabled">This account is disabled</string>
+    <string name="error_email_name_not_match">Email or full name does not match</string>
+
+    <string name="msg_wrong_email_or_password">Wrong email or password</string>
+    <string name="msg_account_disabled_contact_admin">This account is disabled. Contact support.</string>
+    <string name="msg_login_failed">Login failed. Please try again.</string>
+    <string name="msg_password_updated">Password updated. Please log in.</string>
+    <string name="msg_first_login">Welcome! First login.</string>
+    <string name="msg_welcome_back">Welcome back! Last login: %1$s</string>
+    <string name="msg_no_browser">No browser app found.</string>
+
+    <string name="terms_title">Terms &amp; Conditions</string>
+    <string name="terms_subtitle">Please read these terms carefully before using StarDeck.</string>
+    <string name="terms_section_account">Account and acceptable use</string>
+    <string name="terms_section_content">Content and platform rules</string>
+    <string name="terms_line_1">You are responsible for maintaining the confidentiality of your account credentials.</string>
+    <string name="terms_line_2">You agree not to misuse the service, interfere with the platform, or attempt unauthorized access.</string>
+    <string name="terms_line_3">We may suspend or restrict accounts that violate our policies or compromise platform security.</string>
+    <string name="terms_line_4">You are responsible for the content you create, upload, or organize within your study materials.</string>
+    <string name="terms_line_5">You must not upload unlawful, harmful, abusive, or infringing content through the service.</string>
+    <string name="terms_line_6">By continuing to use StarDeck, you agree to these terms and any future updates to them.</string>
+
+    <string name="privacy_title">Privacy Policy</string>
+    <string name="privacy_subtitle">This page explains how StarDeck collects, stores, and protects your information.</string>
+    <string name="privacy_section_information">Information we collect</string>
+    <string name="privacy_section_rights">Your choices and rights</string>
+    <string name="privacy_line_1">StarDeck stores account information and study data necessary to provide core learning features.</string>
+    <string name="privacy_line_2">We use your information to operate the app, improve user experience, and maintain account security.</string>
+    <string name="privacy_line_3">We do not sell your personal information to third parties.</string>
+    <string name="privacy_line_4">You may request updates or removal of your account information in accordance with applicable policies.</string>
+    <string name="privacy_line_5">You are responsible for protecting access to your device and account credentials.</string>
+    <string name="privacy_line_6">By using StarDeck, you acknowledge this privacy policy and our handling of your information.</string>
+
+    <string name="cd_toggle_password_visibility">Toggle password visibility</string>
+    <string name="cd_back">Back</string>
+    <string name="cd_app_logo">StarDeck logo</string>
 </resources>
