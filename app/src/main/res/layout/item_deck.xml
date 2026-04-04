@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -7,7 +8,9 @@
     android:clickable="true"
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground"
+    app:cardBackgroundColor="@color/stardeck_field_bg"
     app:cardCornerRadius="20dp"
+    app:strokeColor="@color/stardeck_field_stroke"
     app:strokeWidth="1dp">
 
     <LinearLayout
@@ -16,27 +19,22 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <LinearLayout
+        <!-- Title row -->
+        <TextView
+            android:id="@+id/tvTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:maxLines="2"
+            android:text="Deck title"
+            android:textColor="@color/stardeck_text_primary"
+            android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
 
-            <TextView
-                android:id="@+id/tvTitle"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:maxLines="2"
-                android:text="Deck title"
-                android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
-        </LinearLayout>
-
-        <LinearLayout
+        <!-- Chips row -->
+        <com.google.android.material.chip.ChipGroup
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:orientation="horizontal">
+            app:chipSpacingHorizontal="6dp">
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipVisibility"
@@ -44,11 +42,7 @@
                 android:layout_height="wrap_content"
                 android:checkable="false"
                 android:clickable="false"
-                android:text="Private" />
-
-            <Space
-                android:layout_width="8dp"
-                android:layout_height="wrap_content" />
+                android:text="Public" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipPremium"
@@ -59,10 +53,6 @@
                 android:text="Premium"
                 android:visibility="gone" />
 
-            <Space
-                android:layout_width="8dp"
-                android:layout_height="wrap_content" />
-
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipCategory"
                 android:layout_width="wrap_content"
@@ -71,10 +61,6 @@
                 android:clickable="false"
                 android:text="Category"
                 android:visibility="gone" />
-
-            <Space
-                android:layout_width="8dp"
-                android:layout_height="wrap_content" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipSubject"
@@ -85,10 +71,6 @@
                 android:text="Subject"
                 android:visibility="gone" />
 
-            <Space
-                android:layout_width="8dp"
-                android:layout_height="wrap_content" />
-
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipLanguage"
                 android:layout_width="wrap_content"
@@ -97,8 +79,9 @@
                 android:clickable="false"
                 android:text="Language"
                 android:visibility="gone" />
-        </LinearLayout>
+        </com.google.android.material.chip.ChipGroup>
 
+        <!-- Description -->
         <TextView
             android:id="@+id/tvDesc"
             android:layout_width="match_parent"
@@ -106,19 +89,23 @@
             android:layout_marginTop="8dp"
             android:maxLines="3"
             android:text="Description"
+            android:textColor="@color/stardeck_text_secondary"
             android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
 
+        <!-- Hint -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:text="Tap card to open deck cards"
+            android:textColor="@color/stardeck_text_hint"
             android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
 
+        <!-- Edit / Delete buttons -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="8dp"
             android:gravity="end"
             android:orientation="horizontal">
 

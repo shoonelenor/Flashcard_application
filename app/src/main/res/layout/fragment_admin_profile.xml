@@ -1,67 +1,407 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp">
+    android:fillViewport="true">
 
-    <TextView
-        android:id="@+id/title"
-        android:layout_width="0dp"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Profile"
-        android:textAppearance="@style/TextAppearance.Material3.HeadlineSmall"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        android:orientation="vertical"
+        android:paddingBottom="32dp">
 
-    <!-- Account card (ONLY name + email) -->
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/cardInfo"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="14dp"
-        app:cardCornerRadius="16dp"
-        app:strokeWidth="1dp"
-        app:layout_constraintTop_toBottomOf="@id/title"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        <!-- Avatar -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardAvatar"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_marginTop="32dp"
+            android:layout_gravity="center_horizontal"
+            app:cardCornerRadius="40dp"
+            app:cardBackgroundColor="#6C63FF"
+            app:cardElevation="0dp">
+            <TextView
+                android:id="@+id/tvAvatarLetter"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="A"
+                android:textSize="32sp"
+                android:textColor="@android:color/white"
+                android:textStyle="bold"/>
+        </com.google.android.material.card.MaterialCardView>
 
-        <LinearLayout
+        <!-- Name -->
+        <TextView
+            android:id="@+id/tvName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="12dp"
+            android:text="Admin"
+            android:textSize="22sp"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"/>
+
+        <!-- Role chip -->
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chipRole"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="6dp"
+            android:text="Admin"
+            android:textColor="@android:color/white"
+            app:chipBackgroundColor="#1E1E3A"
+            app:chipStrokeWidth="1dp"
+            app:chipStrokeColor="#6C63FF"
+            app:chipIconTint="#6C63FF"/>
+
+        <!-- ACCOUNT card -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardInfo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="14dp">
+            android:layout_marginTop="24dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            app:cardCornerRadius="14dp"
+            app:cardBackgroundColor="#1A1A2E"
+            app:cardElevation="0dp">
 
-            <TextView
-                android:id="@+id/tvName"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Admin"
-                android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
+                android:orientation="vertical"
+                android:padding="4dp">
 
-            <TextView
-                android:id="@+id/tvEmail"
-                android:layout_width="match_parent"
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="12dp"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="4dp"
+                    android:text="ACCOUNT"
+                    android:textSize="11sp"
+                    android:letterSpacing="0.1"
+                    android:textColor="#888AAA"/>
+
+                <!-- Name row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp">
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_person"
+                        app:tint="#6C63FF"/>
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:layout_marginStart="12dp">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Name"
+                            android:textSize="12sp"
+                            android:textColor="#888AAA"/>
+                        <TextView
+                            android:id="@+id/tvNameValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="—"
+                            android:textColor="@android:color/white"
+                            android:textSize="14sp"/>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginStart="46dp"
+                    android:background="#252545"/>
+
+                <!-- Email row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp">
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_email"
+                        app:tint="#6C63FF"/>
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:layout_marginStart="12dp">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Email"
+                            android:textSize="12sp"
+                            android:textColor="#888AAA"/>
+                        <TextView
+                            android:id="@+id/tvEmail"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="admin@stardeck.local"
+                            android:textColor="@android:color/white"
+                            android:textSize="14sp"/>
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Stats row -->
+        <LinearLayout
+            android:id="@+id/layoutStats"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:orientation="horizontal"
+            android:weightSum="3">
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="admin@stardeck.local"
-                android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
+                android:layout_weight="1"
+                android:layout_marginEnd="6dp"
+                app:cardCornerRadius="14dp"
+                app:cardBackgroundColor="#1A1A2E"
+                app:cardElevation="0dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:padding="14dp">
+                    <TextView
+                        android:id="@+id/tvStatUsers"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="—"
+                        android:textColor="#6C63FF"
+                        android:textSize="20sp"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="USERS"
+                        android:textSize="10sp"
+                        android:letterSpacing="0.08"
+                        android:textColor="#888AAA"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:layout_marginEnd="6dp"
+                app:cardCornerRadius="14dp"
+                app:cardBackgroundColor="#1A2E1A"
+                app:cardElevation="0dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:padding="14dp">
+                    <TextView
+                        android:id="@+id/tvStatDecks"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="—"
+                        android:textColor="#4CAF50"
+                        android:textSize="20sp"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="DECKS"
+                        android:textSize="10sp"
+                        android:letterSpacing="0.08"
+                        android:textColor="#888AAA"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                app:cardCornerRadius="14dp"
+                app:cardBackgroundColor="#2E1A2E"
+                app:cardElevation="0dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:padding="14dp">
+                    <TextView
+                        android:id="@+id/tvStatReports"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="—"
+                        android:textColor="#E040FB"
+                        android:textSize="20sp"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="REPORTS"
+                        android:textSize="10sp"
+                        android:letterSpacing="0.08"
+                        android:textColor="#888AAA"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
 
-    </com.google.android.material.card.MaterialCardView>
+        <!-- SETTINGS card -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardSettings"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            app:cardCornerRadius="14dp"
+            app:cardBackgroundColor="#1A1A2E"
+            app:cardElevation="0dp">
 
-    <!-- Logout button OUTSIDE card -->
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnLogout"
-        style="@style/Widget.Material3.Button.OutlinedButton"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Logout"
-        android:textAllCaps="false"
-        app:layout_constraintTop_toBottomOf="@id/cardInfo"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="4dp">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="12dp"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="4dp"
+                    android:text="SETTINGS"
+                    android:textSize="11sp"
+                    android:letterSpacing="0.1"
+                    android:textColor="#888AAA"/>
+
+                <!-- Change Password -->
+                <LinearLayout
+                    android:id="@+id/rowChangePassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true">
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_key"
+                        app:tint="#FFC107"/>
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="12dp"
+                        android:text="Change Password"
+                        android:textColor="@android:color/white"
+                        android:textSize="15sp"/>
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_chevron_right"
+                        app:tint="#555577"/>
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginStart="46dp"
+                    android:background="#252545"/>
+
+                <!-- About StarDeck -->
+                <LinearLayout
+                    android:id="@+id/rowAbout"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true">
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_star"
+                        app:tint="#FFC107"/>
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="12dp"
+                        android:text="About StarDeck"
+                        android:textColor="@android:color/white"
+                        android:textSize="15sp"/>
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_chevron_right"
+                        app:tint="#555577"/>
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Logout button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnLogout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:text="Logout"
+            android:textColor="#FF5370"
+            android:textAllCaps="false"
+            android:textSize="16sp"
+            app:backgroundTint="#1A1A2E"
+            app:strokeColor="#FF5370"
+            app:strokeWidth="1dp"
+            app:cornerRadius="14dp"/>
+
+        <!-- Footer — version only -->
+        <TextView
+            android:id="@+id/tvFooter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="20dp"
+            android:text="StarDeck v1.0"
+            android:textSize="12sp"
+            android:textColor="#444466"/>
+
+    </LinearLayout>
+</ScrollView>

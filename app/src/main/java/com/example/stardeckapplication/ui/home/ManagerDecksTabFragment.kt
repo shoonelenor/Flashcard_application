@@ -244,7 +244,8 @@ class ManagerDecksTabFragment : Fragment(R.layout.fragment_manager_decks_tab) {
                 b.btnView.setOnClickListener   { onView(row) }
                 b.btnToggle.text               = if (row.status == DbContract.DECK_ACTIVE) "Hide" else "Unhide"
                 b.btnToggle.setOnClickListener { onToggle(row) }
-                b.chipStatus.text              = if (row.status == DbContract.DECK_ACTIVE) "Active" else "Hidden"
+                // ✅ Fixed: was b.chipStatus (Chip), now b.btnStatus (MaterialButton)
+                b.btnStatus.text = if (row.status == DbContract.DECK_ACTIVE) "Active" else "Hidden"
             }
         }
     }

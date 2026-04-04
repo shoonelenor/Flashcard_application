@@ -1,40 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="8dp">
+    android:background="@color/stardeck_bg_bottom"
+    android:padding="12dp">
 
+    <!-- ── Search bar ── -->
     <com.google.android.material.textfield.TextInputLayout
         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="6dp"
-        android:hint="Search decks, owner, metadata">
+        android:layout_marginBottom="8dp"
+        android:hint="Search decks, owner, metadata"
+        app:hintTextColor="@color/stardeck_text_secondary"
+        app:boxStrokeColor="@color/stardeck_field_stroke"
+        app:boxBackgroundColor="@color/stardeck_field_bg">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etSearch"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="@color/stardeck_text_primary"
+            android:textColorHint="@color/stardeck_text_secondary"
             android:inputType="text"
             android:maxLines="1" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <!-- ── Free / Premium chips + Reset ── -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="6dp"
-        android:orientation="horizontal">
+        android:layout_marginBottom="8dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
 
         <com.google.android.material.chip.Chip
             android:id="@+id/chipFree"
             style="@style/Widget.Material3.Chip.Filter"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="6dp"
+            android:layout_marginEnd="8dp"
             android:checkable="true"
-            android:text="Free" />
+            android:text="Free"
+            android:textColor="@color/stardeck_text_primary"
+            app:chipBackgroundColor="@color/stardeck_field_bg"
+            app:chipStrokeColor="@color/stardeck_field_stroke"
+            app:chipStrokeWidth="1dp" />
 
         <com.google.android.material.chip.Chip
             android:id="@+id/chipPremium"
@@ -42,7 +56,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:checkable="true"
-            android:text="Premium" />
+            android:text="Premium"
+            android:textColor="@color/stardeck_text_primary"
+            app:chipBackgroundColor="@color/stardeck_field_bg"
+            app:chipStrokeColor="@color/stardeck_field_stroke"
+            app:chipStrokeWidth="1dp" />
 
         <Space
             android:layout_width="0dp"
@@ -54,70 +72,94 @@
             style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Reset" />
+            android:text="Reset"
+            android:textColor="@color/stardeck_text_secondary" />
     </LinearLayout>
 
+    <!-- ── Category dropdown ── -->
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/tilCategory"
         style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Category">
+        android:hint="Category"
+        app:hintTextColor="@color/stardeck_text_secondary"
+        app:boxStrokeColor="@color/stardeck_field_stroke"
+        app:boxBackgroundColor="@color/stardeck_field_bg">
 
         <com.google.android.material.textfield.MaterialAutoCompleteTextView
             android:id="@+id/actCategory"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="@color/stardeck_text_primary"
+            android:textColorHint="@color/stardeck_text_secondary"
             android:inputType="none" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <!-- ── Subject dropdown ── -->
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/tilSubject"
         style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:hint="Subject">
+        android:layout_marginTop="8dp"
+        android:hint="Subject"
+        app:hintTextColor="@color/stardeck_text_secondary"
+        app:boxStrokeColor="@color/stardeck_field_stroke"
+        app:boxBackgroundColor="@color/stardeck_field_bg">
 
         <com.google.android.material.textfield.MaterialAutoCompleteTextView
             android:id="@+id/actSubject"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="@color/stardeck_text_primary"
+            android:textColorHint="@color/stardeck_text_secondary"
             android:inputType="none" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <!-- Subject hint note -->
     <TextView
         android:id="@+id/tvSubjectNote"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
         android:text="Choose a category first to see subjects."
-        android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
+        android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+        android:textColor="@color/stardeck_text_secondary" />
 
+    <!-- ── Language dropdown ── -->
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/tilLanguage"
         style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:hint="Language">
+        android:layout_marginTop="8dp"
+        android:hint="Language"
+        app:hintTextColor="@color/stardeck_text_secondary"
+        app:boxStrokeColor="@color/stardeck_field_stroke"
+        app:boxBackgroundColor="@color/stardeck_field_bg">
 
         <com.google.android.material.textfield.MaterialAutoCompleteTextView
             android:id="@+id/actLanguage"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="@color/stardeck_text_primary"
+            android:textColorHint="@color/stardeck_text_secondary"
             android:inputType="none" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <!-- Result count -->
     <TextView
         android:id="@+id/tvCount"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
+        android:layout_marginTop="8dp"
         android:layout_marginBottom="4dp"
         android:text="0 deck(s) found"
-        android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
+        android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+        android:textColor="@color/stardeck_text_secondary" />
 
+    <!-- ── Results list ── -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -130,6 +172,7 @@
             android:clipToPadding="false"
             android:paddingBottom="8dp" />
 
+        <!-- Empty state -->
         <LinearLayout
             android:id="@+id/groupEmpty"
             android:layout_width="match_parent"
@@ -143,14 +186,16 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="No public decks found"
-                android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
+                android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                android:textColor="@color/stardeck_text_primary" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
                 android:text="Try changing your search or filters."
-                android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
+                android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                android:textColor="@color/stardeck_text_secondary" />
         </LinearLayout>
     </FrameLayout>
 

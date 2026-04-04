@@ -1,12 +1,14 @@
 package com.example.stardeckapplication.ui.home
 
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.graphics.Typeface
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.example.stardeckapplication.R
 import com.example.stardeckapplication.databinding.FragmentUserStudyBinding
@@ -38,10 +40,10 @@ class UserStudyFragment : Fragment(R.layout.fragment_user_study) {
     private val session  by lazy { SessionManager(requireContext()) }
     private val dbHelper by lazy { StarDeckDbHelper(requireContext()) }
     private val statsDao by lazy { StatsDao(dbHelper) }
-    private val studyDao by lazy { StudyDao(dbHelper) }    // ✅ getDueCountForDeck
-    private val userDao  by lazy { UserDao(dbHelper) }     // ✅ isUserPremium
-    private val deckDao  by lazy { UserDeckDao(dbHelper) } // ✅ DeckRow, getDecksForOwner
-    private val cardDao  by lazy { CardDao(dbHelper) }     // ✅ getCardCountForDeck
+    private val studyDao by lazy { StudyDao(dbHelper) }
+    private val userDao  by lazy { UserDao(dbHelper) }
+    private val deckDao  by lazy { UserDeckDao(dbHelper) }
+    private val cardDao  by lazy { CardDao(dbHelper) }
 
     private val executor = Executors.newSingleThreadExecutor()
     private val inFlight = AtomicBoolean(false)
@@ -98,16 +100,14 @@ class UserStudyFragment : Fragment(R.layout.fragment_user_study) {
             val todayCount : Int     = try { statsDao.getTodayStudyCount(me.id) }      catch (e: Exception) { 0 }
             val streakDays : Int     = try { statsDao.getStudyStreakDays(me.id) }      catch (e: Exception) { 0 }
             val recent     : StatsDao.RecentDeckRow?   = try { statsDao.getRecentlyStudiedDeck(me.id) } catch (e: Exception) { null }
-            // ✅ UserDao.isUserPremium — correct home
             val premium    : Boolean                   = try { userDao.isUserPremium(me.id) }           catch (e: Exception) { false }
             val decks      : List<UserDeckDao.DeckRow> = try { deckDao.getDecksForOwner(me.id) }        catch (e: Exception) { emptyList() }
 
             val recentId = recent?.deckId
 
             val items: List<DeckStudyItem> = decks.map { deck: UserDeckDao.DeckRow ->
-                val totalCards : Int = try { cardDao.getCardCountForDeck(deck.id) }          catch (e: Exception) { 0 }
-                // ✅ StudyDao.getDueCountForDeck — correct home
-                val dueCount   : Int = try { studyDao.getDueCountForDeck(me.id, deck.id) }   catch (e: Exception) { 0 }
+                val totalCards : Int = try { cardDao.getCardCountForDeck(deck.id) }        catch (e: Exception) { 0 }
+                val dueCount   : Int = try { studyDao.getDueCountForDeck(me.id, deck.id) } catch (e: Exception) { 0 }
                 DeckStudyItem(
                     deck       = deck,
                     totalCards = totalCards,
@@ -166,6 +166,7 @@ class UserStudyFragment : Fragment(R.layout.fragment_user_study) {
             b.tvRecentMeta.text = recentMeta ?: "Recent session found"
         }
 
+        // ✅ RESTORED: original smart due queue message
         b.tvDueInfo.text = when {
             totalDueAcrossUser > 0 && bestDueDeckId != null -> {
                 val best = deckItems.firstOrNull { it.deck.id == bestDueDeckId }
@@ -194,9 +195,19 @@ class UserStudyFragment : Fragment(R.layout.fragment_user_study) {
 
     private fun createDeckCard(item: DeckStudyItem): View {
         val context = requireContext()
+
+        val primaryColor  = ContextCompat.getColor(context, R.color.stardeck_primary)
+        val cardBgColor   = ContextCompat.getColor(context, R.color.stardeck_field_bg)
+        val strokeColor   = ContextCompat.getColor(context, R.color.stardeck_field_stroke)
+        val textPrimary   = ContextCompat.getColor(context, R.color.stardeck_text_primary)
+        val textSecondary = ContextCompat.getColor(context, R.color.stardeck_text_secondary)
+        val white         = ContextCompat.getColor(context, android.R.color.white)
+
         val card = MaterialCardView(context).apply {
-            radius      = dp(20).toFloat()
+            radius = dp(20).toFloat()
             strokeWidth = dp(1)
+            setStrokeColor(ColorStateList.valueOf(strokeColor))
+            setCardBackgroundColor(cardBgColor)
             isClickable = true
             isFocusable = true
             layoutParams = LinearLayout.LayoutParams(
@@ -204,25 +215,46 @@ class UserStudyFragment : Fragment(R.layout.fragment_user_study) {
                 ViewGroup.LayoutParams.WRAP_CONTENT
             ).apply { bottomMargin = dp(12) }
         }
+
+        // Horizontal wrapper for accent bar + content
+        val outer = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+        }
+
+        // Left accent bar
+        val accent = View(context).apply {
+            layoutParams = LinearLayout.LayoutParams(dp(4), ViewGroup.LayoutParams.MATCH_PARENT)
+            setBackgroundColor(primaryColor)
+        }
+
+        // Content
         val content = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(16), dp(16), dp(16), dp(16))
+            setPadding(dp(14), dp(14), dp(14), dp(14))
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
         }
+
         val titleView = TextView(context).apply {
-            text     = item.deck.title
-            textSize = 18f
+            text = item.deck.title
+            textSize = 17f
             setTypeface(typeface, Typeface.BOLD)
+            setTextColor(textPrimary)
         }
+
         val descView = TextView(context).apply {
-            text     = item.deck.description?.takeIf { it.isNotBlank() } ?: "Open this deck in study mode."
-            textSize = 14f
-            setPadding(0, dp(8), 0, 0)
-        }
-        val metaView = TextView(context).apply {
-            text     = buildMetaText(item)
+            text = item.deck.description?.takeIf { it.isNotBlank() } ?: "Open this deck in study mode."
             textSize = 13f
-            setPadding(0, dp(8), 0, 0)
+            setTextColor(textSecondary)
+            setPadding(0, dp(6), 0, 0)
         }
+
+        val metaView = TextView(context).apply {
+            text = buildMetaText(item)
+            textSize = 12f
+            setTextColor(textSecondary)
+            setPadding(0, dp(6), 0, dp(10))
+        }
+
         val action = MaterialButton(context).apply {
             text = when {
                 item.deck.isPremium && !isPremiumUser -> "Unlock Premium"
@@ -230,13 +262,24 @@ class UserStudyFragment : Fragment(R.layout.fragment_user_study) {
                 else                                 -> "Study"
             }
             isAllCaps = false
+            cornerRadius = dp(24)
+            backgroundTintList = ColorStateList.valueOf(primaryColor)
+            setTextColor(white)
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
             setOnClickListener { openDeck(item.deck) }
         }
+
         content.addView(titleView)
         content.addView(descView)
         content.addView(metaView)
         content.addView(action)
-        card.addView(content)
+
+        outer.addView(accent)
+        outer.addView(content)
+        card.addView(outer)
         card.setOnClickListener { openDeck(item.deck) }
         return card
     }

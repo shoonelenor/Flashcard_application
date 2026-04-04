@@ -1,22 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
+
     <item
         android:id="@+id/manager_nav_home"
-        android:title="Home"
-        android:icon="@android:drawable/ic_menu_view" />
+        android:icon="@drawable/ic_nav_home_24"
+        android:title="Home" />
 
     <item
         android:id="@+id/manager_nav_decks"
-        android:title="Decks"
-        android:icon="@android:drawable/ic_menu_sort_by_size" />
+        android:icon="@drawable/ic_nav_decks_24"
+        android:title="Decks" />
 
     <item
         android:id="@+id/manager_nav_reports"
-        android:title="Reports"
-        android:icon="@android:drawable/ic_menu_info_details" />
+        android:icon="@drawable/ic_nav_reports_24"
+        android:title="Reports" />
 
     <item
         android:id="@+id/manager_nav_profile"
-        android:title="Profile"
-        android:icon="@android:drawable/ic_lock_power_off" />
+        android:icon="@drawable/ic_nav_profile_24"
+        android:title="Profile" />
+
 </menu>

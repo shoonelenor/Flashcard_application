@@ -1,18 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="12dp"
-    app:cardCornerRadius="20dp"
+    android:layout_marginBottom="14dp"
+    app:cardBackgroundColor="@color/stardeck_field_bg"
+    app:cardCornerRadius="24dp"
+    app:cardElevation="0dp"
+    app:strokeColor="@color/stardeck_field_stroke"
     app:strokeWidth="1dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:paddingStart="18dp"
+        android:paddingTop="18dp"
+        android:paddingEnd="18dp"
+        android:paddingBottom="18dp">
 
+        <!-- ── Header: Deck name + Resolve button ── -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -24,133 +32,182 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Deck title"
-                android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:paddingEnd="10dp"
+                android:text="Deck Name"
+                android:textColor="@color/stardeck_text_primary"
+                android:textSize="17sp"
                 android:textStyle="bold" />
 
-            <com.google.android.material.button.MaterialButton
+            <TextView
                 android:id="@+id/btnCase"
-                style="@style/Widget.Material3.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:contentDescription="Resolve or reopen case"
-                android:insetLeft="0dp"
-                android:insetRight="0dp"
-                android:minHeight="36dp"
-                android:minWidth="0dp"
+                android:layout_width="80dp"
+                android:layout_height="32dp"
+                android:background="@drawable/bg_home_cta_gradient"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                android:gravity="center"
                 android:text="Resolve"
-                android:textAllCaps="false" />
+                android:textColor="@android:color/white"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
         </LinearLayout>
 
+        <!-- ── Meta: Owner · Reporter ── -->
         <TextView
             android:id="@+id/tvMeta"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Owner / Reporter"
-            android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
+            android:layout_marginTop="7dp"
+            android:ellipsize="end"
+            android:lineSpacingExtra="2dp"
+            android:maxLines="2"
+            android:text="Owner: — • Reported by: —"
+            android:textColor="@color/stardeck_text_secondary"
+            android:textSize="12sp" />
 
+        <!-- ── Divider ── -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="15dp"
+            android:layout_marginBottom="13dp"
+            android:background="@color/stardeck_field_stroke" />
+
+        <!-- ── Reason label ── -->
         <TextView
             android:id="@+id/tvReason"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="Reason"
-            android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+            android:text="Reason: —"
+            android:textColor="@color/stardeck_text_primary"
+            android:textSize="14sp"
             android:textStyle="bold" />
 
+        <!-- ── Details preview ── -->
         <TextView
             android:id="@+id/tvDetailsPreview"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="5dp"
             android:ellipsize="end"
-            android:maxLines="3"
-            android:text="Details preview"
-            android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
+            android:lineSpacingExtra="2dp"
+            android:maxLines="2"
+            android:textColor="@color/stardeck_text_secondary"
+            android:textSize="13sp"
+            android:visibility="gone" />
 
-        <com.google.android.material.chip.ChipGroup
-            android:id="@+id/statusGroup"
+        <!-- ── Chips: Case · Deck · Reported date ── -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            app:chipSpacingHorizontal="8dp"
-            app:chipSpacingVertical="8dp"
-            app:singleLine="false">
+            android:layout_marginTop="14dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipCase"
                 style="@style/Widget.Material3.Chip.Assist"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:checkable="false"
-                android:text="Case: Open" />
+                android:layout_height="28dp"
+                android:text="Case: Open"
+                android:textColor="#63A4FF"
+                android:textSize="11sp"
+                app:chipBackgroundColor="#0D1A3D"
+                app:chipMinHeight="28dp"
+                app:chipStrokeColor="#1A3166"
+                app:chipStrokeWidth="1dp"
+                app:ensureMinTouchTargetSize="false" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipDeck"
                 style="@style/Widget.Material3.Chip.Assist"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:checkable="false"
-                android:text="Deck: Visible" />
+                android:layout_height="28dp"
+                android:layout_marginStart="6dp"
+                android:text="Deck: Visible"
+                android:textColor="@color/stardeck_text_primary"
+                android:textSize="11sp"
+                app:chipBackgroundColor="#1A1F35"
+                app:chipMinHeight="28dp"
+                app:chipStrokeColor="#252C4A"
+                app:chipStrokeWidth="1dp"
+                app:ensureMinTouchTargetSize="false" />
 
-            <com.google.android.material.chip.Chip
+            <TextView
                 android:id="@+id/chipCreated"
-                style="@style/Widget.Material3.Chip.Assist"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:checkable="false"
-                android:text="Reported: 05-20 12:00" />
-        </com.google.android.material.chip.ChipGroup>
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="Reported: —"
+                android:textColor="@color/stardeck_text_hint"
+                android:textSize="11sp" />
 
+        </LinearLayout>
+
+        <!-- ── Action Buttons ── -->
         <LinearLayout
-            android:id="@+id/actionsRow"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="16dp"
+            android:gravity="center_vertical"
             android:orientation="horizontal">
 
-            <com.google.android.material.button.MaterialButton
+            <!-- Review — equal weight, outlined -->
+            <TextView
                 android:id="@+id/btnView"
-                style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="40dp"
+                android:layout_marginEnd="8dp"
                 android:layout_weight="1"
-                android:minHeight="44dp"
+                android:background="@drawable/bg_home_resume_pill"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                android:gravity="center"
                 android:text="Review"
-                android:textAllCaps="false"
-                android:contentDescription="Review reported deck" />
+                android:textColor="@color/stardeck_text_primary"
+                android:textSize="13sp"
+                android:textStyle="bold" />
 
-            <Space
-                android:layout_width="10dp"
-                android:layout_height="1dp" />
-
-            <com.google.android.material.button.MaterialButton
+            <!-- Hide — equal weight, CTA gradient -->
+            <TextView
                 android:id="@+id/btnHide"
-                style="@style/Widget.Material3.Button.TonalButton"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="40dp"
+                android:layout_marginEnd="6dp"
                 android:layout_weight="1"
-                android:minHeight="44dp"
+                android:background="@drawable/bg_home_cta_gradient"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                android:gravity="center"
                 android:text="Hide"
-                android:textAllCaps="false"
-                android:contentDescription="Hide or unhide deck" />
+                android:textColor="@android:color/white"
+                android:textSize="13sp"
+                android:textStyle="bold" />
 
-            <Space
-                android:layout_width="10dp"
-                android:layout_height="1dp" />
-
-            <com.google.android.material.button.MaterialButton
+            <!-- Details — plain text, better contrast -->
+            <TextView
                 android:id="@+id/btnDetails"
-                style="@style/Widget.Material3.Button.TextButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:minHeight="44dp"
+                android:layout_width="56dp"
+                android:layout_height="40dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackgroundBorderless"
+                android:gravity="center"
                 android:text="Details"
-                android:textAllCaps="false"
-                android:contentDescription="Open report details" />
+                android:textColor="@color/stardeck_text_primary"
+                android:textSize="12sp" />
+
         </LinearLayout>
 
     </LinearLayout>
+
 </com.google.android.material.card.MaterialCardView>

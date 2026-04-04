@@ -1,326 +1,564 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:paddingStart="16dp"
-    android:paddingTop="16dp"
-    android:paddingEnd="16dp"
-    android:paddingBottom="0dp">
+    android:background="@color/stardeck_bg_bottom">
 
-    <TextView
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Reports"
-        android:textAppearance="@style/TextAppearance.Material3.HeadlineSmall"
-        android:textStyle="bold" />
-
-    <HorizontalScrollView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:scrollbars="none">
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:overScrollMode="never">
 
         <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="132dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="10dp"
-                app:cardCornerRadius="20dp"
-                app:strokeWidth="1dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="14dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Total"
-                        android:textAppearance="@style/TextAppearance.Material3.LabelLarge" />
-
-                    <TextView
-                        android:id="@+id/tvSummaryTotal"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="0"
-                        android:textAppearance="@style/TextAppearance.Material3.HeadlineMedium"
-                        android:textStyle="bold" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="132dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="10dp"
-                app:cardCornerRadius="20dp"
-                app:strokeWidth="1dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="14dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Open"
-                        android:textAppearance="@style/TextAppearance.Material3.LabelLarge" />
-
-                    <TextView
-                        android:id="@+id/tvSummaryOpen"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="0"
-                        android:textAppearance="@style/TextAppearance.Material3.HeadlineMedium"
-                        android:textStyle="bold" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="132dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="10dp"
-                app:cardCornerRadius="20dp"
-                app:strokeWidth="1dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="14dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Resolved"
-                        android:textAppearance="@style/TextAppearance.Material3.LabelLarge" />
-
-                    <TextView
-                        android:id="@+id/tvSummaryResolved"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="0"
-                        android:textAppearance="@style/TextAppearance.Material3.HeadlineMedium"
-                        android:textStyle="bold" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="132dp"
-                android:layout_height="wrap_content"
-                app:cardCornerRadius="20dp"
-                app:strokeWidth="1dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="14dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Hidden decks"
-                        android:textAppearance="@style/TextAppearance.Material3.LabelLarge" />
-
-                    <TextView
-                        android:id="@+id/tvSummaryHidden"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="0"
-                        android:textAppearance="@style/TextAppearance.Material3.HeadlineMedium"
-                        android:textStyle="bold" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-        </LinearLayout>
-    </HorizontalScrollView>
-
-    <com.google.android.material.textfield.TextInputLayout
-        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="14dp"
-        android:hint="Search deck / owner / reporter / reason / details">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etSearch"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <com.google.android.material.textfield.TextInputLayout
-        style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:hint="Reason filter">
-
-        <com.google.android.material.textfield.MaterialAutoCompleteTextView
-            android:id="@+id/actReasonFilter"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="none" />
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="14dp"
-        android:text="Report status"
-        android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
-        android:textStyle="bold" />
-
-    <com.google.android.material.chip.ChipGroup
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        app:chipSpacingHorizontal="8dp"
-        app:chipSpacingVertical="8dp"
-        app:selectionRequired="true"
-        app:singleSelection="true">
-
-        <com.google.android.material.chip.Chip
-            android:id="@+id/chipOpen"
-            style="@style/Widget.Material3.Chip.Assist"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checkable="true"
-            android:checked="true"
-            android:text="Open" />
-
-        <com.google.android.material.chip.Chip
-            android:id="@+id/chipResolved"
-            style="@style/Widget.Material3.Chip.Assist"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checkable="true"
-            android:text="Resolved" />
-
-        <com.google.android.material.chip.Chip
-            android:id="@+id/chipAll"
-            style="@style/Widget.Material3.Chip.Assist"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checkable="true"
-            android:text="All" />
-    </com.google.android.material.chip.ChipGroup>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:text="Deck visibility"
-        android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
-        android:textStyle="bold" />
-
-    <com.google.android.material.chip.ChipGroup
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        app:chipSpacingHorizontal="8dp"
-        app:chipSpacingVertical="8dp"
-        app:selectionRequired="true"
-        app:singleSelection="true">
-
-        <com.google.android.material.chip.Chip
-            android:id="@+id/chipDeckAll"
-            style="@style/Widget.Material3.Chip.Assist"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checkable="true"
-            android:checked="true"
-            android:text="All" />
-
-        <com.google.android.material.chip.Chip
-            android:id="@+id/chipDeckActive"
-            style="@style/Widget.Material3.Chip.Assist"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checkable="true"
-            android:text="Visible" />
-
-        <com.google.android.material.chip.Chip
-            android:id="@+id/chipDeckHidden"
-            style="@style/Widget.Material3.Chip.Assist"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checkable="true"
-            android:text="Hidden" />
-    </com.google.android.material.chip.ChipGroup>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
-
-        <TextView
-            android:id="@+id/tvCount"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="0 report(s) shown"
-            android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnExport"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Export CSV" />
-    </LinearLayout>
-
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_marginTop="12dp"
-        android:layout_weight="1">
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recycler"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:clipToPadding="false"
-            android:paddingBottom="24dp" />
-
-        <LinearLayout
-            android:id="@+id/groupEmpty"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center"
             android:orientation="vertical"
-            android:visibility="gone">
+            android:paddingStart="18dp"
+            android:paddingTop="24dp"
+            android:paddingEnd="18dp"
+            android:paddingBottom="120dp">
 
+            <!-- ── Page Title ── -->
             <TextView
-                android:id="@+id/tvEmptyTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="No reports"
-                android:textAppearance="@style/TextAppearance.Material3.TitleLarge" />
+                android:fontFamily="sans-serif-medium"
+                android:text="Reports"
+                android:textColor="@color/stardeck_text_primary"
+                android:textSize="26sp"
+                android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/tvEmptyDesc"
-                android:layout_width="wrap_content"
+            <!-- ── Summary Stats Row (all cards equal height via minHeight) ── -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="Reports will appear here."
-                android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
+                android:layout_marginTop="20dp"
+                android:baselineAligned="false"
+                android:orientation="horizontal">
+
+                <!-- TOTAL -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="5dp"
+                    android:layout_weight="1"
+                    app:cardBackgroundColor="@color/stardeck_field_bg"
+                    app:cardCornerRadius="22dp"
+                    app:cardElevation="0dp"
+                    app:strokeColor="@color/stardeck_field_stroke"
+                    app:strokeWidth="1dp">
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:minHeight="110dp"
+                        android:orientation="vertical"
+                        android:padding="14dp">
+                        <TextView
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            android:background="@drawable/bg_home_circle_chip"
+                            android:gravity="center"
+                            android:text="≡"
+                            android:textColor="@color/stardeck_text_secondary"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:letterSpacing="0.06"
+                            android:text="TOTAL"
+                            android:textColor="@color/stardeck_text_secondary"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+                        <TextView
+                            android:id="@+id/tvSummaryTotal"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:text="0"
+                            android:textColor="@color/stardeck_text_primary"
+                            android:textSize="26sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- OPEN -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="5dp"
+                    android:layout_marginEnd="5dp"
+                    android:layout_weight="1"
+                    app:cardBackgroundColor="#0D1A3D"
+                    app:cardCornerRadius="22dp"
+                    app:cardElevation="0dp"
+                    app:strokeColor="#1A3166"
+                    app:strokeWidth="1dp">
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:minHeight="110dp"
+                        android:orientation="vertical"
+                        android:padding="14dp">
+                        <TextView
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            android:background="@drawable/bg_home_circle_chip"
+                            android:gravity="center"
+                            android:text="●"
+                            android:textColor="#63A4FF"
+                            android:textSize="10sp" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:letterSpacing="0.06"
+                            android:text="OPEN"
+                            android:textColor="#63A4FF"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+                        <TextView
+                            android:id="@+id/tvSummaryOpen"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:text="0"
+                            android:textColor="#63A4FF"
+                            android:textSize="26sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- RESOLVED -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="5dp"
+                    android:layout_marginEnd="5dp"
+                    android:layout_weight="1"
+                    app:cardBackgroundColor="#071D1A"
+                    app:cardCornerRadius="22dp"
+                    app:cardElevation="0dp"
+                    app:strokeColor="#0D3830"
+                    app:strokeWidth="1dp">
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:minHeight="110dp"
+                        android:orientation="vertical"
+                        android:padding="14dp">
+                        <TextView
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            android:background="@drawable/bg_home_circle_chip"
+                            android:gravity="center"
+                            android:text="✓"
+                            android:textColor="#23D9A8"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:letterSpacing="0.06"
+                            android:text="DONE"
+                            android:textColor="#23D9A8"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+                        <TextView
+                            android:id="@+id/tvSummaryResolved"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:text="0"
+                            android:textColor="#23D9A8"
+                            android:textSize="26sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- HIDDEN -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="5dp"
+                    android:layout_weight="1"
+                    app:cardBackgroundColor="#120D20"
+                    app:cardCornerRadius="22dp"
+                    app:cardElevation="0dp"
+                    app:strokeColor="#221540"
+                    app:strokeWidth="1dp">
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:minHeight="110dp"
+                        android:orientation="vertical"
+                        android:padding="14dp">
+                        <TextView
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            android:background="@drawable/bg_home_circle_chip"
+                            android:gravity="center"
+                            android:text="◌"
+                            android:textColor="#9C7CFF"
+                            android:textSize="13sp" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:letterSpacing="0.06"
+                            android:text="HIDDEN"
+                            android:textColor="#9C7CFF"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+                        <TextView
+                            android:id="@+id/tvSummaryHidden"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:text="0"
+                            android:textColor="#9C7CFF"
+                            android:textSize="26sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+            </LinearLayout>
+
+            <!-- ── Search Bar ── -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="22dp"
+                app:cardBackgroundColor="@color/stardeck_field_bg"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/stardeck_field_stroke"
+                app:strokeWidth="1dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp">
+                    <TextView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:gravity="center"
+                        android:text="⌕"
+                        android:textColor="@color/stardeck_text_hint"
+                        android:textSize="17sp" />
+                    <EditText
+                        android:id="@+id/etSearch"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginStart="10dp"
+                        android:layout_weight="1"
+                        android:background="@android:color/transparent"
+                        android:hint="Search deck, owner, reason…"
+                        android:inputType="text"
+                        android:textColor="@color/stardeck_text_primary"
+                        android:textColorHint="@color/stardeck_text_hint"
+                        android:textSize="14sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- ── Reason Filter Dropdown ── -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                app:cardBackgroundColor="@color/stardeck_field_bg"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/stardeck_field_stroke"
+                app:strokeWidth="1dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp">
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:letterSpacing="0.06"
+                            android:text="REASON FILTER"
+                            android:textColor="@color/stardeck_text_hint"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+                        <AutoCompleteTextView
+                            android:id="@+id/actReasonFilter"
+                            android:layout_width="match_parent"
+                            android:layout_height="44dp"
+                            android:background="@android:color/transparent"
+                            android:completionThreshold="0"
+                            android:dropDownHeight="wrap_content"
+                            android:hint="All reasons"
+                            android:inputType="none"
+                            android:textColor="@color/stardeck_text_primary"
+                            android:textColorHint="@color/stardeck_text_secondary"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="▾"
+                        android:textColor="@color/stardeck_text_secondary"
+                        android:textSize="14sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- ── Filter Chips ── -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                app:cardBackgroundColor="@color/stardeck_field_bg"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/stardeck_field_stroke"
+                app:strokeWidth="1dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="12dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+                        <TextView
+                            android:layout_width="52dp"
+                            android:layout_height="wrap_content"
+                            android:letterSpacing="0.06"
+                            android:text="Status"
+                            android:textColor="@color/stardeck_text_hint"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+                        <com.google.android.material.chip.ChipGroup
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            app:singleSelection="true">
+                            <com.google.android.material.chip.Chip
+                                android:id="@+id/chipOpen"
+                                style="@style/Widget.Material3.Chip.Filter"
+                                android:layout_width="wrap_content"
+                                android:layout_height="30dp"
+                                android:text="Open"
+                                android:textColor="@color/stardeck_text_primary"
+                                android:textSize="12sp"
+                                app:chipBackgroundColor="#141E3A"
+                                app:chipMinHeight="30dp"
+                                app:chipStrokeColor="#1F2B4D"
+                                app:chipStrokeWidth="1dp"
+                                app:ensureMinTouchTargetSize="false" />
+                            <com.google.android.material.chip.Chip
+                                android:id="@+id/chipResolved"
+                                style="@style/Widget.Material3.Chip.Filter"
+                                android:layout_width="wrap_content"
+                                android:layout_height="30dp"
+                                android:text="Resolved"
+                                android:textColor="@color/stardeck_text_primary"
+                                android:textSize="12sp"
+                                app:chipBackgroundColor="#141E3A"
+                                app:chipMinHeight="30dp"
+                                app:chipStrokeColor="#1F2B4D"
+                                app:chipStrokeWidth="1dp"
+                                app:ensureMinTouchTargetSize="false" />
+                            <com.google.android.material.chip.Chip
+                                android:id="@+id/chipAll"
+                                style="@style/Widget.Material3.Chip.Filter"
+                                android:layout_width="wrap_content"
+                                android:layout_height="30dp"
+                                android:checked="true"
+                                android:text="All"
+                                android:textColor="@color/stardeck_text_primary"
+                                android:textSize="12sp"
+                                app:chipBackgroundColor="#141E3A"
+                                app:chipMinHeight="30dp"
+                                app:chipStrokeColor="#1F2B4D"
+                                app:chipStrokeWidth="1dp"
+                                app:ensureMinTouchTargetSize="false" />
+                        </com.google.android.material.chip.ChipGroup>
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginBottom="10dp"
+                        android:background="@color/stardeck_field_stroke" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+                        <TextView
+                            android:layout_width="52dp"
+                            android:layout_height="wrap_content"
+                            android:letterSpacing="0.06"
+                            android:text="Deck"
+                            android:textColor="@color/stardeck_text_hint"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+                        <com.google.android.material.chip.ChipGroup
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            app:singleSelection="true">
+                            <com.google.android.material.chip.Chip
+                                android:id="@+id/chipDeckAll"
+                                style="@style/Widget.Material3.Chip.Filter"
+                                android:layout_width="wrap_content"
+                                android:layout_height="30dp"
+                                android:checked="true"
+                                android:text="All"
+                                android:textColor="@color/stardeck_text_primary"
+                                android:textSize="12sp"
+                                app:chipBackgroundColor="#141E3A"
+                                app:chipMinHeight="30dp"
+                                app:chipStrokeColor="#1F2B4D"
+                                app:chipStrokeWidth="1dp"
+                                app:ensureMinTouchTargetSize="false" />
+                            <com.google.android.material.chip.Chip
+                                android:id="@+id/chipDeckActive"
+                                style="@style/Widget.Material3.Chip.Filter"
+                                android:layout_width="wrap_content"
+                                android:layout_height="30dp"
+                                android:text="Visible"
+                                android:textColor="@color/stardeck_text_primary"
+                                android:textSize="12sp"
+                                app:chipBackgroundColor="#141E3A"
+                                app:chipMinHeight="30dp"
+                                app:chipStrokeColor="#1F2B4D"
+                                app:chipStrokeWidth="1dp"
+                                app:ensureMinTouchTargetSize="false" />
+                            <com.google.android.material.chip.Chip
+                                android:id="@+id/chipDeckHidden"
+                                style="@style/Widget.Material3.Chip.Filter"
+                                android:layout_width="wrap_content"
+                                android:layout_height="30dp"
+                                android:text="Hidden"
+                                android:textColor="@color/stardeck_text_primary"
+                                android:textSize="12sp"
+                                app:chipBackgroundColor="#141E3A"
+                                app:chipMinHeight="30dp"
+                                app:chipStrokeColor="#1F2B4D"
+                                app:chipStrokeWidth="1dp"
+                                app:ensureMinTouchTargetSize="false" />
+                        </com.google.android.material.chip.ChipGroup>
+                    </LinearLayout>
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- ── Count + Export ── -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="22dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tvCount"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="0 report(s) shown"
+                    android:textColor="@color/stardeck_text_secondary"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/btnExport"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:background="@drawable/bg_home_cta_gradient"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
+                    android:gravity="center"
+                    android:paddingStart="20dp"
+                    android:paddingEnd="20dp"
+                    android:text="Export CSV"
+                    android:textColor="@android:color/white"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
+            <!-- ── RecyclerView ── -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycler"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:clipToPadding="false"
+                android:nestedScrollingEnabled="false"
+                android:overScrollMode="never" />
+
+            <!-- ── Empty State ── -->
+            <LinearLayout
+                android:id="@+id/groupEmpty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="48dp"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:background="@drawable/bg_home_circle_chip"
+                    android:gravity="center"
+                    android:text="📋"
+                    android:textSize="28sp" />
+
+                <TextView
+                    android:id="@+id/tvEmptyTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:gravity="center"
+                    android:text="No reports found"
+                    android:textColor="@color/stardeck_text_primary"
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvEmptyDesc"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center"
+                    android:text="No reports match your current filters."
+                    android:textColor="@color/stardeck_text_secondary"
+                    android:textSize="14sp" />
+
+            </LinearLayout>
+
         </LinearLayout>
-    </FrameLayout>
+    </androidx.core.widget.NestedScrollView>
 
-</LinearLayout>
+</FrameLayout>

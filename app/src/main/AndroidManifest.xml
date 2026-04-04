@@ -52,6 +52,9 @@
         <activity android:name=".ui.legal.TermsActivity" android:exported="false" />
         <activity android:name=".ui.legal.PrivacyPolicyActivity" android:exported="false" />
 
+        <activity android:name=".ui.home.ImportDeckActivity" android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".ui.home.AiGenerateActivity" android:windowSoftInputMode="adjustResize" />
+
     </application>
 
 </manifest>

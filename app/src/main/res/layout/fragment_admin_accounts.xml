@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/stardeck_bg_bottom"
     android:fillViewport="true">
 
     <LinearLayout
@@ -11,10 +13,15 @@
         android:orientation="vertical"
         android:padding="16dp">
 
+        <!-- Header Card -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardCornerRadius="24dp">
+            app:cardBackgroundColor="@color/stardeck_field_bg"
+            app:cardCornerRadius="20dp"
+            app:strokeColor="@color/stardeck_field_stroke"
+            app:strokeWidth="1dp"
+            app:cardElevation="0dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -26,87 +33,198 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Master Data"
-                    android:textAppearance="@style/TextAppearance.Material3.HeadlineSmall" />
+                    android:textColor="@color/stardeck_text_primary"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
+                    android:layout_marginTop="8dp"
                     android:text="Admin setup framework for reusable system data and management modules."
-                    android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+                    android:textColor="@color/stardeck_text_secondary"
+                    android:textSize="14sp"
+                    android:lineSpacingMultiplier="1.4" />
+
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- Section Label -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="8dp"
+            android:layout_marginStart="4dp"
+            android:text="MODULES"
+            android:textColor="@color/stardeck_text_hint"
+            android:textSize="11sp"
+            android:letterSpacing="0.12"
+            android:textStyle="bold" />
+
+        <!-- User Management — Primary filled button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnUser"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_height="52dp"
             android:text="User Management"
-            android:textAllCaps="false" />
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textSize="15sp"
+            app:backgroundTint="@color/stardeck_primary"
+            app:cornerRadius="14dp"
+            app:icon="@drawable/ic_nav_profile_24"
+            app:iconGravity="textStart"
+            app:iconPadding="12dp"
+            app:iconTint="@color/white"
+            app:rippleColor="#334F6BFF" />
 
+        <!-- Content Setup -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnContent"
             style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_height="52dp"
+            android:layout_marginTop="10dp"
             android:text="Content Setup (Premium / Free)"
-            android:textAllCaps="false" />
+            android:textAllCaps="false"
+            android:textColor="@color/stardeck_text_primary"
+            android:textSize="15sp"
+            app:backgroundTint="@color/stardeck_field_bg"
+            app:cornerRadius="14dp"
+            app:icon="@drawable/ic_nav_explore_24"
+            app:iconGravity="textStart"
+            app:iconPadding="12dp"
+            app:iconTint="@color/stardeck_text_secondary"
+            app:strokeColor="@color/stardeck_field_stroke"
+            app:strokeWidth="1dp"
+            app:rippleColor="#1A4F6BFF" />
 
+        <!-- Category Setup -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCategory"
             style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_height="52dp"
+            android:layout_marginTop="10dp"
             android:text="Category Setup"
-            android:textAllCaps="false" />
+            android:textAllCaps="false"
+            android:textColor="@color/stardeck_text_primary"
+            android:textSize="15sp"
+            app:backgroundTint="@color/stardeck_field_bg"
+            app:cornerRadius="14dp"
+            app:icon="@drawable/ic_nav_library_24"
+            app:iconGravity="textStart"
+            app:iconPadding="12dp"
+            app:iconTint="@color/stardeck_text_secondary"
+            app:strokeColor="@color/stardeck_field_stroke"
+            app:strokeWidth="1dp"
+            app:rippleColor="#1A4F6BFF" />
 
+        <!-- Subject Setup -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSubject"
             style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_height="52dp"
+            android:layout_marginTop="10dp"
             android:text="Subject Setup"
-            android:textAllCaps="false" />
+            android:textAllCaps="false"
+            android:textColor="@color/stardeck_text_primary"
+            android:textSize="15sp"
+            app:backgroundTint="@color/stardeck_field_bg"
+            app:cornerRadius="14dp"
+            app:icon="@drawable/ic_nav_study_24"
+            app:iconGravity="textStart"
+            app:iconPadding="12dp"
+            app:iconTint="@color/stardeck_text_secondary"
+            app:strokeColor="@color/stardeck_field_stroke"
+            app:strokeWidth="1dp"
+            app:rippleColor="#1A4F6BFF" />
 
+        <!-- Language Setup -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnLanguage"
             style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_height="52dp"
+            android:layout_marginTop="10dp"
             android:text="Language Setup"
-            android:textAllCaps="false" />
+            android:textAllCaps="false"
+            android:textColor="@color/stardeck_text_primary"
+            android:textSize="15sp"
+            app:backgroundTint="@color/stardeck_field_bg"
+            app:cornerRadius="14dp"
+            app:icon="@drawable/ic_nav_explore_24"
+            app:iconGravity="textStart"
+            app:iconPadding="12dp"
+            app:iconTint="@color/stardeck_text_secondary"
+            app:strokeColor="@color/stardeck_field_stroke"
+            app:strokeWidth="1dp"
+            app:rippleColor="#1A4F6BFF" />
 
+        <!-- Subscription Plan Setup -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSubscription"
             style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_height="52dp"
+            android:layout_marginTop="10dp"
             android:text="Subscription Plan Setup"
-            android:textAllCaps="false" />
+            android:textAllCaps="false"
+            android:textColor="@color/stardeck_text_primary"
+            android:textSize="15sp"
+            app:backgroundTint="@color/stardeck_field_bg"
+            app:cornerRadius="14dp"
+            app:icon="@drawable/ic_stardeck_star"
+            app:iconGravity="textStart"
+            app:iconPadding="12dp"
+            app:iconTint="@color/stardeck_text_secondary"
+            app:strokeColor="@color/stardeck_field_stroke"
+            app:strokeWidth="1dp"
+            app:rippleColor="#1A4F6BFF" />
 
+        <!-- Report Reason Setup -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnReportReason"
             style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_height="52dp"
+            android:layout_marginTop="10dp"
             android:text="Report Reason Setup"
-            android:textAllCaps="false" />
+            android:textAllCaps="false"
+            android:textColor="@color/stardeck_text_primary"
+            android:textSize="15sp"
+            app:backgroundTint="@color/stardeck_field_bg"
+            app:cornerRadius="14dp"
+            app:icon="@drawable/ic_nav_reports_24"
+            app:iconGravity="textStart"
+            app:iconPadding="12dp"
+            app:iconTint="@color/stardeck_text_secondary"
+            app:strokeColor="@color/stardeck_field_stroke"
+            app:strokeWidth="1dp"
+            app:rippleColor="#1A4F6BFF" />
 
+        <!-- Achievement Setup -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnAchievement"
             style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_height="52dp"
+            android:layout_marginTop="10dp"
             android:text="Achievement Setup"
-            android:textAllCaps="false" />
+            android:textAllCaps="false"
+            android:textColor="@color/stardeck_text_primary"
+            android:textSize="15sp"
+            app:backgroundTint="@color/stardeck_field_bg"
+            app:cornerRadius="14dp"
+            app:icon="@drawable/ic_stardeck_star"
+            app:iconGravity="textStart"
+            app:iconPadding="12dp"
+            app:iconTint="@color/stardeck_text_secondary"
+            app:strokeColor="@color/stardeck_field_stroke"
+            app:strokeWidth="1dp"
+            app:rippleColor="#1A4F6BFF" />
 
         <Space
             android:layout_width="match_parent"

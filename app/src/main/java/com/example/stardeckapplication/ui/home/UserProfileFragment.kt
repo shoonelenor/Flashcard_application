@@ -3,6 +3,7 @@ package com.example.stardeckapplication.ui.home
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.example.stardeckapplication.R
 import com.example.stardeckapplication.databinding.FragmentUserProfileBinding
@@ -41,9 +42,15 @@ class UserProfileFragment : Fragment(R.layout.fragment_user_profile) {
             return
         }
 
-        b.btnPremium.setOnClickListener { startActivity(Intent(requireContext(), PremiumDemoActivity::class.java)) }
-        b.btnAchievements.setOnClickListener { startActivity(Intent(requireContext(), AchievementsActivity::class.java)) }
-        b.btnLeaderboard.setOnClickListener { startActivity(Intent(requireContext(), LeaderboardActivity::class.java)) }
+        b.btnPremium.setOnClickListener {
+            startActivity(Intent(requireContext(), PremiumDemoActivity::class.java))
+        }
+        b.btnAchievements.setOnClickListener {
+            startActivity(Intent(requireContext(), AchievementsActivity::class.java))
+        }
+        b.btnLeaderboard.setOnClickListener {
+            startActivity(Intent(requireContext(), LeaderboardActivity::class.java))
+        }
 
         b.btnSettings.setOnClickListener {
             val currentUser = session.load() ?: return@setOnClickListener
@@ -55,7 +62,7 @@ class UserProfileFragment : Fragment(R.layout.fragment_user_profile) {
             )
         }
 
-        b.btnNotifications.text = "Appearance"
+        // "Appearance" is now hardcoded in XML — no .text setter needed
         b.btnNotifications.setOnClickListener { showAppearanceDialog() }
 
         b.btnPrivacyTerms.setOnClickListener { showPrivacyTermsDialog() }
@@ -134,8 +141,12 @@ class UserProfileFragment : Fragment(R.layout.fragment_user_profile) {
         b.tvName.text = me.name
         b.tvEmail.text = me.email
 
+        // Set initials avatar
+        b.tvInitials.text = me.name.firstOrNull()?.uppercaseChar()?.toString() ?: "?"
+
         val currentPlan = subscriptionDao.getCurrentPlanForUser(me.id)
-        val isPremium = currentPlan != null || runCatching { userDao.isUserPremium(me.id) }.getOrDefault(false)
+        val isPremium = currentPlan != null ||
+                runCatching { userDao.isUserPremium(me.id) }.getOrDefault(false)
         val summary = achievementSummary.getSummary(me.id)
 
         b.tvPlanValue.text = when {
@@ -158,8 +169,11 @@ class UserProfileFragment : Fragment(R.layout.fragment_user_profile) {
         }
 
         b.tvPlanNote.text = if (summary.hasAny) {
-            val nextLine = if (!summary.nextTitle.isNullOrBlank() && !summary.nextProgressText.isNullOrBlank()) {
-                "\nAchievements: ${summary.unlockedCount}/${summary.totalCount} unlocked • Next: ${summary.nextTitle} (${summary.nextProgressText})"
+            val nextLine = if (!summary.nextTitle.isNullOrBlank() &&
+                !summary.nextProgressText.isNullOrBlank()
+            ) {
+                "\nAchievements: ${summary.unlockedCount}/${summary.totalCount} unlocked" +
+                        " • Next: ${summary.nextTitle} (${summary.nextProgressText})"
             } else {
                 "\nAchievements: ${summary.unlockedCount}/${summary.totalCount} unlocked"
             }
@@ -168,7 +182,27 @@ class UserProfileFragment : Fragment(R.layout.fragment_user_profile) {
             basePlanNote
         }
 
-        b.btnAchievements.text = if (summary.hasAny) {
+        // Update achievement percent label
+        val pct = if (summary.totalCount > 0)
+            (summary.unlockedCount * 100 / summary.totalCount) else 0
+        b.tvAchievementPercent.text = "$pct%"
+
+        b.tvAchievementSummaryValue.text = "${summary.unlockedCount} / ${summary.totalCount} unlocked"
+        b.progressAchievementSummary.progress = summary.unlockedCount
+
+        // Update the Achievements row label inside its LinearLayout
+        b.btnAchievements
+            .findViewById<TextView>(
+                b.btnAchievements.getChildAt(0).id.takeIf { it != View.NO_ID }
+                    ?: run {
+                        // fallback: find first TextView in the row
+                        return@run View.NO_ID
+                    }
+            )
+
+        // Simpler: find the first TextView child of btnAchievements directly
+        val achievementsLabel = b.btnAchievements.getChildAt(0) as? TextView
+        achievementsLabel?.text = if (summary.hasAny) {
             "Achievements • ${summary.unlockedCount}/${summary.totalCount}"
         } else {
             "Achievements"

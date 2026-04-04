@@ -34,6 +34,10 @@ class PremiumDemoActivity : AppCompatActivity() {
     private var monthlyPlan: SubscriptionPlanDao.PlanOption? = null
     private var yearlyPlan: SubscriptionPlanDao.PlanOption? = null
 
+    // ─────────────────────────────────────────────────────────────
+    // Lifecycle
+    // ─────────────────────────────────────────────────────────────
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         b = ActivityPremiumDemoBinding.inflate(layoutInflater)
@@ -42,50 +46,17 @@ class PremiumDemoActivity : AppCompatActivity() {
         returnDeckId = intent.getLongExtra(EXTRA_RETURN_DECK_ID, -1L)
         returnReadOnlyPublic = intent.getBooleanExtra(EXTRA_RETURN_READ_ONLY_PUBLIC, false)
 
-        setSupportActionBar(b.toolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = "Premium (Demo)"
-
         val me = session.load()
         if (me == null || me.role != DbContract.ROLE_USER) {
             finish()
             return
         }
 
+        setupToolbar()
+        setupListeners(me.id)
         subscriptionDao.ensureDefaultsInserted()
-
-        b.toolbar.setNavigationOnClickListener { finish() }
-
-        b.btnAddDemoDeck.setOnClickListener {
-            val deckId = deckDao.createPremiumDemoDeckForUser(me.id)
-            if (deckId > 0) {
-                Snackbar.make(b.root, "Premium demo deck added", Snackbar.LENGTH_SHORT).show()
-            } else {
-                Snackbar.make(b.root, "Could not add demo deck", Snackbar.LENGTH_LONG).show()
-            }
-        }
-
-        b.chipMonthly.setOnClickListener { renderPlanSelection() }
-        b.chipYearly.setOnClickListener { renderPlanSelection() }
-
-        b.btnPay.setOnClickListener { showPaymentDialog(me.id) }
-
-        b.btnCancelPremium.setOnClickListener {
-            MaterialAlertDialogBuilder(this)
-                .setTitle("Cancel Premium (Demo)?")
-                .setMessage("This will lock premium decks again.")
-                .setPositiveButton("Cancel Premium") { _, _ ->
-                    subscriptionDao.cancelPremiumForUser(me.id)
-                    loadPlans()
-                    render(me.id)
-                    Snackbar.make(b.root, "Premium disabled (demo)", Snackbar.LENGTH_SHORT).show()
-                }
-                .setNegativeButton("Keep", null)
-                .show()
-        }
-
         loadPlans()
-        render(me.id)
+        refreshUi(me.id)
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -93,41 +64,90 @@ class PremiumDemoActivity : AppCompatActivity() {
         return true
     }
 
+    // ─────────────────────────────────────────────────────────────
+    // Setup
+    // ─────────────────────────────────────────────────────────────
+
+    private fun setupToolbar() {
+        setSupportActionBar(b.toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.title = "Subscription"
+        b.toolbar.setNavigationOnClickListener { finish() }
+    }
+
+    private fun setupListeners(userId: Long) {
+        b.chipMonthly.setOnClickListener { renderPlanDetails() }
+        b.chipYearly.setOnClickListener { renderPlanDetails() }
+
+        b.btnPay.setOnClickListener { showConfirmDialog(userId) }
+
+        b.btnCancelPremium.setOnClickListener { showCancelDialog(userId) }
+
+        b.btnAddDemoDeck.setOnClickListener {
+            val deckId = deckDao.createPremiumDemoDeckForUser(userId)
+            val msg = if (deckId > 0) "Sample premium deck added to your library"
+            else "Could not add sample deck"
+            Snackbar.make(b.root, msg, Snackbar.LENGTH_SHORT).show()
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Data loading
+    // ─────────────────────────────────────────────────────────────
+
     private fun loadPlans() {
         monthlyPlan = subscriptionDao.getPlanByBillingCycle(DbContract.BILLING_MONTHLY)
-        yearlyPlan = subscriptionDao.getPlanByBillingCycle(DbContract.BILLING_YEARLY)
+        yearlyPlan  = subscriptionDao.getPlanByBillingCycle(DbContract.BILLING_YEARLY)
 
-        b.chipMonthly.visibility = if (monthlyPlan == null) View.GONE else View.VISIBLE
-        b.chipYearly.visibility = if (yearlyPlan == null) View.GONE else View.VISIBLE
+        b.chipMonthly.visibility = if (monthlyPlan != null) View.VISIBLE else View.GONE
+        b.chipYearly.visibility  = if (yearlyPlan  != null) View.VISIBLE else View.GONE
 
         monthlyPlan?.let { b.chipMonthly.text = it.name }
-        yearlyPlan?.let { b.chipYearly.text = it.name }
+        yearlyPlan?.let  { b.chipYearly.text  = it.name }
 
-        when {
-            monthlyPlan != null && yearlyPlan == null -> b.chipMonthly.isChecked = true
-            monthlyPlan == null && yearlyPlan != null -> b.chipYearly.isChecked = true
-            monthlyPlan != null && yearlyPlan != null && !b.chipMonthly.isChecked && !b.chipYearly.isChecked -> {
-                b.chipMonthly.isChecked = true
-            }
+        // Auto-select first available plan if none checked
+        if (!b.chipMonthly.isChecked && !b.chipYearly.isChecked) {
+            if (monthlyPlan != null) b.chipMonthly.isChecked = true
+            else if (yearlyPlan != null) b.chipYearly.isChecked = true
         }
 
-        renderPlanSelection()
+        renderPlanDetails()
     }
 
-    private fun selectedPlan(): SubscriptionPlanDao.PlanOption? {
-        return when {
-            b.chipYearly.isChecked && yearlyPlan != null -> yearlyPlan
-            b.chipMonthly.isChecked && monthlyPlan != null -> monthlyPlan
-            monthlyPlan != null -> monthlyPlan
-            yearlyPlan != null -> yearlyPlan
-            else -> null
-        }
+    private fun selectedPlan(): SubscriptionPlanDao.PlanOption? = when {
+        b.chipYearly.isChecked  && yearlyPlan  != null -> yearlyPlan
+        b.chipMonthly.isChecked && monthlyPlan != null -> monthlyPlan
+        monthlyPlan != null -> monthlyPlan
+        yearlyPlan  != null -> yearlyPlan
+        else -> null
     }
 
-    private fun renderPlanSelection() {
+    // ─────────────────────────────────────────────────────────────
+    // UI rendering
+    // ─────────────────────────────────────────────────────────────
+
+    private fun refreshUi(userId: Long) {
+        val current = subscriptionDao.getCurrentPlanForUser(userId)
+        val isPremium = current != null
+
+        // Status banner
+        b.tvStatus.text = if (isPremium)
+            "⭐ Premium is active  •  ${current?.planName.orEmpty()}"
+        else
+            "🔒 Premium is not active"
+
+        // Button states
+        b.btnPay.text = if (isPremium) "Change Plan" else "Subscribe Now"
+        b.btnCancelPremium.isEnabled = isPremium
+        b.btnCancelPremium.alpha = if (isPremium) 1f else 0.4f
+
+        renderPlanDetails()
+    }
+
+    private fun renderPlanDetails() {
         val plan = selectedPlan()
         if (plan == null) {
-            b.tvPlanSummary.text = "No active plans are configured by admin yet."
+            b.tvPlanSummary.text = "No plans are currently available."
             b.btnPay.isEnabled = false
             b.btnPay.alpha = 0.5f
             return
@@ -136,81 +156,75 @@ class PremiumDemoActivity : AppCompatActivity() {
         b.btnPay.isEnabled = true
         b.btnPay.alpha = 1f
         b.tvPlanSummary.text = buildString {
-            append("${plan.name} • ${plan.priceText}")
+            append("${plan.name}  •  ${plan.priceText}")
             append("\nBilling: ${plan.billingLabel}")
             append("\nDuration: ${plan.durationDays} day(s)")
-            if (!plan.description.isNullOrBlank()) {
-                append("\n${plan.description}")
-            }
+            if (!plan.description.isNullOrBlank()) append("\n${plan.description}")
         }
     }
 
-    private fun render(userId: Long) {
-        val current = subscriptionDao.getCurrentPlanForUser(userId)
-        val premium = current != null
+    // ─────────────────────────────────────────────────────────────
+    // Dialogs
+    // ─────────────────────────────────────────────────────────────
 
-        b.tvStatus.text = if (premium) {
-            "⭐ Premium is active • ${current?.planName.orEmpty()}"
-        } else {
-            "🔒 Premium is locked"
-        }
-
-        b.btnCancelPremium.isEnabled = premium
-        b.btnCancelPremium.alpha = if (premium) 1f else 0.5f
-        b.btnPay.text = if (premium) "Change Plan (Demo)" else "Upgrade (Demo)"
-        renderPlanSelection()
-    }
-
-    private fun showPaymentDialog(userId: Long) {
-        val plan = selectedPlan()
-        if (plan == null) {
-            Snackbar.make(b.root, "No active plan available.", Snackbar.LENGTH_LONG).show()
+    private fun showConfirmDialog(userId: Long) {
+        val plan = selectedPlan() ?: run {
+            Snackbar.make(b.root, "No plan available to subscribe.", Snackbar.LENGTH_LONG).show()
             return
         }
 
         MaterialAlertDialogBuilder(this)
-            .setTitle("Demo Checkout")
+            .setTitle("Confirm Subscription")
             .setMessage(
                 "Plan: ${plan.name}\n" +
                         "Billing: ${plan.billingLabel}\n" +
                         "Price: ${plan.priceText}\n" +
                         "Duration: ${plan.durationDays} day(s)\n\n" +
-                        "Choose the outcome (demo):"
+                        "You will be charged ${plan.priceText} per ${plan.billingLabel.lowercase()}."
             )
-            .setPositiveButton("Pay Success") { _, _ ->
-                val ok = subscriptionDao.activatePlanForUser(userId, plan.id)
-                if (!ok) {
-                    Snackbar.make(b.root, "Could not activate plan.", Snackbar.LENGTH_LONG).show()
-                    return@setPositiveButton
-                }
-                render(userId)
-
-                MaterialAlertDialogBuilder(this)
-                    .setTitle("Payment Successful")
-                    .setMessage("${plan.name} is now active (demo). Premium decks are unlocked.")
-                    .setPositiveButton("Continue") { _, _ ->
-                        if (returnDeckId > 0) {
-                            startActivity(
-                                Intent(this, DeckCardsActivity::class.java)
-                                    .putExtra(DeckCardsActivity.EXTRA_DECK_ID, returnDeckId)
-                                    .putExtra(
-                                        DeckCardsActivity.EXTRA_READ_ONLY_PUBLIC,
-                                        returnReadOnlyPublic
-                                    )
-                            )
-                        }
-                        finish()
-                    }
-                    .show()
-            }
-            .setNeutralButton("Pay Fail") { _, _ ->
-                MaterialAlertDialogBuilder(this)
-                    .setTitle("Payment Failed")
-                    .setMessage("This is a demo failure. Please try again (demo).")
-                    .setPositiveButton("OK", null)
-                    .show()
+            .setPositiveButton("Confirm") { _, _ ->
+                activatePlan(userId, plan)
             }
             .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun activatePlan(userId: Long, plan: SubscriptionPlanDao.PlanOption) {
+        val ok = subscriptionDao.activatePlanForUser(userId, plan.id)
+        if (!ok) {
+            Snackbar.make(b.root, "Could not activate plan. Please try again.", Snackbar.LENGTH_LONG).show()
+            return
+        }
+
+        refreshUi(userId)
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Subscription Activated")
+            .setMessage("${plan.name} is now active. Premium decks are unlocked.")
+            .setPositiveButton("Continue") { _, _ ->
+                if (returnDeckId > 0) {
+                    startActivity(
+                        Intent(this, DeckCardsActivity::class.java)
+                            .putExtra(DeckCardsActivity.EXTRA_DECK_ID, returnDeckId)
+                            .putExtra(DeckCardsActivity.EXTRA_READ_ONLY_PUBLIC, returnReadOnlyPublic)
+                    )
+                }
+                finish()
+            }
+            .show()
+    }
+
+    private fun showCancelDialog(userId: Long) {
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Cancel Subscription?")
+            .setMessage("You will lose access to premium decks at the end of your billing period.")
+            .setPositiveButton("Cancel Subscription") { _, _ ->
+                subscriptionDao.cancelPremiumForUser(userId)
+                loadPlans()
+                refreshUi(userId)
+                Snackbar.make(b.root, "Subscription cancelled.", Snackbar.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Keep Plan", null)
             .show()
     }
 }

@@ -1,137 +1,193 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="8dp"
-    app:cardElevation="2dp"
-    app:cardUseCompatPadding="true">
+    android:layout_marginBottom="10dp"
+    app:cardBackgroundColor="@color/stardeck_field_bg"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="0dp"
+    app:strokeColor="@color/stardeck_field_stroke"
+    app:strokeWidth="1dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="12dp">
+        android:orientation="horizontal">
 
+        <!-- Left accent bar -->
+        <View
+            android:layout_width="4dp"
+            android:layout_height="match_parent"
+            android:background="@color/stardeck_primary" />
+
+        <!-- Content -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="vertical"
+            android:padding="14dp">
 
-            <TextView
-                android:id="@+id/tvTitle"
-                android:layout_width="0dp"
+            <!-- Title row + Premium badge -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Deck Title"
-                android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
 
+                <TextView
+                    android:id="@+id/tvTitle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Deck Title"
+                    android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                    android:textColor="@color/stardeck_text_primary"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvLocked"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="⭐ Premium"
+                    android:textAppearance="@style/TextAppearance.Material3.LabelSmall"
+                    android:textColor="@color/stardeck_primary"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+            <!-- Owner -->
             <TextView
-                android:id="@+id/tvLocked"
+                android:id="@+id/tvOwner"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="🔒 Premium"
+                android:layout_marginTop="2dp"
+                android:text="by Owner"
+                android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+                android:textColor="@color/stardeck_text_secondary" />
+
+            <!-- Category / Subject / Language chips -->
+            <com.google.android.material.chip.ChipGroup
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                app:chipSpacingHorizontal="6dp"
+                app:singleLine="false">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipCategory"
+                    style="@style/Widget.Material3.Chip.Assist"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checkable="false"
+                    android:text="Category"
+                    android:textColor="@color/stardeck_text_secondary"
+                    app:chipBackgroundColor="@color/stardeck_bg_bottom"
+                    app:chipStrokeColor="@color/stardeck_field_stroke"
+                    app:chipStrokeWidth="1dp"
+                    android:visibility="gone" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipSubject"
+                    style="@style/Widget.Material3.Chip.Assist"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checkable="false"
+                    android:text="Subject"
+                    android:textColor="@color/stardeck_text_secondary"
+                    app:chipBackgroundColor="@color/stardeck_bg_bottom"
+                    app:chipStrokeColor="@color/stardeck_field_stroke"
+                    app:chipStrokeWidth="1dp"
+                    android:visibility="gone" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipLanguage"
+                    style="@style/Widget.Material3.Chip.Assist"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checkable="false"
+                    android:text="Language"
+                    android:textColor="@color/stardeck_text_secondary"
+                    app:chipBackgroundColor="@color/stardeck_bg_bottom"
+                    app:chipStrokeColor="@color/stardeck_field_stroke"
+                    app:chipStrokeWidth="1dp"
+                    android:visibility="gone" />
+            </com.google.android.material.chip.ChipGroup>
+
+            <!-- Description -->
+            <TextView
+                android:id="@+id/tvDesc"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:ellipsize="end"
+                android:maxLines="2"
+                android:text="Description"
+                android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+                android:textColor="@color/stardeck_text_secondary" />
+
+            <!-- Card count -->
+            <TextView
+                android:id="@+id/tvCardCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="0 cards"
                 android:textAppearance="@style/TextAppearance.Material3.LabelSmall"
-                android:visibility="gone" />
+                android:textColor="@color/stardeck_text_secondary" />
+
+            <!-- Action buttons: Preview | Open | Copy -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnPreview"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Preview"
+                    android:textAllCaps="false"
+                    android:textColor="@color/stardeck_text_primary"
+                    app:cornerRadius="24dp"
+                    app:strokeColor="@color/stardeck_field_stroke" />
+
+                <Space
+                    android:layout_width="8dp"
+                    android:layout_height="1dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnOpen"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Open"
+                    android:textAllCaps="false"
+                    android:textColor="@color/stardeck_text_primary"
+                    app:cornerRadius="24dp"
+                    app:strokeColor="@color/stardeck_field_stroke" />
+
+                <Space
+                    android:layout_width="8dp"
+                    android:layout_height="1dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnCopy"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Copy"
+                    android:textAllCaps="false"
+                    app:backgroundTint="@color/stardeck_primary"
+                    app:cornerRadius="24dp" />
+            </LinearLayout>
+
         </LinearLayout>
-
-        <TextView
-            android:id="@+id/tvOwner"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="by Owner"
-            android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
-
-        <com.google.android.material.chip.ChipGroup
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            app:chipSpacingHorizontal="8dp"
-            app:singleLine="false">
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipCategory"
-                style="@style/Widget.Material3.Chip.Assist"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:checkable="false"
-                android:text="Category"
-                android:visibility="gone" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipSubject"
-                style="@style/Widget.Material3.Chip.Assist"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:checkable="false"
-                android:text="Subject"
-                android:visibility="gone" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipLanguage"
-                style="@style/Widget.Material3.Chip.Assist"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:checkable="false"
-                android:text="Language"
-                android:visibility="gone" />
-        </com.google.android.material.chip.ChipGroup>
-
-        <TextView
-            android:id="@+id/tvDesc"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:ellipsize="end"
-            android:maxLines="2"
-            android:text="Description"
-            android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
-
-        <TextView
-            android:id="@+id/tvCardCount"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="0 cards"
-            android:textAppearance="@style/TextAppearance.Material3.LabelSmall" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:orientation="horizontal">
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnPreview"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Preview" />
-
-            <Space
-                android:layout_width="8dp"
-                android:layout_height="1dp" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnOpen"
-                style="@style/Widget.Material3.Button.TonalButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Open" />
-
-            <Space
-                android:layout_width="8dp"
-                android:layout_height="1dp" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnCopy"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Copy" />
-        </LinearLayout>
-
     </LinearLayout>
+
 </com.google.android.material.card.MaterialCardView>

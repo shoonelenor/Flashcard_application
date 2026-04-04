@@ -1,157 +1,273 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="16dp">
-
-    <TextView
-        android:id="@+id/tvTitle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Deck"
-        android:textAppearance="@style/TextAppearance.Material3.TitleLarge" />
-
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/tilTitle"
-        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:hint="Title">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etTitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:inputType="textCapSentences"
-            android:maxLength="40" />
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/tilDescription"
-        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:hint="Description">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etDescription"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:inputType="textCapSentences|textMultiLine"
-            android:maxLines="4"
-            android:minLines="3" />
-    </com.google.android.material.textfield.TextInputLayout>
+    app:cardBackgroundColor="@color/stardeck_field_bg"
+    app:cardCornerRadius="24dp"
+    app:strokeColor="@color/stardeck_field_stroke"
+    app:strokeWidth="1dp">
 
     <LinearLayout
-        android:id="@+id/groupCategory"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:orientation="vertical"
-        android:visibility="gone">
+        android:orientation="vertical">
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilCategory"
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+        <!-- ── Header bar with title ── -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Category">
+            android:background="@color/stardeck_bg_bottom"
+            android:orientation="horizontal"
+            android:padding="20dp">
 
-            <com.google.android.material.textfield.MaterialAutoCompleteTextView
-                android:id="@+id/actCategory"
+            <!-- Left accent bar -->
+            <View
+                android:layout_width="4dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="12dp"
+                android:background="@color/stardeck_primary" />
+
+            <TextView
+                android:id="@+id/tvTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Create Deck"
+                android:textColor="@color/stardeck_text_primary"
+                android:textAppearance="@style/TextAppearance.Material3.TitleLarge" />
+        </LinearLayout>
+
+        <!-- Thin divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/stardeck_field_stroke" />
+
+        <!-- ── Scrollable form body ── -->
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fillViewport="true"
+            android:overScrollMode="never"
+            android:scrollbars="none">
+
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="none" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:orientation="vertical"
+                android:padding="20dp">
 
-        <TextView
-            android:id="@+id/tvCategoryNote"
+                <!-- Title field -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilTitle"
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Title"
+                    app:counterEnabled="true"
+                    app:counterMaxLength="40">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textCapSentences"
+                        android:maxLength="40" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Description field -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilDescription"
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:hint="Description (optional)">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etDescription"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="top"
+                        android:inputType="textCapSentences|textMultiLine"
+                        android:maxLines="4"
+                        android:minLines="3" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- ── Category ── -->
+                <LinearLayout
+                    android:id="@+id/groupCategory"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="vertical">
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilCategory"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Category">
+
+                        <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                            android:id="@+id/actCategory"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="none" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <TextView
+                        android:id="@+id/tvCategoryNote"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginStart="4dp"
+                        android:text="No active categories yet. Admin can create them from Master Data."
+                        android:textColor="@color/stardeck_text_secondary"
+                        android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
+                </LinearLayout>
+
+                <!-- ── Subject ── -->
+                <LinearLayout
+                    android:id="@+id/groupSubject"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="vertical">
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilSubject"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Subject">
+
+                        <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                            android:id="@+id/actSubject"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="none" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <TextView
+                        android:id="@+id/tvSubjectNote"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginStart="4dp"
+                        android:text="Choose a category first to select subjects."
+                        android:textColor="@color/stardeck_text_secondary"
+                        android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
+                </LinearLayout>
+
+                <!-- ── Language ── -->
+                <LinearLayout
+                    android:id="@+id/groupLanguage"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="vertical">
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilLanguage"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Language">
+
+                        <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                            android:id="@+id/actLanguage"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="none" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <TextView
+                        android:id="@+id/tvLanguageNote"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginStart="4dp"
+                        android:text="No active languages yet. Admin can create them from Master Data."
+                        android:textColor="@color/stardeck_text_secondary"
+                        android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
+                </LinearLayout>
+
+                <!-- ── Public toggle ── -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    app:cardBackgroundColor="@color/stardeck_bg_bottom"
+                    app:cardCornerRadius="12dp"
+                    app:strokeColor="@color/stardeck_field_stroke"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="14dp">
+
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:id="@+id/swPublic"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Make this deck public"
+                            android:textColor="@color/stardeck_text_primary"
+                            android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
+
+                        <TextView
+                            android:id="@+id/tvVisibilityNote"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="Private decks are only visible to your account."
+                            android:textColor="@color/stardeck_text_secondary"
+                            android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+            </LinearLayout>
+        </ScrollView>
+
+        <!-- Thin divider above buttons -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/stardeck_field_stroke" />
+
+        <!-- ── Cancel / Create buttons — always visible ── -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:text="Optional category"
-            android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
-    </LinearLayout>
+            android:background="@color/stardeck_field_bg"
+            android:gravity="end"
+            android:orientation="horizontal"
+            android:padding="12dp">
 
-    <LinearLayout
-        android:id="@+id/groupSubject"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:orientation="vertical"
-        android:visibility="gone">
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilSubject"
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Subject">
-
-            <com.google.android.material.textfield.MaterialAutoCompleteTextView
-                android:id="@+id/actSubject"
-                android:layout_width="match_parent"
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCancel"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:inputType="none" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:minWidth="80dp"
+                android:text="Cancel"
+                android:textAllCaps="false"
+                android:textColor="@color/stardeck_text_secondary" />
 
-        <TextView
-            android:id="@+id/tvSubjectNote"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:text="Choose category first"
-            android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/groupLanguage"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:orientation="vertical"
-        android:visibility="gone">
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilLanguage"
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Language">
-
-            <com.google.android.material.textfield.MaterialAutoCompleteTextView
-                android:id="@+id/actLanguage"
-                android:layout_width="match_parent"
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCreate"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:inputType="none" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:layout_marginStart="8dp"
+                android:minWidth="80dp"
+                android:text="Create"
+                android:textAllCaps="false"
+                app:backgroundTint="@color/stardeck_primary" />
+        </LinearLayout>
 
-        <TextView
-            android:id="@+id/tvLanguageNote"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:text="Optional language"
-            android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
     </LinearLayout>
-
-    <com.google.android.material.materialswitch.MaterialSwitch
-        android:id="@+id/swPublic"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="14dp"
-        android:text="Make this deck public" />
-
-    <TextView
-        android:id="@+id/tvVisibilityNote"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:text="Private decks are only visible to your account."
-        android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
-
-</LinearLayout>
+</com.google.android.material.card.MaterialCardView>

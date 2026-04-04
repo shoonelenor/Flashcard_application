@@ -1,20 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/stardeck_bg_bottom">
 
+    <!-- ── AppBar ── -->
     <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@color/stardeck_bg_bottom"
+        app:elevation="0dp"
         app:liftOnScroll="true">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/stardeck_bg_bottom"
+            app:navigationIconTint="@color/stardeck_text_primary"
+            app:titleTextColor="@color/stardeck_text_primary" />
     </com.google.android.material.appbar.AppBarLayout>
 
+    <!-- ── Main Content ── -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -22,23 +32,29 @@
         android:padding="16dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
+        <!-- Search -->
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilSearch"
             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Search cards">
+            android:hint="Search cards"
+            app:endIconMode="clear_text"
+            app:startIconDrawable="@android:drawable/ic_menu_search">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etSearch"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:imeOptions="actionSearch"
                 android:inputType="text" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- Count + Study row -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="12dp"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
@@ -48,7 +64,8 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="0 cards"
-                android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
+                android:textColor="@color/stardeck_primary"
+                android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnReport"
@@ -56,23 +73,29 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Report"
+                android:textAllCaps="false"
                 android:visibility="gone" />
 
+            <!-- Filled pill Study button -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnStudy"
-                style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Study"
+                android:textAllCaps="false"
+                app:backgroundTint="@color/stardeck_primary"
+                app:cornerRadius="24dp"
                 app:icon="@android:drawable/ic_media_play"
                 app:iconPadding="8dp"
-                app:iconSize="18dp" />
+                app:iconSize="16dp"
+                app:iconTint="@color/white" />
         </LinearLayout>
 
+        <!-- Card list / Empty state -->
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="12dp"
             android:layout_weight="1">
 
             <androidx.recyclerview.widget.RecyclerView
@@ -82,6 +105,7 @@
                 android:clipToPadding="false"
                 android:paddingBottom="88dp" />
 
+            <!-- Empty state -->
             <LinearLayout
                 android:id="@+id/groupEmpty"
                 android:layout_width="match_parent"
@@ -94,13 +118,16 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="No cards yet"
+                    android:textColor="@color/stardeck_text_primary"
                     android:textAppearance="@style/TextAppearance.Material3.TitleLarge" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
+                    android:gravity="center"
                     android:text="Create your first flashcard to start studying."
+                    android:textColor="@color/stardeck_text_secondary"
                     android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
 
                 <com.google.android.material.button.MaterialButton
@@ -108,20 +135,26 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    android:text="Create Card" />
+                    android:text="Create Card"
+                    android:textAllCaps="false"
+                    app:backgroundTint="@color/stardeck_primary"
+                    app:cornerRadius="24dp" />
             </LinearLayout>
 
         </FrameLayout>
-
     </LinearLayout>
 
+    <!-- ── FAB ── -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabAdd"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
         android:contentDescription="Add card"
-        app:srcCompat="@android:drawable/ic_input_add" />
+        app:backgroundTint="@color/stardeck_primary"
+        app:srcCompat="@android:drawable/ic_input_add"
+        app:tint="@color/white" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

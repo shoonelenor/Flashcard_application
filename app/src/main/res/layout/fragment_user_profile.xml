@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/stardeck_bg_bottom"
     android:fillViewport="true">
 
     <LinearLayout
@@ -11,10 +13,17 @@
         android:orientation="vertical"
         android:padding="16dp">
 
+        <!-- ═══════════════════════════════════════
+             PROFILE HEADER CARD
+             ═══════════════════════════════════════ -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardCornerRadius="24dp">
+            app:cardBackgroundColor="@color/stardeck_field_bg"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/stardeck_field_stroke"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -26,196 +35,562 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Profile"
-                    android:textAppearance="@style/TextAppearance.Material3.HeadlineSmall" />
+                    android:textAppearance="@style/TextAppearance.Material3.HeadlineSmall"
+                    android:textColor="@color/stardeck_text_primary" />
 
-                <TextView
-                    android:id="@+id/tvName"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
-                    android:text="User Name"
-                    android:textAppearance="@style/TextAppearance.Material3.TitleLarge" />
+                    android:layout_marginTop="16dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/tvEmail"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:text="user@email.com"
-                    android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="60dp"
+                        android:layout_height="60dp"
+                        app:cardBackgroundColor="@color/stardeck_primary"
+                        app:cardCornerRadius="30dp"
+                        app:cardElevation="0dp"
+                        app:strokeWidth="0dp">
+
+                        <TextView
+                            android:id="@+id/tvInitials"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:text="S"
+                            android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
+                            android:textColor="@android:color/white"
+                            android:textStyle="bold" />
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvName"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="User Name"
+                            android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
+                            android:textColor="@color/stardeck_text_primary"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvEmail"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="user@email.com"
+                            android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                            android:textColor="@color/stardeck_text_secondary" />
+                    </LinearLayout>
+                </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- ═══════════════════════════════════════
+             PLAN STATUS CARD
+             ═══════════════════════════════════════ -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            app:cardCornerRadius="20dp">
+            android:layout_marginTop="14dp"
+            app:cardBackgroundColor="@color/stardeck_field_bg"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/stardeck_field_stroke"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="18dp">
+                android:orientation="horizontal">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Plan Status"
-                    android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
+                <View
+                    android:layout_width="4dp"
+                    android:layout_height="match_parent"
+                    android:background="@color/stardeck_primary" />
 
-                <TextView
-                    android:id="@+id/tvPlanValue"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:text="Free Plan"
-                    android:textAppearance="@style/TextAppearance.Material3.TitleLarge" />
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
-                <TextView
-                    android:id="@+id/tvPlanNote"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:text="Upgrade to unlock premium decks and future AI tools."
-                    android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Plan Status"
+                        android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
+                        android:textColor="@color/stardeck_text_secondary"
+                        android:letterSpacing="0.08" />
+
+                    <TextView
+                        android:id="@+id/tvPlanValue"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="Free Plan"
+                        android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
+                        android:textColor="@color/stardeck_text_primary"
+                        android:textStyle="bold" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginTop="12dp"
+                        android:layout_marginBottom="10dp"
+                        android:background="@color/stardeck_field_stroke" />
+
+                    <TextView
+                        android:id="@+id/tvPlanNote"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Upgrade to unlock premium decks and future AI tools."
+                        android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+                        android:textColor="@color/stardeck_text_secondary"
+                        android:lineSpacingExtra="3dp" />
+                </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-
+        <!-- ═══════════════════════════════════════
+             ACHIEVEMENT PROGRESS CARD
+             ═══════════════════════════════════════ -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardAchievementSummary"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            app:cardCornerRadius="20dp">
+            android:layout_marginTop="14dp"
+            app:cardBackgroundColor="@color/stardeck_field_bg"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/stardeck_field_stroke"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="18dp">
+                android:orientation="horizontal">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Achievement Progress"
-                    android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
+                <View
+                    android:layout_width="4dp"
+                    android:layout_height="match_parent"
+                    android:background="@color/stardeck_primary" />
 
-                <TextView
-                    android:id="@+id/tvAchievementSummaryValue"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:text="0 / 8 unlocked"
-                    android:textAppearance="@style/TextAppearance.Material3.TitleLarge" />
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
-                <com.google.android.material.progressindicator.LinearProgressIndicator
-                    android:id="@+id/progressAchievementSummary"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:max="8"
-                    android:progress="0"
-                    app:trackThickness="6dp" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Achievement Progress"
+                        android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
+                        android:textColor="@color/stardeck_text_secondary"
+                        android:letterSpacing="0.08" />
 
-                <TextView
-                    android:id="@+id/tvAchievementNextTitle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
-                    android:text="Next achievement"
-                    android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
 
-                <TextView
-                    android:id="@+id/tvAchievementNextHint"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:text="Your next badge progress will appear here."
-                    android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
+                        <TextView
+                            android:id="@+id/tvAchievementSummaryValue"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="0 / 8 unlocked"
+                            android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
+                            android:textColor="@color/stardeck_text_primary"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvAchievementPercent"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0%"
+                            android:textAppearance="@style/TextAppearance.Material3.LabelSmall"
+                            android:textColor="@color/stardeck_primary" />
+                    </LinearLayout>
+
+                    <com.google.android.material.progressindicator.LinearProgressIndicator
+                        android:id="@+id/progressAchievementSummary"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:max="8"
+                        android:progress="0"
+                        app:indicatorColor="@color/stardeck_primary"
+                        app:trackColor="@color/stardeck_bg_bottom"
+                        app:trackCornerRadius="4dp"
+                        app:trackThickness="8dp" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginTop="14dp"
+                        android:layout_marginBottom="10dp"
+                        android:background="@color/stardeck_field_stroke" />
+
+                    <TextView
+                        android:id="@+id/tvAchievementNextTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Next achievement"
+                        android:textAppearance="@style/TextAppearance.Material3.TitleSmall"
+                        android:textColor="@color/stardeck_text_primary"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvAchievementNextHint"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Your next badge progress will appear here."
+                        android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+                        android:textColor="@color/stardeck_text_secondary"
+                        android:lineSpacingExtra="2dp" />
+                </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- ═══════════════════════════════════════
+             PRIMARY ACTION BUTTON
+             ═══════════════════════════════════════ -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnPremium"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_height="56dp"
+            android:layout_marginTop="20dp"
             android:text="Subscription / Premium"
-            android:textAllCaps="false" />
+            android:textAllCaps="false"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
+            app:backgroundTint="@color/stardeck_primary"
+            app:cornerRadius="28dp" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnAchievements"
-            style="@style/Widget.Material3.Button.OutlinedButton"
+        <!-- ═══════════════════════════════════════
+             SECTION: ACCOUNT
+             ═══════════════════════════════════════ -->
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="Achievements"
-            android:textAllCaps="false" />
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="6dp"
+            android:layout_marginStart="4dp"
+            android:text="ACCOUNT"
+            android:textAppearance="@style/TextAppearance.Material3.LabelSmall"
+            android:textColor="@color/stardeck_text_secondary"
+            android:letterSpacing="0.12" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnSettings"
-            style="@style/Widget.Material3.Button.OutlinedButton"
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="Change Password"
-            android:textAllCaps="false" />
+            app:cardBackgroundColor="@color/stardeck_field_bg"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/stardeck_field_stroke"
+            app:strokeWidth="1dp">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnNotifications"
-            style="@style/Widget.Material3.Button.OutlinedButton"
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:id="@+id/btnAchievements"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:background="?attr/selectableItemBackground">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Achievements • 3/8"
+                        android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+                        android:textColor="@color/stardeck_text_primary" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="›"
+                        android:textColor="@color/stardeck_text_secondary"
+                        android:textSize="20sp" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginStart="16dp"
+                    android:background="@color/stardeck_field_stroke" />
+
+                <LinearLayout
+                    android:id="@+id/btnSettings"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:background="?attr/selectableItemBackground">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Change Password"
+                        android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+                        android:textColor="@color/stardeck_text_primary" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="›"
+                        android:textColor="@color/stardeck_text_secondary"
+                        android:textSize="20sp" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ═══════════════════════════════════════
+             SECTION: PREFERENCES
+             ═══════════════════════════════════════ -->
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="Appearance"
-            android:textAllCaps="false" />
+            android:layout_marginTop="18dp"
+            android:layout_marginBottom="6dp"
+            android:layout_marginStart="4dp"
+            android:text="PREFERENCES"
+            android:textAppearance="@style/TextAppearance.Material3.LabelSmall"
+            android:textColor="@color/stardeck_text_secondary"
+            android:letterSpacing="0.12" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnPrivacyTerms"
-            style="@style/Widget.Material3.Button.OutlinedButton"
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="Privacy &amp; Terms"
-            android:textAllCaps="false" />
+            app:cardBackgroundColor="@color/stardeck_field_bg"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/stardeck_field_stroke"
+            app:strokeWidth="1dp">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnHelp"
-            style="@style/Widget.Material3.Button.OutlinedButton"
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:id="@+id/btnNotifications"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:background="?attr/selectableItemBackground">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Appearance"
+                        android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+                        android:textColor="@color/stardeck_text_primary" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="›"
+                        android:textColor="@color/stardeck_text_secondary"
+                        android:textSize="20sp" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginStart="16dp"
+                    android:background="@color/stardeck_field_stroke" />
+
+                <LinearLayout
+                    android:id="@+id/btnPrivacyTerms"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:background="?attr/selectableItemBackground">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Privacy &amp; Terms"
+                        android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+                        android:textColor="@color/stardeck_text_primary" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="›"
+                        android:textColor="@color/stardeck_text_secondary"
+                        android:textSize="20sp" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginStart="16dp"
+                    android:background="@color/stardeck_field_stroke" />
+
+                <LinearLayout
+                    android:id="@+id/btnHelp"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:background="?attr/selectableItemBackground">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Help / Report Issue"
+                        android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+                        android:textColor="@color/stardeck_text_primary" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="›"
+                        android:textColor="@color/stardeck_text_secondary"
+                        android:textSize="20sp" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ═══════════════════════════════════════
+             SECTION: SOCIAL
+             ═══════════════════════════════════════ -->
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="Help / Report Issue"
-            android:textAllCaps="false" />
+            android:layout_marginTop="18dp"
+            android:layout_marginBottom="6dp"
+            android:layout_marginStart="4dp"
+            android:text="SOCIAL"
+            android:textAppearance="@style/TextAppearance.Material3.LabelSmall"
+            android:textColor="@color/stardeck_text_secondary"
+            android:letterSpacing="0.12" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnFriends"
-            style="@style/Widget.Material3.Button.OutlinedButton"
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="Friends"
-            android:textAllCaps="false" />
+            app:cardBackgroundColor="@color/stardeck_field_bg"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/stardeck_field_stroke"
+            app:strokeWidth="1dp">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnLeaderboard"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="Leaderboard"
-            android:textAllCaps="false" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
 
+                <LinearLayout
+                    android:id="@+id/btnFriends"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:background="?attr/selectableItemBackground">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Friends"
+                        android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+                        android:textColor="@color/stardeck_text_primary" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="›"
+                        android:textColor="@color/stardeck_text_secondary"
+                        android:textSize="20sp" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginStart="16dp"
+                    android:background="@color/stardeck_field_stroke" />
+
+                <LinearLayout
+                    android:id="@+id/btnLeaderboard"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:background="?attr/selectableItemBackground">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Leaderboard"
+                        android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+                        android:textColor="@color/stardeck_text_primary" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="›"
+                        android:textColor="@color/stardeck_text_secondary"
+                        android:textSize="20sp" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ═══════════════════════════════════════
+             LOGOUT BUTTON
+             ═══════════════════════════════════════ -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnLogout"
             style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_height="56dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="20dp"
             android:text="Logout"
-            android:textAllCaps="false" />
+            android:textAllCaps="false"
+            android:textColor="#FF5C5C"
+            android:textStyle="bold"
+            app:cornerRadius="28dp"
+            app:strokeColor="#FF5C5C" />
 
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

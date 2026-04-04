@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -11,208 +12,294 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <TextView
-            android:id="@+id/tvTitle"
+        <!-- ── HEADER CARD ── -->
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Manager Home"
-            android:textAppearance="@style/TextAppearance.Material3.HeadlineSmall"
-            android:textStyle="bold" />
+            app:cardCornerRadius="24dp"
+            app:cardBackgroundColor="#FF3D3FCC">
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="MANAGER CONTROL"
+                    android:textColor="#CCFFFFFF"
+                    android:textSize="11sp"
+                    android:letterSpacing="0.12"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Manager Home"
+                    android:textColor="#FFFFFFFF"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvSubtitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Welcome"
+                    android:textColor="#CCFFFFFF"
+                    android:textSize="13sp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ── SECTION TITLE ── -->
         <TextView
-            android:id="@+id/tvSubtitle"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Welcome"
-            android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="4dp"
+            android:text="Overview"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:textColor="@color/stardeck_text_primary" />
 
+        <!-- ROW 1: Open Reports | Hidden Decks -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="10dp"
             android:orientation="horizontal">
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="110dp"
                 android:layout_weight="1"
                 app:cardCornerRadius="20dp"
-                app:strokeWidth="1dp">
+                app:cardBackgroundColor="#FF1E1E2E">
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:orientation="vertical"
                     android:padding="16dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Open reports"
-                        android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
+                        android:text="🚩"
+                        android:textSize="22sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="REPORTS"
+                        android:textColor="#AAFFFFFF"
+                        android:textSize="11sp"
+                        android:letterSpacing="0.1"
                         android:textStyle="bold" />
 
                     <TextView
                         android:id="@+id/tvOpenReports"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
                         android:text="0"
-                        android:textAppearance="@style/TextAppearance.Material3.HeadlineMedium" />
+                        android:textColor="#FFFF4444"
+                        android:textSize="28sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <Space
-                android:layout_width="12dp"
-                android:layout_height="1dp" />
+            <Space android:layout_width="10dp" android:layout_height="wrap_content" />
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="110dp"
                 android:layout_weight="1"
                 app:cardCornerRadius="20dp"
-                app:strokeWidth="1dp">
+                app:cardBackgroundColor="#FF1E1E2E">
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:orientation="vertical"
                     android:padding="16dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Hidden decks"
-                        android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
+                        android:text="👁"
+                        android:textSize="22sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="HIDDEN"
+                        android:textColor="#AAFFFFFF"
+                        android:textSize="11sp"
+                        android:letterSpacing="0.1"
                         android:textStyle="bold" />
 
                     <TextView
                         android:id="@+id/tvHiddenDecks"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
                         android:text="0"
-                        android:textAppearance="@style/TextAppearance.Material3.HeadlineMedium" />
+                        android:textColor="#FFFFFFFF"
+                        android:textSize="28sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
 
+        <!-- ROW 2: Total Decks | Active Users -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="10dp"
             android:orientation="horizontal">
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="110dp"
                 android:layout_weight="1"
                 app:cardCornerRadius="20dp"
-                app:strokeWidth="1dp">
+                app:cardBackgroundColor="#FF1E1E2E">
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:orientation="vertical"
                     android:padding="16dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Total decks"
-                        android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
+                        android:text="📚"
+                        android:textSize="22sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="DECKS"
+                        android:textColor="#AAFFFFFF"
+                        android:textSize="11sp"
+                        android:letterSpacing="0.1"
                         android:textStyle="bold" />
 
                     <TextView
                         android:id="@+id/tvTotalDecks"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
                         android:text="0"
-                        android:textAppearance="@style/TextAppearance.Material3.HeadlineMedium" />
+                        android:textColor="#FFFFFFFF"
+                        android:textSize="28sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <Space
-                android:layout_width="12dp"
-                android:layout_height="1dp" />
+            <Space android:layout_width="10dp" android:layout_height="wrap_content" />
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="110dp"
                 android:layout_weight="1"
                 app:cardCornerRadius="20dp"
-                app:strokeWidth="1dp">
+                app:cardBackgroundColor="#FF1E1E2E">
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:orientation="vertical"
                     android:padding="16dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Active users"
-                        android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
+                        android:text="✅"
+                        android:textSize="22sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="ACTIVE MTH"
+                        android:textColor="#AAFFFFFF"
+                        android:textSize="11sp"
+                        android:letterSpacing="0.1"
                         android:textStyle="bold" />
 
                     <TextView
                         android:id="@+id/tvActiveMonthValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
                         android:text="0"
-                        android:textAppearance="@style/TextAppearance.Material3.HeadlineMedium" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="This month"
-                        android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
+                        android:textColor="#FF4CAF50"
+                        android:textSize="28sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
 
+        <!-- ── QUICK ACTION CARD ── -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="18dp"
             app:cardCornerRadius="20dp"
-            app:strokeWidth="1dp">
+            app:cardBackgroundColor="#FF1E1E2E">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="18dp">
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Quick action"
-                    android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
+                    android:text="Quick Action"
+                    android:textColor="#FFFFFFFF"
+                    android:textSize="16sp"
                     android:textStyle="bold" />
 
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="10dp"
+                    android:background="#33FFFFFF" />
+
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
                     android:text="Go to the report queue and review unresolved cases."
-                    android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
+                    android:textColor="#CCFFFFFF"
+                    android:textSize="13sp"
+                    android:lineSpacingMultiplier="1.4" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnGoReports"
-                    style="@style/Widget.Material3.Button.TonalButton"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
+                    android:layout_height="44dp"
+                    android:layout_marginTop="14dp"
                     android:text="Review Reports"
-                    android:textAllCaps="false" />
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFFFFF"
+                    android:textSize="14sp"
+                    app:backgroundTint="#FF3D3FCC"
+                    app:cornerRadius="12dp" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="90dp" />
 
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>
