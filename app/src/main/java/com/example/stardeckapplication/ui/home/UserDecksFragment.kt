@@ -111,12 +111,9 @@ class UserDecksFragment : Fragment(R.layout.fragment_user_decks) {
             (activity as? UserHomeActivity)?.openTab(R.id.nav_explore)
         }
 
+        // ✅ Wire AI Generate button to AiGenerateActivity
         b.btnAiGenerate.setOnClickListener {
-            Snackbar.make(
-                b.root,
-                "AI generate framework is ready. Real logic will be added later.",
-                Snackbar.LENGTH_SHORT
-            ).show()
+            startActivity(Intent(requireContext(), AiGenerateActivity::class.java))
         }
 
         reload()

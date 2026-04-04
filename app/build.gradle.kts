@@ -46,10 +46,12 @@ dependencies {
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
 
-    // Use an explicit Material dependency to avoid "Theme.Material3..." not found errors
     implementation("com.google.android.material:material:1.12.0")
-
     implementation("androidx.recyclerview:recyclerview:1.3.2")
+
+    // Coroutines — needed by AiGenerateActivity (lifecycleScope + Dispatchers.IO)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
