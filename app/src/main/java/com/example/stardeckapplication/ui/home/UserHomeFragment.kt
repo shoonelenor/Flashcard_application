@@ -112,7 +112,7 @@ class UserHomeFragment : Fragment(R.layout.fragment_user_home) {
         }
 
         b.btnAiHome.setOnClickListener {
-            startActivity(Intent(requireContext(), AiGenerateActivity::class.java))
+            startActivity(Intent(requireContext(), SmartGenerateActivity::class.java))
         }
     }
 

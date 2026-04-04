@@ -4,7 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
-import com.example.stardeckapplication.databinding.ActivityAiGenerateBinding
+import com.example.stardeckapplication.databinding.ActivitySmartGenerateBinding
 import com.example.stardeckapplication.db.CardDao
 import com.example.stardeckapplication.db.DbContract
 import com.example.stardeckapplication.db.StarDeckDbHelper
@@ -15,9 +15,9 @@ import com.example.stardeckapplication.util.RuleBasedFlashcardGenerator
 import com.example.stardeckapplication.util.SessionManager
 import com.google.android.material.snackbar.Snackbar
 
-class AiGenerateActivity : AppCompatActivity() {
+class SmartGenerateActivity : AppCompatActivity() {
 
-    private lateinit var b: ActivityAiGenerateBinding
+    private lateinit var b: ActivitySmartGenerateBinding
 
     private val session by lazy { SessionManager(this) }
     private val dbHelper by lazy { StarDeckDbHelper(this) }
@@ -25,6 +25,7 @@ class AiGenerateActivity : AppCompatActivity() {
     private val cardDao by lazy { CardDao(dbHelper) }
     private val achievementSync by lazy { AchievementSyncHelper(dbHelper) }
 
+    // ✅ FIXED: added <RuleBasedFlashcardGenerator.GeneratedCard> generic type
     private var generatedCards: List<RuleBasedFlashcardGenerator.GeneratedCard> = emptyList()
 
     // ─────────────────────────────────────────────────────────────
@@ -33,7 +34,7 @@ class AiGenerateActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        b = ActivityAiGenerateBinding.inflate(layoutInflater)
+        b = ActivitySmartGenerateBinding.inflate(layoutInflater)
         setContentView(b.root)
 
         val me = session.load()
@@ -144,7 +145,9 @@ class AiGenerateActivity : AppCompatActivity() {
 
         var created = 0
         for (card in generatedCards) {
-            val id = runCatching { cardDao.createCardAny(deckId, card.front, card.back) }.getOrDefault(-1L)
+            val id = runCatching {
+                cardDao.createCardAny(deckId, card.front, card.back)
+            }.getOrDefault(-1L)
             if (id > 0L) created++
         }
 
