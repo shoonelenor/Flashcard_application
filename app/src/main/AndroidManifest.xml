@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <application
+        android:name=".StarDeckApp"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -30,17 +31,26 @@
         <activity android:name=".ui.home.AdminHomeActivity" android:exported="false" />
 
         <activity android:name=".ui.admin.ManageAccountsActivity" android:exported="false" />
+        <activity android:name=".ui.admin.ManageContentSetupActivity" android:exported="false" />
+        <activity android:name=".ui.admin.ManagePremiumContentActivity" android:exported="false" />
+        <activity android:name=".ui.admin.ManageCategoriesActivity" android:exported="false" />
+        <activity android:name=".ui.admin.ManageSubjectsActivity" android:exported="false" />
+        <activity android:name=".ui.admin.ManageLanguagesActivity" android:exported="false" />
+        <activity android:name=".ui.admin.ManageAchievementsActivity" android:exported="false" />
+        <activity android:name=".ui.admin.ManageSubscriptionPlansActivity" android:exported="false" />
+        <activity android:name=".ui.admin.ManageReportReasonsActivity" android:exported="false" />
+
         <activity android:name=".ui.decks.MyDecksActivity" android:exported="false" />
         <activity android:name=".ui.cards.DeckCardsActivity" android:exported="false" />
         <activity android:name=".ui.study.StudyActivity" android:exported="false" />
         <activity android:name=".ui.manager.ManagerDeckCardsActivity" android:exported="false" />
+
         <activity android:name=".ui.profile.AchievementsActivity" android:exported="false" />
         <activity android:name=".ui.profile.PremiumDemoActivity" android:exported="false" />
-        <activity android:name=".ui.legal.TermsActivity" />
-        <activity android:name=".ui.legal.PrivacyPolicyActivity" />
-        <activity android:name=".ui.admin.ManagePremiumContentActivity" android:exported="false" />
-        <activity android:name=".ui.admin.ManageContentSetupActivity" android:exported="false" />
         <activity android:name=".ui.profile.LeaderboardActivity" android:exported="false" />
+
+        <activity android:name=".ui.legal.TermsActivity" android:exported="false" />
+        <activity android:name=".ui.legal.PrivacyPolicyActivity" android:exported="false" />
 
     </application>
 

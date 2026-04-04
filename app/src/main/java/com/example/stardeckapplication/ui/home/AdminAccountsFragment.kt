@@ -8,9 +8,14 @@ import com.example.stardeckapplication.R
 import com.example.stardeckapplication.databinding.FragmentAdminAccountsBinding
 import com.example.stardeckapplication.db.DbContract
 import com.example.stardeckapplication.ui.admin.ManageAccountsActivity
+import com.example.stardeckapplication.ui.admin.ManageAchievementsActivity
+import com.example.stardeckapplication.ui.admin.ManageCategoriesActivity
 import com.example.stardeckapplication.ui.admin.ManageContentSetupActivity
+import com.example.stardeckapplication.ui.admin.ManageLanguagesActivity
+import com.example.stardeckapplication.ui.admin.ManageReportReasonsActivity
+import com.example.stardeckapplication.ui.admin.ManageSubjectsActivity
+import com.example.stardeckapplication.ui.admin.ManageSubscriptionPlansActivity
 import com.example.stardeckapplication.util.SessionManager
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 class AdminAccountsFragment : Fragment(R.layout.fragment_admin_accounts) {
 
@@ -36,23 +41,29 @@ class AdminAccountsFragment : Fragment(R.layout.fragment_admin_accounts) {
             startActivity(Intent(requireContext(), ManageContentSetupActivity::class.java))
         }
 
-        b.btnCategory.setOnClickListener { showComingSoon("Category Setup") }
-        b.btnSubject.setOnClickListener { showComingSoon("Subject Setup") }
-        b.btnLanguage.setOnClickListener { showComingSoon("Language Setup") }
-        b.btnSubscription.setOnClickListener { showComingSoon("Subscription Plan Setup") }
-        b.btnReportReason.setOnClickListener { showComingSoon("Report Reason Setup") }
-        b.btnAchievement.setOnClickListener { showComingSoon("Achievement Setup") }
-    }
+        b.btnCategory.setOnClickListener {
+            startActivity(Intent(requireContext(), ManageCategoriesActivity::class.java))
+        }
 
-    private fun showComingSoon(title: String) {
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle(title)
-            .setMessage(
-                "This framework tab is ready.\n\n" +
-                        "We will connect the real master-data logic safely later."
-            )
-            .setPositiveButton("OK", null)
-            .show()
+        b.btnSubject.setOnClickListener {
+            startActivity(Intent(requireContext(), ManageSubjectsActivity::class.java))
+        }
+
+        b.btnLanguage.setOnClickListener {
+            startActivity(Intent(requireContext(), ManageLanguagesActivity::class.java))
+        }
+
+        b.btnReportReason.setOnClickListener {
+            startActivity(Intent(requireContext(), ManageReportReasonsActivity::class.java))
+        }
+
+        b.btnAchievement.setOnClickListener {
+            startActivity(Intent(requireContext(), ManageAchievementsActivity::class.java))
+        }
+
+        b.btnSubscription.setOnClickListener {
+            startActivity(Intent(requireContext(), ManageSubscriptionPlansActivity::class.java))
+        }
     }
 
     override fun onDestroyView() {

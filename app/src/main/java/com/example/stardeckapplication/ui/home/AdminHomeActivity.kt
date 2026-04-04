@@ -42,19 +42,7 @@ class AdminHomeActivity : AppCompatActivity() {
                 }
 
                 R.id.admin_nav_reports -> {
-                    showTab(TAG_REPORTS) {
-                        AdminPlaceholderFragment.newInstance(
-                            title = "Reports",
-                            subtitle = "This tab is ready for content reports. We will connect the real report workflow safely later.",
-                            items = arrayListOf(
-                                "Open content reports",
-                                "Resolved reports",
-                                "Review reported decks",
-                                "Review reported cards or content",
-                                "Moderation actions"
-                            )
-                        )
-                    }
+                    showTab(TAG_REPORTS) { ManagerReportsTabFragment() }
                     true
                 }
 

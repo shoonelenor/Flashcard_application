@@ -19,16 +19,16 @@ class StarDeckDbHelper(context: Context) : SQLiteOpenHelper(
     override fun onCreate(db: SQLiteDatabase) {
         DbSchema.createAllTables(db)
 
-        // Initial seed data
         DbSeeder.seedStaffAccounts(db)
         DbSeeder.seedDemoDecksAndCards(db)
+        DbSeeder.seedReportReasons(db)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         DbMigration.migrate(db, oldVersion, newVersion)
 
-        // Re‑seed staff + demo (all seeding functions are idempotent)
         DbSeeder.seedStaffAccounts(db)
         DbSeeder.seedDemoDecksAndCards(db)
+        DbSeeder.seedReportReasons(db)
     }
 }

@@ -8,12 +8,17 @@ import com.example.stardeckapplication.R
 import com.example.stardeckapplication.databinding.FragmentUserProfileBinding
 import com.example.stardeckapplication.db.DbContract
 import com.example.stardeckapplication.db.StarDeckDbHelper
+import com.example.stardeckapplication.db.SubscriptionPlanDao
 import com.example.stardeckapplication.db.UserDao
+import com.example.stardeckapplication.ui.auth.ChangePasswordActivity
 import com.example.stardeckapplication.ui.auth.LoginActivity
 import com.example.stardeckapplication.ui.profile.AchievementsActivity
 import com.example.stardeckapplication.ui.profile.LeaderboardActivity
 import com.example.stardeckapplication.ui.profile.PremiumDemoActivity
+import com.example.stardeckapplication.util.AchievementSummaryHelper
 import com.example.stardeckapplication.util.SessionManager
+import com.example.stardeckapplication.util.ThemeManager
+import com.example.stardeckapplication.util.ThemePrefs
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 class UserProfileFragment : Fragment(R.layout.fragment_user_profile) {
@@ -21,9 +26,11 @@ class UserProfileFragment : Fragment(R.layout.fragment_user_profile) {
     private var _b: FragmentUserProfileBinding? = null
     private val b get() = _b!!
 
-    private val session  by lazy { SessionManager(requireContext()) }
+    private val session by lazy { SessionManager(requireContext()) }
     private val dbHelper by lazy { StarDeckDbHelper(requireContext()) }
-    private val userDao  by lazy { UserDao(dbHelper) }  // ✅ isUserPremium correct home
+    private val userDao by lazy { UserDao(dbHelper) }
+    private val subscriptionDao by lazy { SubscriptionPlanDao(dbHelper) }
+    private val achievementSummary by lazy { AchievementSummaryHelper(dbHelper) }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         _b = FragmentUserProfileBinding.bind(view)
@@ -34,15 +41,26 @@ class UserProfileFragment : Fragment(R.layout.fragment_user_profile) {
             return
         }
 
-        b.btnPremium.setOnClickListener      { startActivity(Intent(requireContext(), PremiumDemoActivity::class.java)) }
+        b.btnPremium.setOnClickListener { startActivity(Intent(requireContext(), PremiumDemoActivity::class.java)) }
         b.btnAchievements.setOnClickListener { startActivity(Intent(requireContext(), AchievementsActivity::class.java)) }
-        b.btnLeaderboard.setOnClickListener  { startActivity(Intent(requireContext(), LeaderboardActivity::class.java)) }
+        b.btnLeaderboard.setOnClickListener { startActivity(Intent(requireContext(), LeaderboardActivity::class.java)) }
 
-        b.btnSettings.setOnClickListener      { showComingSoon("Change Password") }
-        b.btnNotifications.setOnClickListener { showComingSoon("Notification Settings") }
-        b.btnPrivacyTerms.setOnClickListener  { showComingSoon("Privacy & Terms") }
-        b.btnHelp.setOnClickListener          { showComingSoon("Help / Report Issue") }
-        b.btnFriends.setOnClickListener       { showComingSoon("Friends") }
+        b.btnSettings.setOnClickListener {
+            val currentUser = session.load() ?: return@setOnClickListener
+            startActivity(
+                Intent(requireContext(), ChangePasswordActivity::class.java).apply {
+                    putExtra(ChangePasswordActivity.EXTRA_SESSION, currentUser)
+                    putExtra(ChangePasswordActivity.EXTRA_FORCE_MODE, false)
+                }
+            )
+        }
+
+        b.btnNotifications.text = "Appearance"
+        b.btnNotifications.setOnClickListener { showAppearanceDialog() }
+
+        b.btnPrivacyTerms.setOnClickListener { showPrivacyTermsDialog() }
+        b.btnHelp.setOnClickListener { showComingSoon("Help / Report Issue") }
+        b.btnFriends.setOnClickListener { showComingSoon("Friends") }
 
         b.btnLogout.setOnClickListener {
             MaterialAlertDialogBuilder(requireContext())
@@ -72,19 +90,89 @@ class UserProfileFragment : Fragment(R.layout.fragment_user_profile) {
         _b = null
     }
 
+    private fun showAppearanceDialog() {
+        var selected = if (ThemePrefs.getThemeMode(requireContext()) == ThemePrefs.LIGHT) 1 else 0
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Appearance")
+            .setSingleChoiceItems(arrayOf("Dark", "Light"), selected) { _, which ->
+                selected = which
+            }
+            .setPositiveButton("Apply") { _, _ ->
+                val mode = if (selected == 1) ThemePrefs.LIGHT else ThemePrefs.DARK
+                ThemeManager.saveAndApplyTheme(requireContext(), mode)
+                requireActivity().recreate()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun showPrivacyTermsDialog() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Privacy & Terms")
+            .setItems(arrayOf("Privacy Policy", "Terms")) { _, which ->
+                when (which) {
+                    0 -> startActivity(
+                        Intent(
+                            requireContext(),
+                            com.example.stardeckapplication.ui.legal.PrivacyPolicyActivity::class.java
+                        )
+                    )
+                    1 -> startActivity(
+                        Intent(
+                            requireContext(),
+                            com.example.stardeckapplication.ui.legal.TermsActivity::class.java
+                        )
+                    )
+                }
+            }
+            .show()
+    }
+
     private fun bindProfile() {
         val me = session.load() ?: return
-        b.tvName.text  = me.name
+        b.tvName.text = me.name
         b.tvEmail.text = me.email
 
-        // ✅ UserDao.isUserPremium — correct home
-        val isPremium: Boolean = try { userDao.isUserPremium(me.id) } catch (e: Exception) { false }
+        val currentPlan = subscriptionDao.getCurrentPlanForUser(me.id)
+        val isPremium = currentPlan != null || runCatching { userDao.isUserPremium(me.id) }.getOrDefault(false)
+        val summary = achievementSummary.getSummary(me.id)
 
-        b.tvPlanValue.text = if (isPremium) "Premium Plan" else "Free Plan"
-        b.tvPlanNote.text  = if (isPremium)
-            "Premium access is currently active."
-        else
-            "Upgrade to unlock premium decks and future AI tools."
+        b.tvPlanValue.text = when {
+            currentPlan != null -> currentPlan.planName
+            isPremium -> "Premium Plan"
+            else -> "Free Plan"
+        }
+
+        val basePlanNote = when {
+            currentPlan != null -> {
+                buildString {
+                    append("Billing: ${currentPlan.billingLabel} • ${currentPlan.priceText}")
+                    if (currentPlan.expiresAt != null) {
+                        append("\nSubscription is currently active.")
+                    }
+                }
+            }
+            isPremium -> "Premium access is currently active."
+            else -> "Upgrade to unlock premium decks and future AI tools."
+        }
+
+        b.tvPlanNote.text = if (summary.hasAny) {
+            val nextLine = if (!summary.nextTitle.isNullOrBlank() && !summary.nextProgressText.isNullOrBlank()) {
+                "\nAchievements: ${summary.unlockedCount}/${summary.totalCount} unlocked • Next: ${summary.nextTitle} (${summary.nextProgressText})"
+            } else {
+                "\nAchievements: ${summary.unlockedCount}/${summary.totalCount} unlocked"
+            }
+            basePlanNote + nextLine
+        } else {
+            basePlanNote
+        }
+
+        b.btnAchievements.text = if (summary.hasAny) {
+            "Achievements • ${summary.unlockedCount}/${summary.totalCount}"
+        } else {
+            "Achievements"
+        }
     }
 
     private fun showComingSoon(title: String) {

@@ -18,6 +18,8 @@ import com.example.stardeckapplication.db.UserDeckDao
 import com.example.stardeckapplication.ui.cards.DeckCardsActivity
 import com.example.stardeckapplication.ui.profile.PremiumDemoActivity
 import com.example.stardeckapplication.ui.study.StudyActivity
+import com.example.stardeckapplication.util.AchievementSummaryHelper
+import com.example.stardeckapplication.util.AchievementSyncHelper
 import com.example.stardeckapplication.util.RuleBasedFlashcardGenerator
 import com.example.stardeckapplication.util.SessionManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -33,6 +35,8 @@ class UserHomeFragment : Fragment(R.layout.fragment_user_home) {
     private val b get() = _b!!
 
     private val session by lazy { SessionManager(requireContext()) }
+    private val achievementSync by lazy { AchievementSyncHelper(dbHelper) }
+    private val achievementSummary by lazy { AchievementSummaryHelper(dbHelper) }
     private val dbHelper by lazy { StarDeckDbHelper(requireContext()) }
     private val statsDao by lazy { StatsDao(dbHelper) }
     private val studyDao by lazy { StudyDao(dbHelper) }
@@ -73,7 +77,6 @@ class UserHomeFragment : Fragment(R.layout.fragment_user_home) {
             return
         }
 
-        b.tvSubtitle.text = "Welcome back, ${me.name}. Keep your learning progress going today."
 
         b.btnContinue.setOnClickListener { openPrimaryAction() }
 
@@ -113,6 +116,9 @@ class UserHomeFragment : Fragment(R.layout.fragment_user_home) {
 
     private fun refresh() {
         val me = session.load() ?: return
+
+        achievementSync.syncForUser(me.id)
+        val summary = achievementSummary.getSummary(me.id)
 
         val todayCount = runCatching { statsDao.getTodayStudyCount(me.id) }.getOrDefault(0)
         val streakDays = runCatching { statsDao.getStudyStreakDays(me.id) }.getOrDefault(0)
@@ -210,6 +216,16 @@ class UserHomeFragment : Fragment(R.layout.fragment_user_home) {
                 "1 study session"
             } else {
                 "${most.studyCount} study sessions"
+            }
+        }
+
+        b.tvSubtitle.text = buildString {
+            append("Welcome back, ${me.name}. Keep your learning progress going today.")
+            if (summary.hasAny) {
+                append("\nAchievements: ${summary.unlockedCount}/${summary.totalCount} unlocked")
+                if (!summary.nextTitle.isNullOrBlank() && !summary.nextProgressText.isNullOrBlank()) {
+                    append(" • Next: ${summary.nextTitle} (${summary.nextProgressText})")
+                }
             }
         }
 
@@ -440,9 +456,16 @@ class UserHomeFragment : Fragment(R.layout.fragment_user_home) {
                         if (id > 0L) created++
                     }
 
+                    val unlocked = achievementSync.syncForUser(me.id)
+                    val message = if (unlocked > 0) {
+                        "Imported deck created with $created card(s) • $unlocked achievement(s) unlocked!"
+                    } else {
+                        "Imported deck created with $created card(s)."
+                    }
+
                     Snackbar.make(
                         b.root,
-                        "Imported deck created with $created card(s).",
+                        message,
                         Snackbar.LENGTH_LONG
                     ).show()
 
@@ -630,9 +653,16 @@ class UserHomeFragment : Fragment(R.layout.fragment_user_home) {
                         if (id > 0L) created++
                     }
 
+                    val unlocked = achievementSync.syncForUser(me.id)
+                    val message = if (unlocked > 0) {
+                        "AI deck created with $created card(s) • $unlocked achievement(s) unlocked!"
+                    } else {
+                        "AI deck created with $created card(s)."
+                    }
+
                     Snackbar.make(
                         b.root,
-                        "AI deck created with $created card(s).",
+                        message,
                         Snackbar.LENGTH_LONG
                     ).show()
 

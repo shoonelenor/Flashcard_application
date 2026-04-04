@@ -6,42 +6,27 @@ import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import com.google.android.material.appbar.MaterialToolbar
 import com.example.stardeckapplication.R
 import com.example.stardeckapplication.databinding.ItemAchievementBinding
-import com.example.stardeckapplication.db.CardDao
+import com.example.stardeckapplication.db.AchievementDao
 import com.example.stardeckapplication.db.DbContract
 import com.example.stardeckapplication.db.StarDeckDbHelper
-import com.example.stardeckapplication.db.StatsDao
-import com.example.stardeckapplication.db.UserDeckDao
 import com.example.stardeckapplication.util.SessionManager
+import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.snackbar.Snackbar
 import kotlin.math.min
 
 class AchievementsActivity : AppCompatActivity() {
 
-    private val session  by lazy { SessionManager(this) }
+    private val session by lazy { SessionManager(this) }
     private val dbHelper by lazy { StarDeckDbHelper(this) }
-    private val statsDao by lazy { StatsDao(dbHelper) }      // ✅ getTodayStudyCount, getStudyStreakDays, getTotalStudyCount
-    private val deckDao  by lazy { UserDeckDao(dbHelper) }   // ✅ getTotalDeckCountAllStatuses
-    private val cardDao  by lazy { CardDao(dbHelper) }       // ✅ getTotalCardCountForOwnerAllStatuses
-
-    private enum class Metric { DECKS, CARDS, TOTAL_STUDY, TODAY_STUDY, STREAK }
-
-    private data class AchDef(
-        val title       : String,
-        val description : String,
-        val metric      : Metric,
-        val target      : Int
-    )
+    private val achievementDao by lazy { AchievementDao(dbHelper) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_achievements)
 
-        val toolbar   : MaterialToolbar = findViewById(R.id.toolbar)
-        val tvSummary : TextView        = findViewById(R.id.tvSummary)
-        val container : LinearLayout    = findViewById(R.id.container)
-
+        val toolbar: MaterialToolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = "Achievements"
@@ -52,30 +37,12 @@ class AchievementsActivity : AppCompatActivity() {
             return
         }
 
-        // ✅ All calls go through correct DAOs
-        val today      : Int = statsDao.getTodayStudyCount(me.id)
-        val streak     : Int = statsDao.getStudyStreakDays(me.id)
-        val totalStudy : Int = statsDao.getTotalStudyCount(me.id)
-        val deckCount  : Int = deckDao.getTotalDeckCountAllStatuses(me.id)
-        val cardCount  : Int = cardDao.getTotalCardCountForOwnerAllStatuses(me.id)
+        loadAchievements(showUnlockToast = true)
+    }
 
-        val defs = listOf(
-            AchDef("First Deck",          "Create your first deck.",          Metric.DECKS,       1),
-            AchDef("First Study",         "Complete your first card rating.", Metric.TOTAL_STUDY, 1),
-            AchDef("Card Creator",        "Create 25 cards.",                 Metric.CARDS,       25),
-            AchDef("Consistent Learner",  "Maintain a 3-day streak.",         Metric.STREAK,      3),
-            AchDef("Week Streak",         "Maintain a 7-day streak.",         Metric.STREAK,      7),
-            AchDef("Study 50",            "Rate 50 cards in total.",          Metric.TOTAL_STUDY, 50),
-            AchDef("Study 200",           "Rate 200 cards in total.",         Metric.TOTAL_STUDY, 200),
-            AchDef("Daily Push",          "Rate 20 cards in one day.",        Metric.TODAY_STUDY, 20)
-        )
-
-        val unlockedCount = defs.count {
-            currentFor(it.metric, deckCount, cardCount, totalStudy, today, streak) >= it.target
-        }
-        tvSummary.text = "$unlockedCount / ${defs.size} unlocked"
-
-        render(container, defs, deckCount, cardCount, totalStudy, today, streak)
+    override fun onResume() {
+        super.onResume()
+        loadAchievements(showUnlockToast = false)
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -83,53 +50,67 @@ class AchievementsActivity : AppCompatActivity() {
         return true
     }
 
-    private fun render(
-        container  : LinearLayout,
-        defs       : List<AchDef>,
-        deckCount  : Int,
-        cardCount  : Int,
-        totalStudy : Int,
-        today      : Int,
-        streak     : Int
-    ) {
+    private fun loadAchievements(showUnlockToast: Boolean) {
+        val me = session.load() ?: return
+
+        achievementDao.ensureDefaultsInserted()
+        val newlyUnlocked = achievementDao.syncUserAchievements(me.id)
+        val rows = achievementDao.getUserAchievements(me.id)
+
+        val tvSummary: TextView = findViewById(R.id.tvSummary)
+        val container: LinearLayout = findViewById(R.id.container)
+
         container.removeAllViews()
+
+        if (rows.isEmpty()) {
+            tvSummary.text = "No achievements configured yet."
+            val emptyText = TextView(this).apply {
+                text = "Admin can create achievements from Master Data."
+                textSize = 16f
+            }
+            container.addView(emptyText)
+            return
+        }
+
+        val unlockedCount = rows.count { it.isUnlocked }
+        tvSummary.text = "$unlockedCount / ${rows.size} unlocked"
+
         val inflater = LayoutInflater.from(this)
-
-        defs.forEach { def ->
-            val current  = currentFor(def.metric, deckCount, cardCount, totalStudy, today, streak)
-            val unlocked = current >= def.target
-
+        rows.forEach { row ->
             val item = ItemAchievementBinding.inflate(inflater, container, false)
-            item.tvTitle.text       = def.title
-            item.tvDesc.text        = def.description
-            item.chipStatus.text    = if (unlocked) "Unlocked" else "Locked"
+            item.tvTitle.text = row.title
+            item.tvDesc.text = buildString {
+                append(row.description ?: "No description")
+                append("\nMetric: ${row.metricLabel}")
+            }
+
+            item.chipStatus.text = if (row.isUnlocked) "Unlocked" else "Locked"
             item.chipStatus.isClickable = false
             item.chipStatus.isCheckable = false
-            item.tvProgress.text    = "${min(current, def.target)} / ${def.target}"
-            item.progress.max       = def.target
-            item.progress.progress  = min(current, def.target)
-            item.root.alpha         = if (unlocked) 1.0f else 0.78f
 
-            item.tvHint.visibility  = if (unlocked) View.GONE else View.VISIBLE
-            val remaining = (def.target - current).coerceAtLeast(0)
-            item.tvHint.text        = if (remaining == 0) "" else "Only $remaining more to unlock"
+            val progressValue = min(row.currentValue, row.targetValue)
+            item.tvProgress.text = "$progressValue / ${row.targetValue}"
+            item.progress.max = row.targetValue
+            item.progress.progress = progressValue
+            item.root.alpha = if (row.isUnlocked) 1.0f else 0.78f
+
+            item.tvHint.visibility = View.VISIBLE
+            if (row.isUnlocked) {
+                item.tvHint.text = "Unlocked"
+            } else {
+                val remaining = (row.targetValue - row.currentValue).coerceAtLeast(0)
+                item.tvHint.text = "Only $remaining more to unlock"
+            }
 
             container.addView(item.root)
         }
-    }
 
-    private fun currentFor(
-        metric     : Metric,
-        deckCount  : Int,
-        cardCount  : Int,
-        totalStudy : Int,
-        today      : Int,
-        streak     : Int
-    ): Int = when (metric) {
-        Metric.DECKS       -> deckCount
-        Metric.CARDS       -> cardCount
-        Metric.TOTAL_STUDY -> totalStudy
-        Metric.TODAY_STUDY -> today
-        Metric.STREAK      -> streak
+        if (showUnlockToast && newlyUnlocked > 0) {
+            Snackbar.make(
+                findViewById(android.R.id.content),
+                "$newlyUnlocked achievement(s) unlocked!",
+                Snackbar.LENGTH_LONG
+            ).show()
+        }
     }
 }

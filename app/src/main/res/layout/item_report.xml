@@ -29,17 +29,17 @@
                 android:textStyle="bold" />
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnResolve"
+                android:id="@+id/btnCase"
                 style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:minWidth="0dp"
-                android:minHeight="36dp"
+                android:contentDescription="Resolve or reopen case"
                 android:insetLeft="0dp"
                 android:insetRight="0dp"
-                android:text="Close"
-                android:textAllCaps="false"
-                android:contentDescription="Close report case" />
+                android:minHeight="36dp"
+                android:minWidth="0dp"
+                android:text="Resolve"
+                android:textAllCaps="false" />
         </LinearLayout>
 
         <TextView
@@ -55,8 +55,19 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Issue"
-            android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
+            android:text="Reason"
+            android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvDetailsPreview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:ellipsize="end"
+            android:maxLines="3"
+            android:text="Details preview"
+            android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
 
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/statusGroup"
@@ -82,6 +93,14 @@
                 android:layout_height="wrap_content"
                 android:checkable="false"
                 android:text="Deck: Visible" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipCreated"
+                style="@style/Widget.Material3.Chip.Assist"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checkable="false"
+                android:text="Reported: 05-20 12:00" />
         </com.google.android.material.chip.ChipGroup>
 
         <LinearLayout
@@ -116,6 +135,21 @@
                 android:text="Hide"
                 android:textAllCaps="false"
                 android:contentDescription="Hide or unhide deck" />
+
+            <Space
+                android:layout_width="10dp"
+                android:layout_height="1dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnDetails"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:minHeight="44dp"
+                android:text="Details"
+                android:textAllCaps="false"
+                android:contentDescription="Open report details" />
         </LinearLayout>
 
     </LinearLayout>

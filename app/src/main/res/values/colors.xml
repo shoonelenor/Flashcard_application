@@ -1,24 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- keep your existing -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
-    <!-- StarDeck Night palette -->
-    <color name="stardeck_bg_top">#FF070B17</color>
-    <color name="stardeck_bg_bottom">#FF01030A</color>
+    <color name="stardeck_bg_top">#FF0D1736</color>
+    <color name="stardeck_bg_bottom">#FF050B18</color>
     <color name="stardeck_glow">#332A6CFF</color>
 
-    <color name="stardeck_primary">#FF5B66FF</color>
-    <color name="stardeck_link">#FF5B66FF</color>
+    <color name="stardeck_primary">#FF4F6BFF</color>
+    <color name="stardeck_link">#FF5D71FF</color>
 
-    <color name="stardeck_text_primary">#FFF2F4FF</color>
-    <color name="stardeck_text_secondary">#FF9AA3C7</color>
-    <color name="stardeck_text_hint">#FF5D658A</color>
+    <color name="stardeck_text_primary">#FFF5F7FF</color>
+    <color name="stardeck_text_secondary">#FF9CA7C7</color>
+    <color name="stardeck_text_hint">#FF6F7898</color>
 
-    <color name="stardeck_field_bg">#1A1F33</color>
-    <color name="stardeck_field_stroke">#33415A</color>
+    <color name="stardeck_field_bg">#FF101A37</color>
+    <color name="stardeck_field_stroke">#FF1F2B4D</color>
+
+    <color name="stardeck_dialog_bg">#FF18234A</color>
+    <color name="stardeck_dialog_stroke">#FF2F3D6E</color>
 
     <color name="stardeck_logo_start">#FF6A5CFF</color>
     <color name="stardeck_logo_end">#FF25C5FF</color>
+
+    <!-- bottom navigation -->
+    <color name="stardeck_bottom_nav_bg">#FF081227</color>
+    <color name="stardeck_bottom_nav_stroke">#FF12264A</color>
+
+    <color name="stardeck_bottom_nav_icon_active">#FF3A8DFF</color>
+    <color name="stardeck_bottom_nav_icon_inactive">#FF7B88A8</color>
+
+    <color name="stardeck_bottom_nav_text_active">#FF3A8DFF</color>
+    <color name="stardeck_bottom_nav_text_inactive">#FF7B88A8</color>
 </resources>

@@ -56,6 +56,57 @@ class DeckDao(private val dbHelper: StarDeckDbHelper) {
 
     // ---------- HELPERS ----------
 
+    private fun getDeckOwnerUserIdAny(deckId: Long): Long {
+        readable.rawQuery(
+            """
+            SELECT ${DbContract.D_OWNER_USER_ID}
+            FROM ${DbContract.T_DECKS}
+            WHERE ${DbContract.D_ID} = ?
+            LIMIT 1
+            """.trimIndent(),
+            arrayOf(deckId.toString())
+        ).use { c ->
+            if (c.moveToFirst()) return c.getLong(0)
+        }
+        return -1L
+    }
+
+    private fun deckIsReportablePublic(deckId: Long): Boolean {
+        readable.rawQuery(
+            """
+            SELECT 1
+            FROM ${DbContract.T_DECKS}
+            WHERE ${DbContract.D_ID} = ?
+              AND ${DbContract.D_STATUS} = ?
+              AND COALESCE(${DbContract.D_IS_PUBLIC}, 0) = 1
+            LIMIT 1
+            """.trimIndent(),
+            arrayOf(deckId.toString(), DbContract.DECK_ACTIVE)
+        ).use { c ->
+            return c.moveToFirst()
+        }
+    }
+
+    private fun hasOpenReportByUserForDeck(reporterUserId: Long, deckId: Long): Boolean {
+        readable.rawQuery(
+            """
+            SELECT 1
+            FROM ${DbContract.T_REPORTS}
+            WHERE ${DbContract.R_REPORTER_USER_ID} = ?
+              AND ${DbContract.R_DECK_ID} = ?
+              AND ${DbContract.R_STATUS} = ?
+            LIMIT 1
+            """.trimIndent(),
+            arrayOf(
+                reporterUserId.toString(),
+                deckId.toString(),
+                DbContract.REPORT_OPEN
+            )
+        ).use { c ->
+            return c.moveToFirst()
+        }
+    }
+
     private fun deckExistsAny(deckId: Long): Boolean {
         readable.rawQuery(
             "SELECT 1 FROM ${DbContract.T_DECKS} WHERE ${DbContract.D_ID} = ? LIMIT 1",
@@ -215,19 +266,52 @@ class DeckDao(private val dbHelper: StarDeckDbHelper) {
     // ---------- REPORTS ----------
 
     fun createDeckReport(
-        reporterUserId : Long,
-        deckId         : Long,
-        reason         : String,
-        details        : String?
+        reporterUserId: Long,
+        deckId: Long,
+        reason: String,
+        details: String?
     ): Long {
+        return createDeckReport(
+            reporterUserId = reporterUserId,
+            deckId = deckId,
+            reasonId = null,
+            reason = reason,
+            details = details
+        )
+    }
+
+    fun createDeckReport(
+        reporterUserId: Long,
+        deckId: Long,
+        reasonId: Long?,
+        reason: String,
+        details: String?
+    ): Long {
+        val cleanReason = reason.trim()
+        if (cleanReason.length < 3) return -1L
+        if (!deckIsReportablePublic(deckId)) return -5L
+
+        val ownerUserId = getDeckOwnerUserIdAny(deckId)
+        if (ownerUserId <= 0L) return -5L
+        if (ownerUserId == reporterUserId) return -2L
+        if (hasOpenReportByUserForDeck(reporterUserId, deckId)) return -3L
+
         val cv = ContentValues().apply {
             put(DbContract.R_REPORTER_USER_ID, reporterUserId)
-            put(DbContract.R_DECK_ID,          deckId)
-            put(DbContract.R_REASON,           reason.trim())
-            put(DbContract.R_DETAILS,          details?.trim()?.ifBlank { null })
-            put(DbContract.R_STATUS,           DbContract.REPORT_OPEN)
-            put(DbContract.R_CREATED_AT,       System.currentTimeMillis())
+            put(DbContract.R_DECK_ID, deckId)
+
+            if (reasonId != null && reasonId > 0L) {
+                put(DbContract.R_REASON_ID, reasonId)
+            } else {
+                putNull(DbContract.R_REASON_ID)
+            }
+
+            put(DbContract.R_REASON, cleanReason)
+            put(DbContract.R_DETAILS, details?.trim()?.ifBlank { null })
+            put(DbContract.R_STATUS, DbContract.REPORT_OPEN)
+            put(DbContract.R_CREATED_AT, System.currentTimeMillis())
         }
+
         return try {
             writable.insertOrThrow(DbContract.T_REPORTS, null, cv)
         } catch (e: Exception) {

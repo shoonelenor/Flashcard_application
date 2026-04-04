@@ -23,6 +23,82 @@ import com.example.stardeckapplication.util.PasswordHasher
  */
 object DbSeeder {
 
+    fun seedReportReasons(db: SQLiteDatabase) {
+        ensureReportReason(
+            db = db,
+            name = "Wrong answer",
+            description = "The answer or fact in the deck is incorrect.",
+            sortOrder = 10
+        )
+        ensureReportReason(
+            db = db,
+            name = "Misleading explanation",
+            description = "The explanation is confusing or inaccurate.",
+            sortOrder = 20
+        )
+        ensureReportReason(
+            db = db,
+            name = "Duplicate content",
+            description = "This deck duplicates other existing content.",
+            sortOrder = 30
+        )
+        ensureReportReason(
+            db = db,
+            name = "Spam / irrelevant",
+            description = "The deck is spammy or unrelated to useful study content.",
+            sortOrder = 40
+        )
+        ensureReportReason(
+            db = db,
+            name = "Inappropriate content",
+            description = "The deck contains offensive or unsuitable material.",
+            sortOrder = 50
+        )
+        ensureReportReason(
+            db = db,
+            name = "Copyright issue",
+            description = "This content may violate copyright or ownership rights.",
+            sortOrder = 60
+        )
+        ensureReportReason(
+            db = db,
+            name = "Broken formatting",
+            description = "The deck has formatting issues that affect readability.",
+            sortOrder = 70
+        )
+    }
+
+    private fun ensureReportReason(
+        db: SQLiteDatabase,
+        name: String,
+        description: String,
+        sortOrder: Int
+    ): Long {
+        val cleanName = name.trim()
+
+        db.rawQuery(
+            """
+        SELECT ${DbContract.RR_ID}
+        FROM ${DbContract.T_REPORT_REASONS}
+        WHERE ${DbContract.RR_NAME} = ?
+        COLLATE NOCASE
+        LIMIT 1
+        """.trimIndent(),
+            arrayOf(cleanName)
+        ).use { c ->
+            if (c.moveToFirst()) return c.getLong(0)
+        }
+
+        val cv = ContentValues().apply {
+            put(DbContract.RR_NAME, cleanName)
+            put(DbContract.RR_DESCRIPTION, description.trim())
+            put(DbContract.RR_IS_ACTIVE, 1)
+            put(DbContract.RR_SORT_ORDER, sortOrder)
+            put(DbContract.RR_CREATED_AT, System.currentTimeMillis())
+        }
+        return db.insertOrThrow(DbContract.T_REPORT_REASONS, null, cv)
+    }
+
     // ---------- PUBLIC API ----------
 
     fun seedStaffAccounts(db: SQLiteDatabase) {

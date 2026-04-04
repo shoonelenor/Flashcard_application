@@ -9,6 +9,7 @@ import com.example.stardeckapplication.db.DbContract
 import com.example.stardeckapplication.db.DeckDao
 import com.example.stardeckapplication.db.StarDeckDbHelper
 import com.example.stardeckapplication.db.StudyDao
+import com.example.stardeckapplication.util.AchievementSyncHelper
 import com.example.stardeckapplication.util.SessionManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
@@ -48,6 +49,7 @@ class StudyActivity : AppCompatActivity() {
     private val studyDao  by lazy { StudyDao(dbHelper) }   // ✅ SRS, due cards, log, delete, snapshot
     private val deckDao   by lazy { DeckDao(dbHelper) }    // ✅ getDeckTitleForOwner, getCardsForDeck
     private val session   by lazy { SessionManager(this) }
+    private val achievementSync by lazy { AchievementSyncHelper(dbHelper) }
 
     private var userId: Long = -1L
     private var deckId: Long = -1L
@@ -300,14 +302,26 @@ class StudyActivity : AppCompatActivity() {
     }
 
     private fun showSummary() {
-        val total   = order.size
+        val total = order.size
         val studied = (knownCount + hardCount).coerceAtMost(total)
-        val mode    = if (dueMode) "Due Now" else "Normal Review"
+        val mode = if (dueMode) "Due Now" else "Normal Review"
+        val unlocked = achievementSync.syncForUser(userId)
+
+        val message = buildString {
+            append("Mode: $mode")
+            append("\nStudied: $studied / $total")
+            append("\nKnown: $knownCount")
+            append("\nHard: $hardCount")
+            if (unlocked > 0) {
+                append("\n\nNew achievements unlocked: $unlocked")
+            }
+        }
+
         MaterialAlertDialogBuilder(this)
             .setTitle("Session complete")
-            .setMessage("Mode: $mode\nStudied: $studied / $total\nKnown: $knownCount\nHard: $hardCount")
+            .setMessage(message)
             .setPositiveButton("Restart") { _, _ -> restartSession() }
-            .setNegativeButton("Back")    { _, _ -> finish()         }
+            .setNegativeButton("Back") { _, _ -> finish() }
             .show()
     }
 
