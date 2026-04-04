@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.example.stardeckapplication.BuildConfig
 import com.example.stardeckapplication.databinding.ActivityAiGenerateBinding
 import com.example.stardeckapplication.db.CardDao
 import com.example.stardeckapplication.db.DbContract
@@ -36,9 +37,11 @@ class AiGenerateActivity : AppCompatActivity() {
     private var generatedCards: List<Pair<String, String>> = emptyList()
 
     // ─────────────────────────────────────────────────────────────
-    // Free Gemini 2.0 Flash — get key at https://aistudio.google.com/app/apikey
+    // API key is read from local.properties → BuildConfig at build time.
+    // To set up: add  GEMINI_API_KEY=AIzaSy...  to your local.properties file.
+    // Get a free key at https://aistudio.google.com/app/apikey
     // ─────────────────────────────────────────────────────────────
-    private val GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE"
+    private val GEMINI_API_KEY = BuildConfig.GEMINI_API_KEY
     private val GEMINI_ENDPOINT =
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$GEMINI_API_KEY"
 
@@ -73,8 +76,12 @@ class AiGenerateActivity : AppCompatActivity() {
             b.tilNotes.error = "Please paste a bit more text (at least a few sentences)"
             return
         }
-        if (GEMINI_API_KEY == "YOUR_GEMINI_API_KEY_HERE") {
-            Snackbar.make(b.root, "Please set your Gemini API key in AiGenerateActivity.kt", Snackbar.LENGTH_LONG).show()
+        if (GEMINI_API_KEY.isBlank()) {
+            Snackbar.make(
+                b.root,
+                "No API key found. Add GEMINI_API_KEY=AIzaSy... to your local.properties and rebuild.",
+                Snackbar.LENGTH_LONG
+            ).show()
             return
         }
 
@@ -88,12 +95,19 @@ class AiGenerateActivity : AppCompatActivity() {
             setLoading(false)
 
             when {
-                result == null -> Snackbar.make(b.root, "Network error. Check your internet and API key.", Snackbar.LENGTH_LONG).show()
-                result.isEmpty() -> b.tilNotes.error = "Gemini couldn't find flashcards — try more detailed notes."
+                result == null -> Snackbar.make(
+                    b.root,
+                    "Network error — check your internet connection.",
+                    Snackbar.LENGTH_LONG
+                ).show()
+                result.isEmpty() -> b.tilNotes.error =
+                    "Gemini couldn't find flashcards — try more detailed notes."
                 else -> {
                     generatedCards = result
-                    val preview = generatedCards.take(3).joinToString("\n\n") { (f, bk) -> "Q: $f\nA: $bk" }
-                    val suffix = if (generatedCards.size > 3) "\n\n…and ${generatedCards.size - 3} more" else ""
+                    val preview = generatedCards.take(3)
+                        .joinToString("\n\n") { (f, bk) -> "Q: $f\nA: $bk" }
+                    val suffix =
+                        if (generatedCards.size > 3) "\n\n…and ${generatedCards.size - 3} more" else ""
                     b.tvPreview.text = "${generatedCards.size} cards generated:\n\n$preview$suffix"
                     b.tvPreview.visibility = View.VISIBLE
                     if (b.etDeckTitle.text.isNullOrBlank()) b.etDeckTitle.setText("AI Generated Deck")
@@ -157,13 +171,12 @@ ${notes.take(4000)}
     """.trimIndent()
 
     // ─────────────────────────────────────────────────────────────
-    // Robust parser: regex-strips ALL code fence variants, then
-    // finds the first [ ... ] block in the remaining text.
+    // Robust parser: strips ALL code fence variants, then finds
+    // the first [ ... ] block in the remaining text.
     // ─────────────────────────────────────────────────────────────
 
     private fun parseGeminiResponse(json: String): List<Pair<String, String>> {
         return try {
-            // Step 1: extract Gemini inner text
             val rawText = JSONObject(json)
                 .getJSONArray("candidates")
                 .getJSONObject(0)
@@ -173,22 +186,16 @@ ${notes.take(4000)}
                 .getString("text")
                 .trim()
 
-            // Step 2: strip ALL code fence variants using regex
-            // Handles: ```json\n, ```\n, ``` at start or end, with or without newlines
             val stripped = rawText
-                .replace(Regex("""```[a-zA-Z]*\s*"""), "")   // opening fences
-                .replace(Regex("""```\s*"""), "")             // closing fences
+                .replace(Regex("""```[a-zA-Z]*\s*"""), "")
+                .replace(Regex("""```\s*"""), "")
                 .trim()
 
-            // Step 3: find the JSON array portion [ ... ] (bracket extraction)
-            // This handles any leading/trailing text Gemini adds despite the prompt
             val start = stripped.indexOf('[')
             val end = stripped.lastIndexOf(']')
             if (start == -1 || end == -1 || end <= start) return emptyList()
 
             val jsonArray = stripped.substring(start, end + 1)
-
-            // Step 4: parse cards
             val arr = JSONArray(jsonArray)
             val cards = mutableListOf<Pair<String, String>>()
             for (i in 0 until arr.length()) {
@@ -213,7 +220,8 @@ ${notes.take(4000)}
         if (title.isBlank()) { b.tilDeckTitle.error = "Deck title is required"; return }
         if (title.length > 40) { b.tilDeckTitle.error = "Max 40 characters"; return }
         if (generatedCards.isEmpty()) {
-            Snackbar.make(b.root, "Generate cards first.", Snackbar.LENGTH_SHORT).show(); return
+            Snackbar.make(b.root, "Generate cards first.", Snackbar.LENGTH_SHORT).show()
+            return
         }
 
         lifecycleScope.launch {
@@ -223,7 +231,9 @@ ${notes.take(4000)}
                     if (deckId <= 0L) return@runCatching -1L to 0
                     var created = 0
                     for ((front, back) in generatedCards) {
-                        val id = runCatching { cardDao.createCardAny(deckId, front, back) }.getOrDefault(-1L)
+                        val id = runCatching {
+                            cardDao.createCardAny(deckId, front, back)
+                        }.getOrDefault(-1L)
                         if (id > 0L) created++
                     }
                     achievementSync.syncForUser(userId)
@@ -232,7 +242,11 @@ ${notes.take(4000)}
             }
             val (deckId, created) = result
             if (deckId <= 0L) {
-                Snackbar.make(b.root, "Could not create deck. Try a different title.", Snackbar.LENGTH_LONG).show()
+                Snackbar.make(
+                    b.root,
+                    "Could not create deck. Try a different title.",
+                    Snackbar.LENGTH_LONG
+                ).show()
                 return@launch
             }
             Snackbar.make(b.root, "Deck created with $created card(s).", Snackbar.LENGTH_LONG).show()

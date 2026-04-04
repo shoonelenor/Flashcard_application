@@ -1,3 +1,11 @@
+import java.util.Properties
+
+// Read local.properties safely
+val localProps = Properties().apply {
+    val f = rootProject.file("local.properties")
+    if (f.exists()) load(f.inputStream())
+}
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -15,6 +23,13 @@ android {
         versionCode = 1
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Gemini API key injected from local.properties — never commit real keys
+        buildConfigField(
+            "String",
+            "GEMINI_API_KEY",
+            "\"${localProps.getProperty("GEMINI_API_KEY", "")}\""
+        )
     }
 
     buildTypes {
@@ -29,6 +44,7 @@ android {
 
     buildFeatures {
         viewBinding = true
+        buildConfig = true   // required to access BuildConfig.GEMINI_API_KEY
     }
 
     compileOptions {
