@@ -33,20 +33,14 @@ class AiGenerateActivity : AppCompatActivity() {
     private val cardDao by lazy { CardDao(dbHelper) }
     private val achievementSync by lazy { AchievementSyncHelper(dbHelper) }
 
-    // Each card is a Pair: front to back
     private var generatedCards: List<Pair<String, String>> = emptyList()
 
     // ─────────────────────────────────────────────────────────────
-    // Free Gemini 2.0 Flash endpoint (no billing required)
-    // Get your free key at: https://aistudio.google.com/app/apikey
+    // Free Gemini 2.0 Flash — get key at https://aistudio.google.com/app/apikey
     // ─────────────────────────────────────────────────────────────
     private val GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE"
     private val GEMINI_ENDPOINT =
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$GEMINI_API_KEY"
-
-    // ─────────────────────────────────────────────────────────────
-    // Lifecycle
-    // ─────────────────────────────────────────────────────────────
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,47 +48,31 @@ class AiGenerateActivity : AppCompatActivity() {
         setContentView(b.root)
 
         val me = session.load()
-        if (me == null || me.role != DbContract.ROLE_USER) {
-            finish()
-            return
-        }
+        if (me == null || me.role != DbContract.ROLE_USER) { finish(); return }
 
-        setupToolbar()
+        setSupportActionBar(b.toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.title = "AI Generate"
+        b.toolbar.setNavigationOnClickListener { finish() }
 
         b.btnGenerate.setOnClickListener { attemptGenerate() }
         b.btnSave.setOnClickListener { attemptSave(me.id) }
     }
 
-    override fun onSupportNavigateUp(): Boolean {
-        finish()
-        return true
-    }
+    override fun onSupportNavigateUp(): Boolean { finish(); return true }
 
     // ─────────────────────────────────────────────────────────────
-    // Setup
-    // ─────────────────────────────────────────────────────────────
-
-    private fun setupToolbar() {
-        setSupportActionBar(b.toolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = "AI Generate"
-        b.toolbar.setNavigationOnClickListener { finish() }
-    }
-
-    // ─────────────────────────────────────────────────────────────
-    // Generate via Gemini
+    // Generate
     // ─────────────────────────────────────────────────────────────
 
     private fun attemptGenerate() {
         b.tilNotes.error = null
-
         val text = b.etNotes.text?.toString().orEmpty().trim()
 
         if (text.length < 10) {
             b.tilNotes.error = "Please paste a bit more text (at least a few sentences)"
             return
         }
-
         if (GEMINI_API_KEY == "YOUR_GEMINI_API_KEY_HERE") {
             Snackbar.make(b.root, "Please set your Gemini API key in AiGenerateActivity.kt", Snackbar.LENGTH_LONG).show()
             return
@@ -110,24 +88,15 @@ class AiGenerateActivity : AppCompatActivity() {
             setLoading(false)
 
             when {
-                result == null -> {
-                    Snackbar.make(b.root, "Network error. Check your internet and API key.", Snackbar.LENGTH_LONG).show()
-                }
-                result.isEmpty() -> {
-                    b.tilNotes.error = "Gemini couldn't find flashcards — try more detailed notes."
-                }
+                result == null -> Snackbar.make(b.root, "Network error. Check your internet and API key.", Snackbar.LENGTH_LONG).show()
+                result.isEmpty() -> b.tilNotes.error = "Gemini couldn't find flashcards — try more detailed notes."
                 else -> {
                     generatedCards = result
-
                     val preview = generatedCards.take(3).joinToString("\n\n") { (f, bk) -> "Q: $f\nA: $bk" }
                     val suffix = if (generatedCards.size > 3) "\n\n…and ${generatedCards.size - 3} more" else ""
                     b.tvPreview.text = "${generatedCards.size} cards generated:\n\n$preview$suffix"
                     b.tvPreview.visibility = View.VISIBLE
-
-                    if (b.etDeckTitle.text.isNullOrBlank()) {
-                        b.etDeckTitle.setText("AI Generated Deck")
-                    }
-
+                    if (b.etDeckTitle.text.isNullOrBlank()) b.etDeckTitle.setText("AI Generated Deck")
                     b.btnSave.visibility = View.VISIBLE
                     b.btnGenerate.text = "Re-generate"
                 }
@@ -136,23 +105,21 @@ class AiGenerateActivity : AppCompatActivity() {
     }
 
     // ─────────────────────────────────────────────────────────────
-    // Gemini REST call — no extra SDK needed, pure HTTP
+    // Gemini HTTP call
     // ─────────────────────────────────────────────────────────────
 
     private fun callGemini(notes: String): List<Pair<String, String>>? {
         return try {
-            val prompt = buildPrompt(notes)
-
             val requestBody = JSONObject().apply {
                 put("contents", JSONArray().apply {
                     put(JSONObject().apply {
                         put("parts", JSONArray().apply {
-                            put(JSONObject().apply { put("text", prompt) })
+                            put(JSONObject().apply { put("text", buildPrompt(notes)) })
                         })
                     })
                 })
                 put("generationConfig", JSONObject().apply {
-                    put("temperature", 0.4)
+                    put("temperature", 0.3)
                     put("maxOutputTokens", 2048)
                 })
             }
@@ -164,39 +131,40 @@ class AiGenerateActivity : AppCompatActivity() {
                 connectTimeout = 15_000
                 readTimeout = 30_000
             }
-
             OutputStreamWriter(conn.outputStream).use { it.write(requestBody.toString()) }
 
             if (conn.responseCode != 200) return emptyList()
 
-            val responseText = conn.inputStream.bufferedReader().readText()
-            parseGeminiResponse(responseText)
+            parseGeminiResponse(conn.inputStream.bufferedReader().readText())
         } catch (e: Exception) {
             null
         }
     }
 
     private fun buildPrompt(notes: String): String = """
-You are a flashcard generator. Given the study notes below, create as many useful flashcards as possible.
+You are a flashcard generator. Read the study notes and produce flashcards.
 
-Rules:
-- Output ONLY a JSON array. No explanation, no markdown, no code blocks.
-- Each object must have exactly two keys: "front" (the question or term) and "back" (the answer or definition).
-- Keep each front under 100 characters. Keep each back under 200 characters.
+STRICT OUTPUT RULES:
+- Return ONLY a raw JSON array.
+- Do NOT use markdown, code fences, backticks, or any explanation.
+- Start your entire response with [ and end with ]
+- Each element: {"front": "question", "back": "answer"}
 - Generate at least 5 cards if the notes are long enough.
+- front max 100 chars, back max 200 chars.
 
-Example output:
-[{"front":"What is photosynthesis?","back":"The process plants use to convert sunlight into energy"},{"front":"Mitochondria","back":"The powerhouse of the cell that produces ATP"}]
-
-Notes:
+NOTES:
 ${notes.take(4000)}
-""".trimIndent()
+    """.trimIndent()
+
+    // ─────────────────────────────────────────────────────────────
+    // Robust parser: regex-strips ALL code fence variants, then
+    // finds the first [ ... ] block in the remaining text.
+    // ─────────────────────────────────────────────────────────────
 
     private fun parseGeminiResponse(json: String): List<Pair<String, String>> {
         return try {
-            // Extract the text content from the Gemini response envelope
-            val root = JSONObject(json)
-            val text = root
+            // Step 1: extract Gemini inner text
+            val rawText = JSONObject(json)
                 .getJSONArray("candidates")
                 .getJSONObject(0)
                 .getJSONObject("content")
@@ -205,21 +173,29 @@ ${notes.take(4000)}
                 .getString("text")
                 .trim()
 
-            // Strip any accidental markdown code fences
-            val clean = text
-                .removePrefix("```json").removePrefix("```")
-                .removeSuffix("```")
+            // Step 2: strip ALL code fence variants using regex
+            // Handles: ```json\n, ```\n, ``` at start or end, with or without newlines
+            val stripped = rawText
+                .replace(Regex("""```[a-zA-Z]*\s*"""), "")   // opening fences
+                .replace(Regex("""```\s*"""), "")             // closing fences
                 .trim()
 
-            val arr = JSONArray(clean)
+            // Step 3: find the JSON array portion [ ... ] (bracket extraction)
+            // This handles any leading/trailing text Gemini adds despite the prompt
+            val start = stripped.indexOf('[')
+            val end = stripped.lastIndexOf(']')
+            if (start == -1 || end == -1 || end <= start) return emptyList()
+
+            val jsonArray = stripped.substring(start, end + 1)
+
+            // Step 4: parse cards
+            val arr = JSONArray(jsonArray)
             val cards = mutableListOf<Pair<String, String>>()
             for (i in 0 until arr.length()) {
                 val obj = arr.getJSONObject(i)
-                val front = obj.optString("front").trim()
-                val back = obj.optString("back").trim()
-                if (front.isNotBlank() && back.isNotBlank()) {
-                    cards.add(front to back)
-                }
+                val front = obj.optString("front", "").trim()
+                val back = obj.optString("back", "").trim()
+                if (front.isNotBlank() && back.isNotBlank()) cards.add(front to back)
             }
             cards
         } catch (e: Exception) {
@@ -233,54 +209,33 @@ ${notes.take(4000)}
 
     private fun attemptSave(userId: Long) {
         b.tilDeckTitle.error = null
-
         val title = b.etDeckTitle.text?.toString().orEmpty().trim()
-
-        if (title.isBlank()) {
-            b.tilDeckTitle.error = "Deck title is required"
-            return
-        }
-
-        if (title.length > 40) {
-            b.tilDeckTitle.error = "Max 40 characters"
-            return
-        }
-
+        if (title.isBlank()) { b.tilDeckTitle.error = "Deck title is required"; return }
+        if (title.length > 40) { b.tilDeckTitle.error = "Max 40 characters"; return }
         if (generatedCards.isEmpty()) {
-            Snackbar.make(b.root, "Generate cards first.", Snackbar.LENGTH_SHORT).show()
-            return
+            Snackbar.make(b.root, "Generate cards first.", Snackbar.LENGTH_SHORT).show(); return
         }
 
-        saveDeck(userId, title)
-    }
-
-    private fun saveDeck(userId: Long, title: String) {
         lifecycleScope.launch {
             val result = withContext(Dispatchers.IO) {
                 runCatching {
                     val deckId = deckDao.createDeck(userId, title, "AI Generated from notes", false, false)
                     if (deckId <= 0L) return@runCatching -1L to 0
-
                     var created = 0
                     for ((front, back) in generatedCards) {
                         val id = runCatching { cardDao.createCardAny(deckId, front, back) }.getOrDefault(-1L)
                         if (id > 0L) created++
                     }
-
-                    val unlocked = achievementSync.syncForUser(userId)
+                    achievementSync.syncForUser(userId)
                     deckId to created
                 }.getOrDefault(-1L to 0)
             }
-
             val (deckId, created) = result
-
             if (deckId <= 0L) {
                 Snackbar.make(b.root, "Could not create deck. Try a different title.", Snackbar.LENGTH_LONG).show()
                 return@launch
             }
-
             Snackbar.make(b.root, "Deck created with $created card(s).", Snackbar.LENGTH_LONG).show()
-
             startActivity(
                 Intent(this@AiGenerateActivity, DeckCardsActivity::class.java)
                     .putExtra(DeckCardsActivity.EXTRA_DECK_ID, deckId)
@@ -297,6 +252,10 @@ ${notes.take(4000)}
         b.progressBar.visibility = if (loading) View.VISIBLE else View.GONE
         b.btnGenerate.isEnabled = !loading
         b.btnSave.isEnabled = !loading
-        b.btnGenerate.text = if (loading) "Generating…" else if (generatedCards.isEmpty()) "Generate Flashcards" else "Re-generate"
+        b.btnGenerate.text = when {
+            loading -> "Generating…"
+            generatedCards.isEmpty() -> "Generate Flashcards"
+            else -> "Re-generate"
+        }
     }
 }
