@@ -16,6 +16,7 @@ import com.example.stardeckapplication.ui.auth.LoginActivity
 import com.example.stardeckapplication.ui.profile.AchievementsActivity
 import com.example.stardeckapplication.ui.profile.LeaderboardActivity
 import com.example.stardeckapplication.ui.profile.PremiumDemoActivity
+import com.example.stardeckapplication.ui.profile.ReportIssueActivity
 import com.example.stardeckapplication.util.AchievementSummaryHelper
 import com.example.stardeckapplication.util.SessionManager
 import com.example.stardeckapplication.util.ThemeManager
@@ -66,7 +67,12 @@ class UserProfileFragment : Fragment(R.layout.fragment_user_profile) {
         b.btnNotifications.setOnClickListener { showAppearanceDialog() }
 
         b.btnPrivacyTerms.setOnClickListener { showPrivacyTermsDialog() }
-        b.btnHelp.setOnClickListener { showComingSoon("Help / Report Issue") }
+
+        // ── Help / Report Issue ── now opens the real ReportIssueActivity
+        b.btnHelp.setOnClickListener {
+            startActivity(Intent(requireContext(), ReportIssueActivity::class.java))
+        }
+
         b.btnFriends.setOnClickListener { showComingSoon("Friends") }
 
         b.btnLogout.setOnClickListener {
@@ -151,8 +157,8 @@ class UserProfileFragment : Fragment(R.layout.fragment_user_profile) {
 
         b.tvPlanValue.text = when {
             currentPlan != null -> currentPlan.planName
-            isPremium -> "Premium Plan"
-            else -> "Free Plan"
+            isPremium           -> "Premium Plan"
+            else                -> "Free Plan"
         }
 
         val basePlanNote = when {
@@ -165,7 +171,7 @@ class UserProfileFragment : Fragment(R.layout.fragment_user_profile) {
                 }
             }
             isPremium -> "Premium access is currently active."
-            else -> "Upgrade to unlock premium decks and future AI tools."
+            else      -> "Upgrade to unlock premium decks and future AI tools."
         }
 
         b.tvPlanNote.text = if (summary.hasAny) {
