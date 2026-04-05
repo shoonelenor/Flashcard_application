@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
-    android:background="#FFF5F5F5">
+    android:background="@color/stardeck_bg_top">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -16,13 +16,15 @@
         android:paddingTop="16dp"
         android:paddingBottom="24dp">
 
-        <!-- HEADER BANNER -->
+        <!-- ══ HEADER BANNER ══ -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:cardCornerRadius="20dp"
             app:cardElevation="0dp"
-            app:cardBackgroundColor="#FF004D40">
+            app:cardBackgroundColor="@color/stardeck_dialog_bg"
+            app:strokeColor="@color/stardeck_dialog_stroke"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -41,7 +43,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="MANAGER PANEL"
-                        android:textColor="#99FFFFFF"
+                        android:textColor="@color/stardeck_text_secondary"
                         android:textSize="11sp"
                         android:letterSpacing="0.15"
                         android:textStyle="bold" />
@@ -52,7 +54,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
                         android:text="Manager Home"
-                        android:textColor="#FFFFFFFF"
+                        android:textColor="@color/stardeck_text_primary"
                         android:textSize="20sp"
                         android:textStyle="bold" />
 
@@ -62,42 +64,42 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
                         android:text="Welcome back"
-                        android:textColor="#BBFFFFFF"
+                        android:textColor="@color/stardeck_text_secondary"
                         android:textSize="13sp" />
 
                 </LinearLayout>
 
-                <!-- Header badge -->
+                <!-- Header badge: shield icon -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="48dp"
                     android:layout_height="48dp"
                     app:cardCornerRadius="14dp"
                     app:cardElevation="0dp"
-                    app:cardBackgroundColor="#33FFFFFF">
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:gravity="center"
-                        android:text="M"
-                        android:textColor="#FFFFFFFF"
-                        android:textSize="22sp"
-                        android:textStyle="bold" />
+                    app:cardBackgroundColor="#1A4F6BFF">
+
+                    <ImageView
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        android:layout_gravity="center"
+                        android:contentDescription="Manager"
+                        app:srcCompat="@drawable/ic_manager_shield" />
+
                 </com.google.android.material.card.MaterialCardView>
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- SECTION LABEL -->
+        <!-- ══ SECTION LABEL: Overview ══ -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
             android:layout_marginBottom="2dp"
             android:text="Overview"
-            android:textSize="14sp"
+            android:textSize="13sp"
             android:textStyle="bold"
-            android:letterSpacing="0.05"
-            android:textColor="#FF424242" />
+            android:letterSpacing="0.08"
+            android:textColor="@color/stardeck_text_secondary" />
 
         <!-- ROW 1: Open Reports | Hidden Decks -->
         <LinearLayout
@@ -112,8 +114,10 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 app:cardCornerRadius="16dp"
-                app:cardElevation="2dp"
-                app:cardBackgroundColor="#FFFFFFFF">
+                app:cardElevation="0dp"
+                app:cardBackgroundColor="@color/stardeck_field_bg"
+                app:strokeColor="@color/stardeck_field_stroke"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -121,29 +125,20 @@
                     android:orientation="vertical"
                     android:padding="16dp">
 
-                    <com.google.android.material.card.MaterialCardView
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
+                    <!-- flag icon -->
+                    <ImageView
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
                         android:layout_marginBottom="10dp"
-                        app:cardCornerRadius="10dp"
-                        app:cardElevation="0dp"
-                        app:cardBackgroundColor="#FFFCE4EC">
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:gravity="center"
-                            android:text="!"
-                            android:textColor="#FFC62828"
-                            android:textSize="17sp"
-                            android:textStyle="bold" />
-                    </com.google.android.material.card.MaterialCardView>
+                        android:contentDescription="Open Reports"
+                        app:srcCompat="@drawable/ic_stat_flag" />
 
                     <TextView
                         android:id="@+id/tvOpenReports"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0"
-                        android:textColor="#FFC62828"
+                        android:textColor="#FFEF5350"
                         android:textSize="28sp"
                         android:textStyle="bold" />
 
@@ -152,7 +147,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
                         android:text="Open Reports"
-                        android:textColor="#FF757575"
+                        android:textColor="@color/stardeck_text_secondary"
                         android:textSize="12sp" />
 
                 </LinearLayout>
@@ -166,8 +161,10 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 app:cardCornerRadius="16dp"
-                app:cardElevation="2dp"
-                app:cardBackgroundColor="#FFFFFFFF">
+                app:cardElevation="0dp"
+                app:cardBackgroundColor="@color/stardeck_field_bg"
+                app:strokeColor="@color/stardeck_field_stroke"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -175,29 +172,20 @@
                     android:orientation="vertical"
                     android:padding="16dp">
 
-                    <com.google.android.material.card.MaterialCardView
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
+                    <!-- eye-off icon -->
+                    <ImageView
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
                         android:layout_marginBottom="10dp"
-                        app:cardCornerRadius="10dp"
-                        app:cardElevation="0dp"
-                        app:cardBackgroundColor="#FFFFF3E0">
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:gravity="center"
-                            android:text="H"
-                            android:textColor="#FFF57F17"
-                            android:textSize="15sp"
-                            android:textStyle="bold" />
-                    </com.google.android.material.card.MaterialCardView>
+                        android:contentDescription="Hidden Decks"
+                        app:srcCompat="@drawable/ic_stat_eye_off" />
 
                     <TextView
                         android:id="@+id/tvHiddenDecks"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0"
-                        android:textColor="#FFF57F17"
+                        android:textColor="#FFFFB300"
                         android:textSize="28sp"
                         android:textStyle="bold" />
 
@@ -206,7 +194,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
                         android:text="Hidden Decks"
-                        android:textColor="#FF757575"
+                        android:textColor="@color/stardeck_text_secondary"
                         android:textSize="12sp" />
 
                 </LinearLayout>
@@ -226,8 +214,10 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 app:cardCornerRadius="16dp"
-                app:cardElevation="2dp"
-                app:cardBackgroundColor="#FFFFFFFF">
+                app:cardElevation="0dp"
+                app:cardBackgroundColor="@color/stardeck_field_bg"
+                app:strokeColor="@color/stardeck_field_stroke"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -235,29 +225,20 @@
                     android:orientation="vertical"
                     android:padding="16dp">
 
-                    <com.google.android.material.card.MaterialCardView
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
+                    <!-- layers/deck icon -->
+                    <ImageView
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
                         android:layout_marginBottom="10dp"
-                        app:cardCornerRadius="10dp"
-                        app:cardElevation="0dp"
-                        app:cardBackgroundColor="#FFE0F2F1">
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:gravity="center"
-                            android:text="D"
-                            android:textColor="#FF00695C"
-                            android:textSize="15sp"
-                            android:textStyle="bold" />
-                    </com.google.android.material.card.MaterialCardView>
+                        android:contentDescription="Total Decks"
+                        app:srcCompat="@drawable/ic_stat_layers" />
 
                     <TextView
                         android:id="@+id/tvTotalDecks"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0"
-                        android:textColor="#FF00695C"
+                        android:textColor="@color/stardeck_primary"
                         android:textSize="28sp"
                         android:textStyle="bold" />
 
@@ -266,7 +247,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
                         android:text="Total Decks"
-                        android:textColor="#FF757575"
+                        android:textColor="@color/stardeck_text_secondary"
                         android:textSize="12sp" />
 
                 </LinearLayout>
@@ -280,8 +261,10 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 app:cardCornerRadius="16dp"
-                app:cardElevation="2dp"
-                app:cardBackgroundColor="#FFFFFFFF">
+                app:cardElevation="0dp"
+                app:cardBackgroundColor="@color/stardeck_field_bg"
+                app:strokeColor="@color/stardeck_field_stroke"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -289,29 +272,20 @@
                     android:orientation="vertical"
                     android:padding="16dp">
 
-                    <com.google.android.material.card.MaterialCardView
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
+                    <!-- trending-up icon -->
+                    <ImageView
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
                         android:layout_marginBottom="10dp"
-                        app:cardCornerRadius="10dp"
-                        app:cardElevation="0dp"
-                        app:cardBackgroundColor="#FFE8F5E9">
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:gravity="center"
-                            android:text="+"
-                            android:textColor="#FF2E7D32"
-                            android:textSize="18sp"
-                            android:textStyle="bold" />
-                    </com.google.android.material.card.MaterialCardView>
+                        android:contentDescription="Active This Month"
+                        app:srcCompat="@drawable/ic_stat_trending_up" />
 
                     <TextView
                         android:id="@+id/tvActiveMonthValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0"
-                        android:textColor="#FF2E7D32"
+                        android:textColor="#FF66BB6A"
                         android:textSize="28sp"
                         android:textStyle="bold" />
 
@@ -320,24 +294,24 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
                         android:text="Active This Month"
-                        android:textColor="#FF757575"
+                        android:textColor="@color/stardeck_text_secondary"
                         android:textSize="12sp" />
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
 
-        <!-- SECTION LABEL -->
+        <!-- ══ SECTION LABEL: Quick Actions ══ -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
             android:layout_marginBottom="2dp"
             android:text="Quick Actions"
-            android:textSize="14sp"
+            android:textSize="13sp"
             android:textStyle="bold"
-            android:letterSpacing="0.05"
-            android:textColor="#FF424242" />
+            android:letterSpacing="0.08"
+            android:textColor="@color/stardeck_text_secondary" />
 
         <!-- QUICK ACTIONS LIST CARD -->
         <com.google.android.material.card.MaterialCardView
@@ -345,8 +319,10 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             app:cardCornerRadius="16dp"
-            app:cardElevation="2dp"
-            app:cardBackgroundColor="#FFFFFFFF">
+            app:cardElevation="0dp"
+            app:cardBackgroundColor="@color/stardeck_field_bg"
+            app:strokeColor="@color/stardeck_field_stroke"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -357,7 +333,7 @@
                 <LinearLayout
                     android:id="@+id/btnGoReports"
                     android:layout_width="match_parent"
-                    android:layout_height="56dp"
+                    android:layout_height="58dp"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
                     android:paddingStart="16dp"
@@ -365,19 +341,20 @@
                     android:background="?attr/selectableItemBackground">
 
                     <com.google.android.material.card.MaterialCardView
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        app:cardCornerRadius="8dp"
+                        android:layout_width="34dp"
+                        android:layout_height="34dp"
+                        app:cardCornerRadius="10dp"
                         app:cardElevation="0dp"
-                        app:cardBackgroundColor="#FFFCE4EC">
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:gravity="center"
-                            android:text="!"
-                            android:textColor="#FFC62828"
-                            android:textSize="15sp"
-                            android:textStyle="bold" />
+                        app:cardBackgroundColor="#1AEF5350">
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:layout_gravity="center"
+                            android:contentDescription="Review Reports"
+                            app:srcCompat="@drawable/ic_stat_flag"
+                            app:tint="#FFEF5350" />
+
                     </com.google.android.material.card.MaterialCardView>
 
                     <TextView
@@ -386,26 +363,29 @@
                         android:layout_weight="1"
                         android:layout_marginStart="12dp"
                         android:text="Review Reports"
-                        android:textColor="#FF212121"
+                        android:textColor="@color/stardeck_text_primary"
                         android:textSize="14sp" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="&#8250;"
-                        android:textColor="#FFBDBDBD"
-                        android:textSize="22sp" />
+                    <ImageView
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:contentDescription="Go"
+                        app:srcCompat="@drawable/ic_chevron_right"
+                        app:tint="@color/stardeck_text_hint" />
+
                 </LinearLayout>
 
-                <View android:layout_width="match_parent" android:layout_height="1dp"
-                    android:background="#FFF0F0F0"
-                    android:layout_marginStart="60dp" />
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@color/stardeck_field_stroke"
+                    android:layout_marginStart="62dp" />
 
                 <!-- Manage Decks -->
                 <LinearLayout
                     android:id="@+id/btnGoDecks"
                     android:layout_width="match_parent"
-                    android:layout_height="56dp"
+                    android:layout_height="58dp"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
                     android:paddingStart="16dp"
@@ -413,19 +393,20 @@
                     android:background="?attr/selectableItemBackground">
 
                     <com.google.android.material.card.MaterialCardView
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        app:cardCornerRadius="8dp"
+                        android:layout_width="34dp"
+                        android:layout_height="34dp"
+                        app:cardCornerRadius="10dp"
                         app:cardElevation="0dp"
-                        app:cardBackgroundColor="#FFE0F2F1">
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:gravity="center"
-                            android:text="D"
-                            android:textColor="#FF00695C"
-                            android:textSize="13sp"
-                            android:textStyle="bold" />
+                        app:cardBackgroundColor="#1A4F6BFF">
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:layout_gravity="center"
+                            android:contentDescription="Manage Decks"
+                            app:srcCompat="@drawable/ic_stat_layers"
+                            app:tint="@color/stardeck_primary" />
+
                     </com.google.android.material.card.MaterialCardView>
 
                     <TextView
@@ -434,15 +415,16 @@
                         android:layout_weight="1"
                         android:layout_marginStart="12dp"
                         android:text="Manage Decks"
-                        android:textColor="#FF212121"
+                        android:textColor="@color/stardeck_text_primary"
                         android:textSize="14sp" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="&#8250;"
-                        android:textColor="#FFBDBDBD"
-                        android:textSize="22sp" />
+                    <ImageView
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:contentDescription="Go"
+                        app:srcCompat="@drawable/ic_chevron_right"
+                        app:tint="@color/stardeck_text_hint" />
+
                 </LinearLayout>
 
             </LinearLayout>
