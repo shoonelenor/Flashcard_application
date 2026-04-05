@@ -42,8 +42,10 @@ class AiGenerateActivity : AppCompatActivity() {
     // Get a free key at https://aistudio.google.com/app/apikey
     // ─────────────────────────────────────────────────────────────
     private val GEMINI_API_KEY = BuildConfig.GEMINI_API_KEY
+
+    // gemini-2.0-flash was shut down March 31 2026 — upgraded to gemini-2.5-flash
     private val GEMINI_ENDPOINT =
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$GEMINI_API_KEY"
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$GEMINI_API_KEY"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -97,7 +99,7 @@ class AiGenerateActivity : AppCompatActivity() {
             when {
                 result == null -> Snackbar.make(
                     b.root,
-                    "Network error — check your internet connection.",
+                    "Generation failed — API key may be invalid, model unavailable, or no internet. Check Logcat tag: AiGenerate.",
                     Snackbar.LENGTH_LONG
                 ).show()
                 result.isEmpty() -> b.tilNotes.error =
@@ -147,10 +149,17 @@ class AiGenerateActivity : AppCompatActivity() {
             }
             OutputStreamWriter(conn.outputStream).use { it.write(requestBody.toString()) }
 
-            if (conn.responseCode != 200) return emptyList()
+            val code = conn.responseCode
+            if (code != 200) {
+                // Log the real API error — open Logcat in Android Studio and filter by "AiGenerate"
+                val errorBody = conn.errorStream?.bufferedReader()?.readText() ?: "no error body"
+                android.util.Log.e("AiGenerate", "HTTP $code: $errorBody")
+                return null   // null = show the "Generation failed" Snackbar, not "try more notes"
+            }
 
             parseGeminiResponse(conn.inputStream.bufferedReader().readText())
         } catch (e: Exception) {
+            android.util.Log.e("AiGenerate", "callGemini exception: ${e.message}", e)
             null
         }
     }
