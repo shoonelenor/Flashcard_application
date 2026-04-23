@@ -38,10 +38,7 @@ class ReportReasonDao(private val dbHelper: StarDeckDbHelper) {
             FROM ${DbContract.T_REPORT_REASONS} rr
             LEFT JOIN ${DbContract.T_REPORTS} r
                 ON r.${DbContract.R_REASON_ID} = rr.${DbContract.RR_ID}
-                OR (
-                    r.${DbContract.R_REASON_ID} IS NULL
-                    AND LOWER(TRIM(r.${DbContract.R_REASON})) = LOWER(TRIM(rr.${DbContract.RR_NAME}))
-                )
+               AND r.${DbContract.R_DECK_ID} IS NULL
             GROUP BY
                 rr.${DbContract.RR_ID},
                 rr.${DbContract.RR_NAME},
@@ -209,21 +206,14 @@ class ReportReasonDao(private val dbHelper: StarDeckDbHelper) {
     private fun getUsageCount(reasonId: Long): Int {
         readable.rawQuery(
             """
-            SELECT COUNT(r.${DbContract.R_ID})
-            FROM ${DbContract.T_REPORTS} r
-            LEFT JOIN ${DbContract.T_REPORT_REASONS} rr
-                ON rr.${DbContract.RR_ID} = ?
-            WHERE r.${DbContract.R_REASON_ID} = ?
-               OR (
-                    r.${DbContract.R_REASON_ID} IS NULL
-                    AND rr.${DbContract.RR_ID} IS NOT NULL
-                    AND LOWER(TRIM(r.${DbContract.R_REASON})) = LOWER(TRIM(rr.${DbContract.RR_NAME}))
-               )
+            SELECT COUNT(*)
+            FROM ${DbContract.T_REPORTS}
+            WHERE ${DbContract.R_REASON_ID} = ?
+              AND ${DbContract.R_DECK_ID} IS NULL
             """.trimIndent(),
-            arrayOf(reasonId.toString(), reasonId.toString())
+            arrayOf(reasonId.toString())
         ).use { c ->
-            if (c.moveToFirst()) return c.getInt(0)
+            return if (c.moveToFirst()) c.getInt(0) else 0
         }
-        return 0
     }
 }

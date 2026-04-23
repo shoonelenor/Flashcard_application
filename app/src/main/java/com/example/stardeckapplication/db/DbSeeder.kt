@@ -24,47 +24,67 @@ import com.example.stardeckapplication.util.PasswordHasher
 object DbSeeder {
 
     fun seedReportReasons(db: SQLiteDatabase) {
+        // These reasons are for the Help / Report Issues (trouble ticket) system.
+        // They are NOT for content reports (reporting a deck/flashcard).
         ensureReportReason(
             db = db,
-            name = "Wrong answer",
-            description = "The answer or fact in the deck is incorrect.",
+            name = "Bug / App Crash",
+            description = "The app crashed, froze, or something stopped working unexpectedly.",
             sortOrder = 10
         )
         ensureReportReason(
             db = db,
-            name = "Misleading explanation",
-            description = "The explanation is confusing or inaccurate.",
+            name = "Feature Not Working",
+            description = "A feature exists but is not behaving correctly or is broken.",
             sortOrder = 20
         )
         ensureReportReason(
             db = db,
-            name = "Duplicate content",
-            description = "This deck duplicates other existing content.",
+            name = "Login / Account Issue",
+            description = "Problems with signing in, password, or account access.",
             sortOrder = 30
         )
         ensureReportReason(
             db = db,
-            name = "Spam / irrelevant",
-            description = "The deck is spammy or unrelated to useful study content.",
+            name = "Study / Flashcard Problem",
+            description = "Issues with the study session, card flipping, or progress not saving.",
             sortOrder = 40
         )
         ensureReportReason(
             db = db,
-            name = "Inappropriate content",
-            description = "The deck contains offensive or unsuitable material.",
+            name = "Deck or Card Not Loading",
+            description = "Decks or cards are missing, not loading, or showing blank content.",
             sortOrder = 50
         )
         ensureReportReason(
             db = db,
-            name = "Copyright issue",
-            description = "This content may violate copyright or ownership rights.",
+            name = "Subscription / Payment Issue",
+            description = "Problems with premium subscription, billing, or unlocking premium content.",
             sortOrder = 60
         )
         ensureReportReason(
             db = db,
-            name = "Broken formatting",
-            description = "The deck has formatting issues that affect readability.",
+            name = "Performance / Speed Issue",
+            description = "The app is slow, laggy, or takes too long to load.",
             sortOrder = 70
+        )
+        ensureReportReason(
+            db = db,
+            name = "UI / Display Problem",
+            description = "Something looks visually wrong, overlapping, or hard to read.",
+            sortOrder = 80
+        )
+        ensureReportReason(
+            db = db,
+            name = "Suggestion / Feedback",
+            description = "I have an idea or general feedback about the application.",
+            sortOrder = 90
+        )
+        ensureReportReason(
+            db = db,
+            name = "Other",
+            description = "Something else not listed above.",
+            sortOrder = 100
         )
     }
 
@@ -76,14 +96,15 @@ object DbSeeder {
     ): Long {
         val cleanName = name.trim()
 
+        // If it already exists, return its id — do not duplicate
         db.rawQuery(
             """
-        SELECT ${DbContract.RR_ID}
-        FROM ${DbContract.T_REPORT_REASONS}
-        WHERE ${DbContract.RR_NAME} = ?
-        COLLATE NOCASE
-        LIMIT 1
-        """.trimIndent(),
+            SELECT ${DbContract.RR_ID}
+            FROM ${DbContract.T_REPORT_REASONS}
+            WHERE ${DbContract.RR_NAME} = ?
+            COLLATE NOCASE
+            LIMIT 1
+            """.trimIndent(),
             arrayOf(cleanName)
         ).use { c ->
             if (c.moveToFirst()) return c.getLong(0)

@@ -5,7 +5,7 @@ object DbContract {
     const val DB_NAME = "stardeck.db"
     const val DBNAME = DB_NAME
 
-    const val DB_VERSION = 17
+    const val DB_VERSION = 18
     const val DBVERSION = DB_VERSION
 
     const val T_USERS = "users"
@@ -293,22 +293,17 @@ object DbContract {
 
     const val ACH_METRIC_DECKS_CREATED = "decks_created"
     const val ACHMETRICDECKSCREATED = ACH_METRIC_DECKS_CREATED
-
     const val ACH_METRIC_CARDS_CREATED = "cards_created"
     const val ACHMETRICCARDSCREATED = ACH_METRIC_CARDS_CREATED
-
     const val ACH_METRIC_TOTAL_STUDY = "total_study"
     const val ACHMETRICTOTALSTUDY = ACH_METRIC_TOTAL_STUDY
-
     const val ACH_METRIC_TODAY_STUDY = "today_study"
     const val ACHMETRICTODAYSTUDY = ACH_METRIC_TODAY_STUDY
-
     const val ACH_METRIC_STREAK_DAYS = "streak_days"
     const val ACHMETRICSTREAKDAYS = ACH_METRIC_STREAK_DAYS
 
     const val BILLING_MONTHLY = "monthly"
     const val BILLINGMONTHLY = BILLING_MONTHLY
-
     const val BILLING_YEARLY = "yearly"
     const val BILLINGYEARLY = BILLING_YEARLY
 }

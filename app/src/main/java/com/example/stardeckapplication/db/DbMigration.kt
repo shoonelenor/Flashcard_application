@@ -12,6 +12,54 @@ object DbMigration {
         if (oldVersion < 15) addLanguageSupport(db)
         if (oldVersion < 16) addAchievementSupport(db)
         if (oldVersion < 17) addSubscriptionPlanSupport(db)
+        if (oldVersion < 18) fixReportsTableForDualUse(db)
+    }
+
+    private fun fixReportsTableForDualUse(db: SQLiteDatabase) {
+        try {
+            db.execSQL("ALTER TABLE ${DbContract.TREPORTS} RENAME TO reports_old")
+        } catch (_: Exception) {
+            try {
+                DbSchema.recreateReportsTable(db)
+                return
+            } catch (_: Exception) {
+                return
+            }
+        }
+
+        try {
+            DbSchema.recreateReportsTable(db)
+
+            db.execSQL(
+                """
+                INSERT INTO ${DbContract.TREPORTS} (
+                    ${DbContract.RID},
+                    ${DbContract.RREPORTERUSERID},
+                    ${DbContract.RDECKID},
+                    ${DbContract.RREASONID},
+                    ${DbContract.RREASON},
+                    ${DbContract.RDETAILS},
+                    ${DbContract.RSTATUS},
+                    ${DbContract.RCREATEDAT}
+                )
+                SELECT
+                    ${DbContract.RID},
+                    ${DbContract.RREPORTERUSERID},
+                    ${DbContract.RDECKID},
+                    ${DbContract.RREASONID},
+                    ${DbContract.RREASON},
+                    ${DbContract.RDETAILS},
+                    ${DbContract.RSTATUS},
+                    ${DbContract.RCREATEDAT}
+                FROM reports_old
+                """.trimIndent()
+            )
+        } catch (_: Exception) {
+        } finally {
+            try {
+                db.execSQL("DROP TABLE IF EXISTS reports_old")
+            } catch (_: Exception) { }
+        }
     }
 
     private fun addCategorySupport(db: SQLiteDatabase) {

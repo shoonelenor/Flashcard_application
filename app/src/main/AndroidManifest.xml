@@ -58,6 +58,9 @@
         <activity android:name=".ui.home.SmartGenerateActivity" android:windowSoftInputMode="adjustResize" />
         <activity android:name=".ui.home.AiGenerateActivity" android:windowSoftInputMode="adjustResize" />
 
+        <activity android:name=".ui.profile.ReportIssueActivity" />
+        <activity android:name=".ui.admin.AdminTicketsActivity" />
+
     </application>
 
 </manifest>
