@@ -21,6 +21,11 @@ object DbSchema {
         createUserSubscriptionsTable(db)
     }
 
+    fun recreateReportReasonsTable(db: SQLiteDatabase) {
+        db.execSQL("DROP TABLE IF EXISTS ${DbContract.TREPORTREASONS}")
+        createReportReasonsTable(db)
+    }
+
     fun recreateReportsTable(db: SQLiteDatabase) {
         db.execSQL("DROP TABLE IF EXISTS ${DbContract.TREPORTS}")
         createReportsTable(db)
@@ -59,7 +64,9 @@ object DbSchema {
             )
             """.trimIndent()
         )
-        db.execSQL("CREATE INDEX IF NOT EXISTS idx_categories_active_sort ON ${DbContract.TCATEGORIES}(${DbContract.CATISACTIVE}, ${DbContract.CATSORTORDER})")
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS idx_categories_active_sort ON ${DbContract.TCATEGORIES}(${DbContract.CATISACTIVE}, ${DbContract.CATSORTORDER})"
+        )
     }
 
     private fun createSubjectsTable(db: SQLiteDatabase) {
@@ -79,7 +86,9 @@ object DbSchema {
             )
             """.trimIndent()
         )
-        db.execSQL("CREATE INDEX IF NOT EXISTS idx_subjects_category_active_sort ON ${DbContract.TSUBJECTS}(${DbContract.SUBJCATEGORYID}, ${DbContract.SUBJISACTIVE}, ${DbContract.SUBJSORTORDER})")
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS idx_subjects_category_active_sort ON ${DbContract.TSUBJECTS}(${DbContract.SUBJCATEGORYID}, ${DbContract.SUBJISACTIVE}, ${DbContract.SUBJSORTORDER})"
+        )
     }
 
     private fun createLanguagesTable(db: SQLiteDatabase) {
@@ -95,61 +104,67 @@ object DbSchema {
             )
             """.trimIndent()
         )
-        db.execSQL("CREATE INDEX IF NOT EXISTS idx_languages_active_sort ON ${DbContract.TLANGUAGES}(${DbContract.LANGISACTIVE}, ${DbContract.LANGSORTORDER})")
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS idx_languages_active_sort ON ${DbContract.TLANGUAGES}(${DbContract.LANGISACTIVE}, ${DbContract.LANGSORTORDER})"
+        )
     }
 
     private fun createSubscriptionPlansTable(db: SQLiteDatabase) {
         db.execSQL(
             """
             CREATE TABLE IF NOT EXISTS ${DbContract.TSUBSCRIPTIONPLANS} (
-                ${DbContract.SPID}          INTEGER PRIMARY KEY AUTOINCREMENT,
-                ${DbContract.SPNAME}        TEXT NOT NULL COLLATE NOCASE UNIQUE,
+                ${DbContract.SPID}           INTEGER PRIMARY KEY AUTOINCREMENT,
+                ${DbContract.SPNAME}         TEXT NOT NULL COLLATE NOCASE UNIQUE,
                 ${DbContract.SPBILLINGCYCLE} TEXT NOT NULL,
-                ${DbContract.SPPRICETEXT}   TEXT NOT NULL,
+                ${DbContract.SPPRICETEXT}    TEXT NOT NULL,
                 ${DbContract.SPDURATIONDAYS} INTEGER NOT NULL,
-                ${DbContract.SPDESCRIPTION} TEXT,
-                ${DbContract.SPISACTIVE}    INTEGER NOT NULL DEFAULT 1,
-                ${DbContract.SPSORTORDER}   INTEGER NOT NULL DEFAULT 0,
-                ${DbContract.SPCREATEDAT}   INTEGER NOT NULL
+                ${DbContract.SPDESCRIPTION}  TEXT,
+                ${DbContract.SPISACTIVE}     INTEGER NOT NULL DEFAULT 1,
+                ${DbContract.SPSORTORDER}    INTEGER NOT NULL DEFAULT 0,
+                ${DbContract.SPCREATEDAT}    INTEGER NOT NULL
             )
             """.trimIndent()
         )
-        db.execSQL("CREATE INDEX IF NOT EXISTS idx_subscription_plans_active_sort ON ${DbContract.TSUBSCRIPTIONPLANS}(${DbContract.SPISACTIVE}, ${DbContract.SPSORTORDER})")
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS idx_subscription_plans_active_sort ON ${DbContract.TSUBSCRIPTIONPLANS}(${DbContract.SPISACTIVE}, ${DbContract.SPSORTORDER})"
+        )
     }
 
     private fun createAchievementsTable(db: SQLiteDatabase) {
         db.execSQL(
             """
             CREATE TABLE IF NOT EXISTS ${DbContract.TACHIEVEMENTS} (
-                ${DbContract.AID}           INTEGER PRIMARY KEY AUTOINCREMENT,
-                ${DbContract.ATITLE}        TEXT NOT NULL COLLATE NOCASE UNIQUE,
-                ${DbContract.ADESCRIPTION}  TEXT,
-                ${DbContract.AMETRICKEY}    TEXT NOT NULL,
-                ${DbContract.ATARGETVALUE}  INTEGER NOT NULL,
-                ${DbContract.AISACTIVE}     INTEGER NOT NULL DEFAULT 1,
-                ${DbContract.ASORTORDER}    INTEGER NOT NULL DEFAULT 0,
-                ${DbContract.ACREATEDAT}    INTEGER NOT NULL
+                ${DbContract.AID}          INTEGER PRIMARY KEY AUTOINCREMENT,
+                ${DbContract.ATITLE}       TEXT NOT NULL COLLATE NOCASE UNIQUE,
+                ${DbContract.ADESCRIPTION} TEXT,
+                ${DbContract.AMETRICKEY}   TEXT NOT NULL,
+                ${DbContract.ATARGETVALUE} INTEGER NOT NULL,
+                ${DbContract.AISACTIVE}    INTEGER NOT NULL DEFAULT 1,
+                ${DbContract.ASORTORDER}   INTEGER NOT NULL DEFAULT 0,
+                ${DbContract.ACREATEDAT}   INTEGER NOT NULL
             )
             """.trimIndent()
         )
-        db.execSQL("CREATE INDEX IF NOT EXISTS idx_achievements_active_sort ON ${DbContract.TACHIEVEMENTS}(${DbContract.AISACTIVE}, ${DbContract.ASORTORDER})")
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS idx_achievements_active_sort ON ${DbContract.TACHIEVEMENTS}(${DbContract.AISACTIVE}, ${DbContract.ASORTORDER})"
+        )
     }
 
     private fun createDecksTable(db: SQLiteDatabase) {
         db.execSQL(
             """
             CREATE TABLE IF NOT EXISTS ${DbContract.TDECKS} (
-                ${DbContract.DID}           INTEGER PRIMARY KEY AUTOINCREMENT,
-                ${DbContract.DOWNERUSERID}  INTEGER NOT NULL,
-                ${DbContract.DCATEGORYID}   INTEGER,
-                ${DbContract.DSUBJECTID}    INTEGER,
-                ${DbContract.DLANGUAGEID}   INTEGER,
-                ${DbContract.DTITLE}        TEXT NOT NULL,
-                ${DbContract.DDESCRIPTION}  TEXT,
-                ${DbContract.DCREATEDAT}    INTEGER NOT NULL,
-                ${DbContract.DSTATUS}       TEXT NOT NULL DEFAULT '${DbContract.DECKACTIVE}',
-                ${DbContract.DISPREMIUM}    INTEGER NOT NULL DEFAULT 0,
-                ${DbContract.DISPUBLIC}     INTEGER NOT NULL DEFAULT 0,
+                ${DbContract.DID}          INTEGER PRIMARY KEY AUTOINCREMENT,
+                ${DbContract.DOWNERUSERID} INTEGER NOT NULL,
+                ${DbContract.DCATEGORYID}  INTEGER,
+                ${DbContract.DSUBJECTID}   INTEGER,
+                ${DbContract.DLANGUAGEID}  INTEGER,
+                ${DbContract.DTITLE}       TEXT NOT NULL,
+                ${DbContract.DDESCRIPTION} TEXT,
+                ${DbContract.DCREATEDAT}   INTEGER NOT NULL,
+                ${DbContract.DSTATUS}      TEXT NOT NULL DEFAULT '${DbContract.DECKACTIVE}',
+                ${DbContract.DISPREMIUM}   INTEGER NOT NULL DEFAULT 0,
+                ${DbContract.DISPUBLIC}    INTEGER NOT NULL DEFAULT 0,
                 FOREIGN KEY(${DbContract.DOWNERUSERID}) REFERENCES ${DbContract.TUSERS}(${DbContract.UID}) ON DELETE CASCADE,
                 FOREIGN KEY(${DbContract.DCATEGORYID})  REFERENCES ${DbContract.TCATEGORIES}(${DbContract.CATID}) ON DELETE SET NULL,
                 FOREIGN KEY(${DbContract.DSUBJECTID})   REFERENCES ${DbContract.TSUBJECTS}(${DbContract.SUBJID}) ON DELETE SET NULL,
@@ -157,11 +172,12 @@ object DbSchema {
             )
             """.trimIndent()
         )
-        db.execSQL("CREATE INDEX IF NOT EXISTS idx_decks_owner    ON ${DbContract.TDECKS}(${DbContract.DOWNERUSERID})")
-        db.execSQL("CREATE INDEX IF NOT EXISTS idx_decks_status   ON ${DbContract.TDECKS}(${DbContract.DSTATUS})")
-        db.execSQL("CREATE INDEX IF NOT EXISTS idx_decks_public   ON ${DbContract.TDECKS}(${DbContract.DISPUBLIC})")
+
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_decks_owner ON ${DbContract.TDECKS}(${DbContract.DOWNERUSERID})")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_decks_status ON ${DbContract.TDECKS}(${DbContract.DSTATUS})")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_decks_public ON ${DbContract.TDECKS}(${DbContract.DISPUBLIC})")
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_decks_category ON ${DbContract.TDECKS}(${DbContract.DCATEGORYID})")
-        db.execSQL("CREATE INDEX IF NOT EXISTS idx_decks_subject  ON ${DbContract.TDECKS}(${DbContract.DSUBJECTID})")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_decks_subject ON ${DbContract.TDECKS}(${DbContract.DSUBJECTID})")
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_decks_language ON ${DbContract.TDECKS}(${DbContract.DLANGUAGEID})")
     }
 
@@ -169,10 +185,10 @@ object DbSchema {
         db.execSQL(
             """
             CREATE TABLE IF NOT EXISTS ${DbContract.TCARDS} (
-                ${DbContract.CID}       INTEGER PRIMARY KEY AUTOINCREMENT,
-                ${DbContract.CDECKID}   INTEGER NOT NULL,
-                ${DbContract.CFRONT}    TEXT NOT NULL,
-                ${DbContract.CBACK}     TEXT NOT NULL,
+                ${DbContract.CID}        INTEGER PRIMARY KEY AUTOINCREMENT,
+                ${DbContract.CDECKID}    INTEGER NOT NULL,
+                ${DbContract.CFRONT}     TEXT NOT NULL,
+                ${DbContract.CBACK}      TEXT NOT NULL,
                 ${DbContract.CCREATEDAT} INTEGER NOT NULL,
                 FOREIGN KEY(${DbContract.CDECKID}) REFERENCES ${DbContract.TDECKS}(${DbContract.DID}) ON DELETE CASCADE
             )
@@ -200,7 +216,7 @@ object DbSchema {
             )
             """.trimIndent()
         )
-        db.execSQL("CREATE INDEX IF NOT EXISTS idx_cardprogress_due  ON ${DbContract.TCARDPROGRESS}(${DbContract.PUSERID}, ${DbContract.PDUEAT})")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_cardprogress_due ON ${DbContract.TCARDPROGRESS}(${DbContract.PUSERID}, ${DbContract.PDUEAT})")
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_cardprogress_card ON ${DbContract.TCARDPROGRESS}(${DbContract.PCARDID})")
     }
 
@@ -208,10 +224,10 @@ object DbSchema {
         db.execSQL(
             """
             CREATE TABLE IF NOT EXISTS ${DbContract.TSTUDYSESSIONS} (
-                ${DbContract.SID}       INTEGER PRIMARY KEY AUTOINCREMENT,
-                ${DbContract.SUSERID}   INTEGER NOT NULL,
-                ${DbContract.SDECKID}   INTEGER NOT NULL,
-                ${DbContract.SRESULT}   TEXT NOT NULL,
+                ${DbContract.SID}        INTEGER PRIMARY KEY AUTOINCREMENT,
+                ${DbContract.SUSERID}    INTEGER NOT NULL,
+                ${DbContract.SDECKID}    INTEGER NOT NULL,
+                ${DbContract.SRESULT}    TEXT NOT NULL,
                 ${DbContract.SCREATEDAT} INTEGER NOT NULL,
                 FOREIGN KEY(${DbContract.SUSERID}) REFERENCES ${DbContract.TUSERS}(${DbContract.UID}) ON DELETE CASCADE,
                 FOREIGN KEY(${DbContract.SDECKID}) REFERENCES ${DbContract.TDECKS}(${DbContract.DID}) ON DELETE CASCADE
@@ -225,19 +241,21 @@ object DbSchema {
             """
             CREATE TABLE IF NOT EXISTS ${DbContract.TREPORTREASONS} (
                 ${DbContract.RRID}          INTEGER PRIMARY KEY AUTOINCREMENT,
-                ${DbContract.RRNAME}        TEXT NOT NULL COLLATE NOCASE UNIQUE,
+                ${DbContract.RRTYPE}        TEXT NOT NULL DEFAULT '${DbContract.RR_TYPE_HELP}',
+                ${DbContract.RRNAME}        TEXT NOT NULL COLLATE NOCASE,
                 ${DbContract.RRDESCRIPTION} TEXT,
                 ${DbContract.RRISACTIVE}    INTEGER NOT NULL DEFAULT 1,
                 ${DbContract.RRSORTORDER}   INTEGER NOT NULL DEFAULT 0,
-                ${DbContract.RRCREATEDAT}   INTEGER NOT NULL
+                ${DbContract.RRCREATEDAT}   INTEGER NOT NULL,
+                UNIQUE(${DbContract.RRNAME}, ${DbContract.RRTYPE})
             )
             """.trimIndent()
         )
-        db.execSQL("CREATE INDEX IF NOT EXISTS idx_report_reasons_active_sort ON ${DbContract.TREPORTREASONS}(${DbContract.RRISACTIVE}, ${DbContract.RRSORTORDER})")
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS idx_report_reasons_type_active_sort ON ${DbContract.TREPORTREASONS}(${DbContract.RRTYPE}, ${DbContract.RRISACTIVE}, ${DbContract.RRSORTORDER})"
+        )
     }
 
-    // ── reports table supports BOTH trouble tickets (deck_id NULL)
-    //   AND content reports (deck_id NOT NULL / > 0) ─────────────────────
     private fun createReportsTable(db: SQLiteDatabase) {
         db.execSQL(
             """
@@ -250,18 +268,15 @@ object DbSchema {
                 ${DbContract.RDETAILS}        TEXT,
                 ${DbContract.RSTATUS}         TEXT NOT NULL DEFAULT '${DbContract.REPORTOPEN}',
                 ${DbContract.RCREATEDAT}      INTEGER NOT NULL,
-                FOREIGN KEY(${DbContract.RREPORTERUSERID})
-                    REFERENCES ${DbContract.TUSERS}(${DbContract.UID}) ON DELETE CASCADE,
-                FOREIGN KEY(${DbContract.RDECKID})
-                    REFERENCES ${DbContract.TDECKS}(${DbContract.DID}) ON DELETE CASCADE,
-                FOREIGN KEY(${DbContract.RREASONID})
-                    REFERENCES ${DbContract.TREPORTREASONS}(${DbContract.RRID}) ON DELETE SET NULL
+                FOREIGN KEY(${DbContract.RREPORTERUSERID}) REFERENCES ${DbContract.TUSERS}(${DbContract.UID}) ON DELETE CASCADE,
+                FOREIGN KEY(${DbContract.RDECKID}) REFERENCES ${DbContract.TDECKS}(${DbContract.DID}) ON DELETE CASCADE,
+                FOREIGN KEY(${DbContract.RREASONID}) REFERENCES ${DbContract.TREPORTREASONS}(${DbContract.RRID}) ON DELETE SET NULL
             )
             """.trimIndent()
         )
-        db.execSQL("CREATE INDEX IF NOT EXISTS idx_reports_deck      ON ${DbContract.TREPORTS}(${DbContract.RDECKID})")
-        db.execSQL("CREATE INDEX IF NOT EXISTS idx_reports_status    ON ${DbContract.TREPORTS}(${DbContract.RSTATUS})")
-        db.execSQL("CREATE INDEX IF NOT EXISTS idx_reports_created   ON ${DbContract.TREPORTS}(${DbContract.RCREATEDAT})")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_reports_deck ON ${DbContract.TREPORTS}(${DbContract.RDECKID})")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_reports_status ON ${DbContract.TREPORTS}(${DbContract.RSTATUS})")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_reports_created ON ${DbContract.TREPORTS}(${DbContract.RCREATEDAT})")
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_reports_reason_id ON ${DbContract.TREPORTS}(${DbContract.RREASONID})")
     }
 
@@ -273,7 +288,7 @@ object DbSchema {
                 ${DbContract.UAACHIEVEMENTID} INTEGER NOT NULL,
                 ${DbContract.UAUNLOCKEDAT}    INTEGER NOT NULL,
                 PRIMARY KEY(${DbContract.UAUSERID}, ${DbContract.UAACHIEVEMENTID}),
-                FOREIGN KEY(${DbContract.UAUSERID})        REFERENCES ${DbContract.TUSERS}(${DbContract.UID}) ON DELETE CASCADE,
+                FOREIGN KEY(${DbContract.UAUSERID}) REFERENCES ${DbContract.TUSERS}(${DbContract.UID}) ON DELETE CASCADE,
                 FOREIGN KEY(${DbContract.UAACHIEVEMENTID}) REFERENCES ${DbContract.TACHIEVEMENTS}(${DbContract.AID}) ON DELETE CASCADE
             )
             """.trimIndent()

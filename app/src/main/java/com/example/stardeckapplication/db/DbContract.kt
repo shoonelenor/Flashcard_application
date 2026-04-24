@@ -4,10 +4,10 @@ object DbContract {
 
     const val DB_NAME = "stardeck.db"
     const val DBNAME = DB_NAME
-
-    const val DB_VERSION = 18
+    const val DB_VERSION = 19
     const val DBVERSION = DB_VERSION
 
+    // ── Tables ──────────────────────────────────────────────────────────────
     const val T_USERS = "users"
     const val TUSERS = T_USERS
 
@@ -50,6 +50,7 @@ object DbContract {
     const val T_REPORT_REASONS = "report_reasons"
     const val TREPORTREASONS = T_REPORT_REASONS
 
+    // ── Users ───────────────────────────────────────────────────────────────
     const val U_ID = "id"
     const val UID = U_ID
     const val U_NAME = "name"
@@ -73,6 +74,7 @@ object DbContract {
     const val U_LAST_LOGIN_AT = "last_login_at"
     const val ULASTLOGINAT = U_LAST_LOGIN_AT
 
+    // ── Categories ──────────────────────────────────────────────────────────
     const val CAT_ID = "id"
     const val CATID = CAT_ID
     const val CAT_NAME = "name"
@@ -86,6 +88,7 @@ object DbContract {
     const val CAT_CREATED_AT = "created_at"
     const val CATCREATEDAT = CAT_CREATED_AT
 
+    // ── Subjects ────────────────────────────────────────────────────────────
     const val SUBJ_ID = "id"
     const val SUBJID = SUBJ_ID
     const val SUBJ_CATEGORY_ID = "category_id"
@@ -101,6 +104,7 @@ object DbContract {
     const val SUBJ_CREATED_AT = "created_at"
     const val SUBJCREATEDAT = SUBJ_CREATED_AT
 
+    // ── Languages ───────────────────────────────────────────────────────────
     const val LANG_ID = "id"
     const val LANGID = LANG_ID
     const val LANG_NAME = "name"
@@ -114,6 +118,7 @@ object DbContract {
     const val LANG_CREATED_AT = "created_at"
     const val LANGCREATEDAT = LANG_CREATED_AT
 
+    // ── Achievements ────────────────────────────────────────────────────────
     const val A_ID = "id"
     const val AID = A_ID
     const val A_TITLE = "title"
@@ -131,6 +136,7 @@ object DbContract {
     const val A_CREATED_AT = "created_at"
     const val ACREATEDAT = A_CREATED_AT
 
+    // ── User achievements ───────────────────────────────────────────────────
     const val UA_USER_ID = "user_id"
     const val UAUSERID = UA_USER_ID
     const val UA_ACHIEVEMENT_ID = "achievement_id"
@@ -138,6 +144,7 @@ object DbContract {
     const val UA_UNLOCKED_AT = "unlocked_at"
     const val UAUNLOCKEDAT = UA_UNLOCKED_AT
 
+    // ── Subscription plans ──────────────────────────────────────────────────
     const val SP_ID = "id"
     const val SPID = SP_ID
     const val SP_NAME = "name"
@@ -157,6 +164,7 @@ object DbContract {
     const val SP_CREATED_AT = "created_at"
     const val SPCREATEDAT = SP_CREATED_AT
 
+    // ── User subscriptions ──────────────────────────────────────────────────
     const val US_ID = "id"
     const val USID = US_ID
     const val US_USER_ID = "user_id"
@@ -170,6 +178,7 @@ object DbContract {
     const val US_IS_ACTIVE = "is_active"
     const val USISACTIVE = US_IS_ACTIVE
 
+    // ── Decks ───────────────────────────────────────────────────────────────
     const val D_ID = "id"
     const val DID = D_ID
     const val D_OWNER_USER_ID = "owner_user_id"
@@ -193,6 +202,7 @@ object DbContract {
     const val D_IS_PUBLIC = "is_public"
     const val DISPUBLIC = D_IS_PUBLIC
 
+    // ── Cards ───────────────────────────────────────────────────────────────
     const val C_ID = "id"
     const val CID = C_ID
     const val C_DECK_ID = "deck_id"
@@ -204,6 +214,7 @@ object DbContract {
     const val C_CREATED_AT = "created_at"
     const val CCREATEDAT = C_CREATED_AT
 
+    // ── Card progress ───────────────────────────────────────────────────────
     const val P_USER_ID = "user_id"
     const val PUSERID = P_USER_ID
     const val P_CARD_ID = "card_id"
@@ -223,6 +234,7 @@ object DbContract {
     const val P_LAST_RESULT = "last_result"
     const val PLASTRESULT = P_LAST_RESULT
 
+    // ── Study sessions ──────────────────────────────────────────────────────
     const val S_ID = "id"
     const val SID = S_ID
     const val S_USER_ID = "user_id"
@@ -234,6 +246,7 @@ object DbContract {
     const val S_CREATED_AT = "created_at"
     const val SCREATEDAT = S_CREATED_AT
 
+    // ── Reports ─────────────────────────────────────────────────────────────
     const val R_ID = "id"
     const val RID = R_ID
     const val R_REPORTER_USER_ID = "reporter_user_id"
@@ -251,8 +264,13 @@ object DbContract {
     const val R_CREATED_AT = "created_at"
     const val RCREATEDAT = R_CREATED_AT
 
+    // ── Report reasons ──────────────────────────────────────────────────────
     const val RR_ID = "id"
     const val RRID = RR_ID
+    const val RR_TYPE = "reason_type"
+    const val RRTYPE = RR_TYPE
+    const val RR_TYPE_HELP = "help"
+    const val RR_TYPE_CONTENT = "content"
     const val RR_NAME = "name"
     const val RRNAME = RR_NAME
     const val RR_DESCRIPTION = "description"
@@ -264,6 +282,7 @@ object DbContract {
     const val RR_CREATED_AT = "created_at"
     const val RRCREATEDAT = RR_CREATED_AT
 
+    // ── Roles ───────────────────────────────────────────────────────────────
     const val ROLE_USER = "user"
     const val ROLEUSER = ROLE_USER
     const val ROLE_ADMIN = "admin"
@@ -271,26 +290,31 @@ object DbContract {
     const val ROLE_MANAGER = "manager"
     const val ROLEMANAGER = ROLE_MANAGER
 
+    // ── User status ─────────────────────────────────────────────────────────
     const val STATUS_ACTIVE = "active"
     const val STATUSACTIVE = STATUS_ACTIVE
     const val STATUS_DISABLED = "disabled"
     const val STATUSDISABLED = STATUS_DISABLED
 
+    // ── Deck status ─────────────────────────────────────────────────────────
     const val DECK_ACTIVE = "active"
     const val DECKACTIVE = DECK_ACTIVE
     const val DECK_HIDDEN = "hidden"
     const val DECKHIDDEN = DECK_HIDDEN
 
+    // ── Report status ───────────────────────────────────────────────────────
     const val REPORT_OPEN = "open"
     const val REPORTOPEN = REPORT_OPEN
     const val REPORT_RESOLVED = "resolved"
     const val REPORTRESOLVED = REPORT_RESOLVED
 
+    // ── Study result ────────────────────────────────────────────────────────
     const val RESULT_KNOWN = "known"
     const val RESULTKNOWN = RESULT_KNOWN
     const val RESULT_HARD = "hard"
     const val RESULTHARD = RESULT_HARD
 
+    // ── Achievement metric keys ─────────────────────────────────────────────
     const val ACH_METRIC_DECKS_CREATED = "decks_created"
     const val ACHMETRICDECKSCREATED = ACH_METRIC_DECKS_CREATED
     const val ACH_METRIC_CARDS_CREATED = "cards_created"
@@ -302,6 +326,7 @@ object DbContract {
     const val ACH_METRIC_STREAK_DAYS = "streak_days"
     const val ACHMETRICSTREAKDAYS = ACH_METRIC_STREAK_DAYS
 
+    // ── Billing cycle ───────────────────────────────────────────────────────
     const val BILLING_MONTHLY = "monthly"
     const val BILLINGMONTHLY = BILLING_MONTHLY
     const val BILLING_YEARLY = "yearly"

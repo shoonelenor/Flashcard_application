@@ -13,6 +13,50 @@ object DbMigration {
         if (oldVersion < 16) addAchievementSupport(db)
         if (oldVersion < 17) addSubscriptionPlanSupport(db)
         if (oldVersion < 18) fixReportsTableForDualUse(db)
+        if (oldVersion < 19) addReasonTypeToReportReasons(db)
+    }
+
+    private fun addReasonTypeToReportReasons(db: SQLiteDatabase) {
+        try {
+            db.execSQL(
+                "ALTER TABLE ${DbContract.TREPORTREASONS} ADD COLUMN ${DbContract.RRTYPE} TEXT NOT NULL DEFAULT '${DbContract.RR_TYPE_HELP}'"
+            )
+        } catch (_: Exception) {
+        }
+
+        try {
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS idx_report_reasons_type_active_sort ON ${DbContract.TREPORTREASONS}(${DbContract.RRTYPE}, ${DbContract.RRISACTIVE}, ${DbContract.RRSORTORDER})"
+            )
+        } catch (_: Exception) {
+        }
+
+        try {
+            db.execSQL("ALTER TABLE ${DbContract.TREPORTREASONS} RENAME TO report_reasons_v18")
+            DbSchema.recreateReportReasonsTable(db)
+            db.execSQL(
+                """
+                INSERT OR IGNORE INTO ${DbContract.TREPORTREASONS}
+                    (${DbContract.RRID}, ${DbContract.RRTYPE}, ${DbContract.RRNAME}, ${DbContract.RRDESCRIPTION},
+                     ${DbContract.RRISACTIVE}, ${DbContract.RRSORTORDER}, ${DbContract.RRCREATEDAT})
+                SELECT
+                    id,
+                    COALESCE(reason_type, '${DbContract.RR_TYPE_HELP}'),
+                    name,
+                    description,
+                    is_active,
+                    sort_order,
+                    created_at
+                FROM report_reasons_v18
+                """.trimIndent()
+            )
+            db.execSQL("DROP TABLE IF EXISTS report_reasons_v18")
+        } catch (_: Exception) {
+            try {
+                DbSchema.recreateReportReasonsTable(db)
+            } catch (_: Exception) {
+            }
+        }
     }
 
     private fun fixReportsTableForDualUse(db: SQLiteDatabase) {
@@ -58,7 +102,8 @@ object DbMigration {
         } finally {
             try {
                 db.execSQL("DROP TABLE IF EXISTS reports_old")
-            } catch (_: Exception) { }
+            } catch (_: Exception) {
+            }
         }
     }
 
@@ -66,183 +111,198 @@ object DbMigration {
         try {
             db.execSQL(
                 """
-                CREATE TABLE IF NOT EXISTS ${DbContract.T_CATEGORIES} (
-                    ${DbContract.CAT_ID} INTEGER PRIMARY KEY AUTOINCREMENT,
-                    ${DbContract.CAT_NAME} TEXT NOT NULL COLLATE NOCASE UNIQUE,
-                    ${DbContract.CAT_DESCRIPTION} TEXT,
-                    ${DbContract.CAT_IS_ACTIVE} INTEGER NOT NULL DEFAULT 1,
-                    ${DbContract.CAT_SORT_ORDER} INTEGER NOT NULL DEFAULT 0,
-                    ${DbContract.CAT_CREATED_AT} INTEGER NOT NULL
+                CREATE TABLE IF NOT EXISTS ${DbContract.TCATEGORIES} (
+                    ${DbContract.CATID}          INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ${DbContract.CATNAME}        TEXT NOT NULL COLLATE NOCASE UNIQUE,
+                    ${DbContract.CATDESCRIPTION} TEXT,
+                    ${DbContract.CATISACTIVE}    INTEGER NOT NULL DEFAULT 1,
+                    ${DbContract.CATSORTORDER}   INTEGER NOT NULL DEFAULT 0,
+                    ${DbContract.CATCREATEDAT}   INTEGER NOT NULL
                 )
                 """.trimIndent()
             )
-        } catch (_: Exception) { }
+        } catch (_: Exception) {
+        }
+
         try {
-            db.execSQL("""ALTER TABLE ${DbContract.T_DECKS} ADD COLUMN ${DbContract.D_CATEGORY_ID} INTEGER""")
-        } catch (_: Exception) { }
+            db.execSQL("ALTER TABLE ${DbContract.TDECKS} ADD COLUMN ${DbContract.DCATEGORYID} INTEGER")
+        } catch (_: Exception) {
+        }
+
         try {
-            db.execSQL("CREATE INDEX IF NOT EXISTS idx_decks_category ON ${DbContract.T_DECKS}(${DbContract.D_CATEGORY_ID})")
-        } catch (_: Exception) { }
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_decks_category ON ${DbContract.TDECKS}(${DbContract.DCATEGORYID})")
+        } catch (_: Exception) {
+        }
     }
 
     private fun addSubjectSupport(db: SQLiteDatabase) {
         try {
             db.execSQL(
                 """
-                CREATE TABLE IF NOT EXISTS ${DbContract.T_SUBJECTS} (
-                    ${DbContract.SUBJ_ID} INTEGER PRIMARY KEY AUTOINCREMENT,
-                    ${DbContract.SUBJ_CATEGORY_ID} INTEGER NOT NULL,
-                    ${DbContract.SUBJ_NAME} TEXT NOT NULL COLLATE NOCASE,
-                    ${DbContract.SUBJ_DESCRIPTION} TEXT,
-                    ${DbContract.SUBJ_IS_ACTIVE} INTEGER NOT NULL DEFAULT 1,
-                    ${DbContract.SUBJ_SORT_ORDER} INTEGER NOT NULL DEFAULT 0,
-                    ${DbContract.SUBJ_CREATED_AT} INTEGER NOT NULL,
-                    UNIQUE(${DbContract.SUBJ_CATEGORY_ID}, ${DbContract.SUBJ_NAME})
+                CREATE TABLE IF NOT EXISTS ${DbContract.TSUBJECTS} (
+                    ${DbContract.SUBJID} INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ${DbContract.SUBJCATEGORYID} INTEGER NOT NULL,
+                    ${DbContract.SUBJNAME} TEXT NOT NULL COLLATE NOCASE,
+                    ${DbContract.SUBJDESCRIPTION} TEXT,
+                    ${DbContract.SUBJISACTIVE} INTEGER NOT NULL DEFAULT 1,
+                    ${DbContract.SUBJSORTORDER} INTEGER NOT NULL DEFAULT 0,
+                    ${DbContract.SUBJCREATEDAT} INTEGER NOT NULL,
+                    UNIQUE(${DbContract.SUBJCATEGORYID}, ${DbContract.SUBJNAME})
                 )
                 """.trimIndent()
             )
-        } catch (_: Exception) { }
+        } catch (_: Exception) {
+        }
+
         try {
-            db.execSQL("""ALTER TABLE ${DbContract.T_DECKS} ADD COLUMN ${DbContract.D_SUBJECT_ID} INTEGER""")
-        } catch (_: Exception) { }
+            db.execSQL("ALTER TABLE ${DbContract.TDECKS} ADD COLUMN ${DbContract.DSUBJECTID} INTEGER")
+        } catch (_: Exception) {
+        }
+
         try {
-            db.execSQL("CREATE INDEX IF NOT EXISTS idx_decks_subject ON ${DbContract.T_DECKS}(${DbContract.D_SUBJECT_ID})")
-        } catch (_: Exception) { }
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_decks_subject ON ${DbContract.TDECKS}(${DbContract.DSUBJECTID})")
+        } catch (_: Exception) {
+        }
+
         try {
             db.execSQL(
-                """
-                CREATE INDEX IF NOT EXISTS idx_subjects_category_active_sort
-                ON ${DbContract.T_SUBJECTS}(${DbContract.SUBJ_CATEGORY_ID}, ${DbContract.SUBJ_IS_ACTIVE}, ${DbContract.SUBJ_SORT_ORDER})
-                """.trimIndent()
+                "CREATE INDEX IF NOT EXISTS idx_subjects_category_active_sort ON ${DbContract.TSUBJECTS}(${DbContract.SUBJCATEGORYID}, ${DbContract.SUBJISACTIVE}, ${DbContract.SUBJSORTORDER})"
             )
-        } catch (_: Exception) { }
+        } catch (_: Exception) {
+        }
     }
 
     private fun addLanguageSupport(db: SQLiteDatabase) {
         try {
             db.execSQL(
                 """
-                CREATE TABLE IF NOT EXISTS ${DbContract.T_LANGUAGES} (
-                    ${DbContract.LANG_ID} INTEGER PRIMARY KEY AUTOINCREMENT,
-                    ${DbContract.LANG_NAME} TEXT NOT NULL COLLATE NOCASE UNIQUE,
-                    ${DbContract.LANG_DESCRIPTION} TEXT,
-                    ${DbContract.LANG_IS_ACTIVE} INTEGER NOT NULL DEFAULT 1,
-                    ${DbContract.LANG_SORT_ORDER} INTEGER NOT NULL DEFAULT 0,
-                    ${DbContract.LANG_CREATED_AT} INTEGER NOT NULL
+                CREATE TABLE IF NOT EXISTS ${DbContract.TLANGUAGES} (
+                    ${DbContract.LANGID} INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ${DbContract.LANGNAME} TEXT NOT NULL COLLATE NOCASE UNIQUE,
+                    ${DbContract.LANGDESCRIPTION} TEXT,
+                    ${DbContract.LANGISACTIVE} INTEGER NOT NULL DEFAULT 1,
+                    ${DbContract.LANGSORTORDER} INTEGER NOT NULL DEFAULT 0,
+                    ${DbContract.LANGCREATEDAT} INTEGER NOT NULL
                 )
                 """.trimIndent()
             )
-        } catch (_: Exception) { }
+        } catch (_: Exception) {
+        }
+
         try {
-            db.execSQL("""ALTER TABLE ${DbContract.T_DECKS} ADD COLUMN ${DbContract.D_LANGUAGE_ID} INTEGER""")
-        } catch (_: Exception) { }
+            db.execSQL("ALTER TABLE ${DbContract.TDECKS} ADD COLUMN ${DbContract.DLANGUAGEID} INTEGER")
+        } catch (_: Exception) {
+        }
+
         try {
-            db.execSQL("CREATE INDEX IF NOT EXISTS idx_decks_language ON ${DbContract.T_DECKS}(${DbContract.D_LANGUAGE_ID})")
-        } catch (_: Exception) { }
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_decks_language ON ${DbContract.TDECKS}(${DbContract.DLANGUAGEID})")
+        } catch (_: Exception) {
+        }
+
         try {
             db.execSQL(
-                """
-                CREATE INDEX IF NOT EXISTS idx_languages_active_sort
-                ON ${DbContract.T_LANGUAGES}(${DbContract.LANG_IS_ACTIVE}, ${DbContract.LANG_SORT_ORDER})
-                """.trimIndent()
+                "CREATE INDEX IF NOT EXISTS idx_languages_active_sort ON ${DbContract.TLANGUAGES}(${DbContract.LANGISACTIVE}, ${DbContract.LANGSORTORDER})"
             )
-        } catch (_: Exception) { }
+        } catch (_: Exception) {
+        }
     }
 
     private fun addAchievementSupport(db: SQLiteDatabase) {
         try {
             db.execSQL(
                 """
-                CREATE TABLE IF NOT EXISTS ${DbContract.T_ACHIEVEMENTS} (
-                    ${DbContract.A_ID} INTEGER PRIMARY KEY AUTOINCREMENT,
-                    ${DbContract.A_TITLE} TEXT NOT NULL COLLATE NOCASE UNIQUE,
-                    ${DbContract.A_DESCRIPTION} TEXT,
-                    ${DbContract.A_METRIC_KEY} TEXT NOT NULL,
-                    ${DbContract.A_TARGET_VALUE} INTEGER NOT NULL,
-                    ${DbContract.A_IS_ACTIVE} INTEGER NOT NULL DEFAULT 1,
-                    ${DbContract.A_SORT_ORDER} INTEGER NOT NULL DEFAULT 0,
-                    ${DbContract.A_CREATED_AT} INTEGER NOT NULL
+                CREATE TABLE IF NOT EXISTS ${DbContract.TACHIEVEMENTS} (
+                    ${DbContract.AID} INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ${DbContract.ATITLE} TEXT NOT NULL COLLATE NOCASE UNIQUE,
+                    ${DbContract.ADESCRIPTION} TEXT,
+                    ${DbContract.AMETRICKEY} TEXT NOT NULL,
+                    ${DbContract.ATARGETVALUE} INTEGER NOT NULL,
+                    ${DbContract.AISACTIVE} INTEGER NOT NULL DEFAULT 1,
+                    ${DbContract.ASORTORDER} INTEGER NOT NULL DEFAULT 0,
+                    ${DbContract.ACREATEDAT} INTEGER NOT NULL
                 )
                 """.trimIndent()
             )
-        } catch (_: Exception) { }
+        } catch (_: Exception) {
+        }
+
         try {
             db.execSQL(
-                """
-                CREATE INDEX IF NOT EXISTS idx_achievements_active_sort
-                ON ${DbContract.T_ACHIEVEMENTS}(${DbContract.A_IS_ACTIVE}, ${DbContract.A_SORT_ORDER})
-                """.trimIndent()
+                "CREATE INDEX IF NOT EXISTS idx_achievements_active_sort ON ${DbContract.TACHIEVEMENTS}(${DbContract.AISACTIVE}, ${DbContract.ASORTORDER})"
             )
-        } catch (_: Exception) { }
+        } catch (_: Exception) {
+        }
+
         try {
             db.execSQL(
                 """
-                CREATE TABLE IF NOT EXISTS ${DbContract.T_USER_ACHIEVEMENTS} (
-                    ${DbContract.UA_USER_ID} INTEGER NOT NULL,
-                    ${DbContract.UA_ACHIEVEMENT_ID} INTEGER NOT NULL,
-                    ${DbContract.UA_UNLOCKED_AT} INTEGER NOT NULL,
-                    PRIMARY KEY(${DbContract.UA_USER_ID}, ${DbContract.UA_ACHIEVEMENT_ID})
+                CREATE TABLE IF NOT EXISTS ${DbContract.TUSERACHIEVEMENTS} (
+                    ${DbContract.UAUSERID} INTEGER NOT NULL,
+                    ${DbContract.UAACHIEVEMENTID} INTEGER NOT NULL,
+                    ${DbContract.UAUNLOCKEDAT} INTEGER NOT NULL,
+                    PRIMARY KEY(${DbContract.UAUSERID}, ${DbContract.UAACHIEVEMENTID})
                 )
                 """.trimIndent()
             )
-        } catch (_: Exception) { }
+        } catch (_: Exception) {
+        }
+
         try {
             db.execSQL(
-                """
-                CREATE INDEX IF NOT EXISTS idx_user_achievements_user
-                ON ${DbContract.T_USER_ACHIEVEMENTS}(${DbContract.UA_USER_ID}, ${DbContract.UA_UNLOCKED_AT})
-                """.trimIndent()
+                "CREATE INDEX IF NOT EXISTS idx_user_achievements_user ON ${DbContract.TUSERACHIEVEMENTS}(${DbContract.UAUSERID}, ${DbContract.UAUNLOCKEDAT})"
             )
-        } catch (_: Exception) { }
+        } catch (_: Exception) {
+        }
     }
 
     private fun addSubscriptionPlanSupport(db: SQLiteDatabase) {
         try {
             db.execSQL(
                 """
-                CREATE TABLE IF NOT EXISTS ${DbContract.T_SUBSCRIPTION_PLANS} (
-                    ${DbContract.SP_ID} INTEGER PRIMARY KEY AUTOINCREMENT,
-                    ${DbContract.SP_NAME} TEXT NOT NULL COLLATE NOCASE UNIQUE,
-                    ${DbContract.SP_BILLING_CYCLE} TEXT NOT NULL,
-                    ${DbContract.SP_PRICE_TEXT} TEXT NOT NULL,
-                    ${DbContract.SP_DURATION_DAYS} INTEGER NOT NULL,
-                    ${DbContract.SP_DESCRIPTION} TEXT,
-                    ${DbContract.SP_IS_ACTIVE} INTEGER NOT NULL DEFAULT 1,
-                    ${DbContract.SP_SORT_ORDER} INTEGER NOT NULL DEFAULT 0,
-                    ${DbContract.SP_CREATED_AT} INTEGER NOT NULL
+                CREATE TABLE IF NOT EXISTS ${DbContract.TSUBSCRIPTIONPLANS} (
+                    ${DbContract.SPID} INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ${DbContract.SPNAME} TEXT NOT NULL COLLATE NOCASE UNIQUE,
+                    ${DbContract.SPBILLINGCYCLE} TEXT NOT NULL,
+                    ${DbContract.SPPRICETEXT} TEXT NOT NULL,
+                    ${DbContract.SPDURATIONDAYS} INTEGER NOT NULL,
+                    ${DbContract.SPDESCRIPTION} TEXT,
+                    ${DbContract.SPISACTIVE} INTEGER NOT NULL DEFAULT 1,
+                    ${DbContract.SPSORTORDER} INTEGER NOT NULL DEFAULT 0,
+                    ${DbContract.SPCREATEDAT} INTEGER NOT NULL
                 )
                 """.trimIndent()
             )
-        } catch (_: Exception) { }
+        } catch (_: Exception) {
+        }
+
         try {
             db.execSQL(
-                """
-                CREATE INDEX IF NOT EXISTS idx_subscription_plans_active_sort
-                ON ${DbContract.T_SUBSCRIPTION_PLANS}(${DbContract.SP_IS_ACTIVE}, ${DbContract.SP_SORT_ORDER})
-                """.trimIndent()
+                "CREATE INDEX IF NOT EXISTS idx_subscription_plans_active_sort ON ${DbContract.TSUBSCRIPTIONPLANS}(${DbContract.SPISACTIVE}, ${DbContract.SPSORTORDER})"
             )
-        } catch (_: Exception) { }
+        } catch (_: Exception) {
+        }
+
         try {
             db.execSQL(
                 """
-                CREATE TABLE IF NOT EXISTS ${DbContract.T_USER_SUBSCRIPTIONS} (
-                    ${DbContract.US_ID} INTEGER PRIMARY KEY AUTOINCREMENT,
-                    ${DbContract.US_USER_ID} INTEGER NOT NULL,
-                    ${DbContract.US_PLAN_ID} INTEGER NOT NULL,
-                    ${DbContract.US_PURCHASED_AT} INTEGER NOT NULL,
-                    ${DbContract.US_EXPIRES_AT} INTEGER,
-                    ${DbContract.US_IS_ACTIVE} INTEGER NOT NULL DEFAULT 1
+                CREATE TABLE IF NOT EXISTS ${DbContract.TUSERSUBSCRIPTIONS} (
+                    ${DbContract.USID} INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ${DbContract.USUSERID} INTEGER NOT NULL,
+                    ${DbContract.USPLANID} INTEGER NOT NULL,
+                    ${DbContract.USPURCHASEDAT} INTEGER NOT NULL,
+                    ${DbContract.USEXPIRESAT} INTEGER,
+                    ${DbContract.USISACTIVE} INTEGER NOT NULL DEFAULT 1
                 )
                 """.trimIndent()
             )
-        } catch (_: Exception) { }
+        } catch (_: Exception) {
+        }
+
         try {
             db.execSQL(
-                """
-                CREATE INDEX IF NOT EXISTS idx_user_subscriptions_user_active
-                ON ${DbContract.T_USER_SUBSCRIPTIONS}(${DbContract.US_USER_ID}, ${DbContract.US_IS_ACTIVE})
-                """.trimIndent()
+                "CREATE INDEX IF NOT EXISTS idx_user_subscriptions_user_active ON ${DbContract.TUSERSUBSCRIPTIONS}(${DbContract.USUSERID}, ${DbContract.USISACTIVE})"
             )
-        } catch (_: Exception) { }
+        } catch (_: Exception) {
+        }
     }
 }
