@@ -53,6 +53,8 @@ class UserStudyFragment : Fragment(R.layout.fragment_user_study) {
     private var bestDueDeckId      : Long? = null
     private var totalDueAcrossUser = 0
     private var deckItems          : List<DeckStudyItem> = emptyList()
+    // ── NEW: holds 7-day chart data ──
+    private var chartData          : List<StatsDao.DayCount> = emptyList()
 
     private data class DeckStudyItem(
         val deck       : UserDeckDao.DeckRow,
@@ -97,11 +99,16 @@ class UserStudyFragment : Fragment(R.layout.fragment_user_study) {
         if (inFlight.getAndSet(true)) return
 
         executor.execute {
-            val todayCount : Int     = try { statsDao.getTodayStudyCount(me.id) }      catch (e: Exception) { 0 }
-            val streakDays : Int     = try { statsDao.getStudyStreakDays(me.id) }      catch (e: Exception) { 0 }
+            val todayCount : Int = try { statsDao.getTodayStudyCount(me.id) }      catch (e: Exception) { 0 }
+            val streakDays : Int = try { statsDao.getStudyStreakDays(me.id) }      catch (e: Exception) { 0 }
             val recent     : StatsDao.RecentDeckRow?   = try { statsDao.getRecentlyStudiedDeck(me.id) } catch (e: Exception) { null }
             val premium    : Boolean                   = try { userDao.isUserPremium(me.id) }           catch (e: Exception) { false }
             val decks      : List<UserDeckDao.DeckRow> = try { deckDao.getDecksForOwner(me.id) }        catch (e: Exception) { emptyList() }
+
+            // ── NEW: fetch 7-day chart data ──
+            val chart : List<StatsDao.DayCount> = try {
+                statsDao.getLast7DaysStudyCounts(me.id)
+            } catch (e: Exception) { emptyList() }
 
             val recentId = recent?.deckId
 
@@ -128,8 +135,7 @@ class UserStudyFragment : Fragment(R.layout.fragment_user_study) {
                     compareBy<DeckStudyItem> { it.dueCount }
                         .thenBy { if (it.isRecent) 1 else 0 }
                         .thenBy { it.totalCards }
-                )
-                ?.deck?.id
+                )?.deck?.id
 
             val recentTitle : String? = recent?.title
             val recentMeta  : String? = recent?.lastStudiedAt?.let { "Last studied ${formatTime(it)}" }
@@ -140,7 +146,10 @@ class UserStudyFragment : Fragment(R.layout.fragment_user_study) {
                 bestDueDeckId      = bestDue
                 totalDueAcrossUser = totalDue
                 deckItems          = items
+                chartData          = chart
                 bindTopArea(todayCount, streakDays, recentTitle, recentMeta)
+                // ── NEW: bind the chart ──
+                bindChartArea(chart)
                 renderDeckCards(items)
                 inFlight.set(false)
             }
@@ -166,7 +175,6 @@ class UserStudyFragment : Fragment(R.layout.fragment_user_study) {
             b.tvRecentMeta.text = recentMeta ?: "Recent session found"
         }
 
-        // ✅ RESTORED: original smart due queue message
         b.tvDueInfo.text = when {
             totalDueAcrossUser > 0 && bestDueDeckId != null -> {
                 val best = deckItems.firstOrNull { it.deck.id == bestDueDeckId }
@@ -182,6 +190,21 @@ class UserStudyFragment : Fragment(R.layout.fragment_user_study) {
         b.btnContinueStudy.text = if (deckItems.isEmpty()) "Open Library" else "Continue Study"
         b.btnDueNow.isEnabled   = deckItems.isNotEmpty()
         b.btnDueNow.alpha       = if (deckItems.isNotEmpty()) 1f else 0.5f
+    }
+
+    // ── NEW: bind 7-day chart ──
+    private fun bindChartArea(data: List<StatsDao.DayCount>) {
+        // studyBarChart is the custom view added in fragment_user_study.xml (Step 3 from earlier)
+        // If you haven't added it yet, this block will safely do nothing
+        runCatching {
+            val total = data.sumOf { it.count }
+            b.studyBarChart.setData(data)
+            b.tvChartTotal.text = if (total == 1) "1 total" else "$total total"
+            b.tvChartSubtitle.text = if (total == 0)
+                "No activity yet — start studying!"
+            else
+                "Cards reviewed this week"
+        }
     }
 
     private fun renderDeckCards(items: List<DeckStudyItem>) {
@@ -216,18 +239,15 @@ class UserStudyFragment : Fragment(R.layout.fragment_user_study) {
             ).apply { bottomMargin = dp(12) }
         }
 
-        // Horizontal wrapper for accent bar + content
         val outer = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
         }
 
-        // Left accent bar
         val accent = View(context).apply {
             layoutParams = LinearLayout.LayoutParams(dp(4), ViewGroup.LayoutParams.MATCH_PARENT)
             setBackgroundColor(primaryColor)
         }
 
-        // Content
         val content = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(14), dp(14), dp(14), dp(14))
@@ -258,7 +278,7 @@ class UserStudyFragment : Fragment(R.layout.fragment_user_study) {
         val action = MaterialButton(context).apply {
             text = when {
                 item.deck.isPremium && !isPremiumUser -> "Unlock Premium"
-                item.dueCount > 0                    -> "Study Due"
+                item.dueCount > 0                    -> "Study Due (${item.dueCount})"
                 else                                 -> "Study"
             }
             isAllCaps = false
@@ -317,14 +337,14 @@ class UserStudyFragment : Fragment(R.layout.fragment_user_study) {
         }
         val bestDueItem = deckItems.firstOrNull { it.deck.id == bestDueDeckId }
         if (bestDueItem != null) {
-            Snackbar.make(b.root, "Opening best due deck: ${bestDueItem.deck.title}", Snackbar.LENGTH_SHORT).show()
+            Snackbar.make(b.root, "Opening: ${bestDueItem.deck.title}", Snackbar.LENGTH_SHORT).show()
             openDeck(bestDueItem.deck)
             return
         }
         val fallback = deckItems.firstOrNull { it.deck.id == recentDeckId }
             ?: deckItems.firstOrNull { !it.deck.isPremium || isPremiumUser }
             ?: deckItems.first()
-        Snackbar.make(b.root, "No due cards yet. Opening ${fallback.deck.title} in normal review.", Snackbar.LENGTH_SHORT).show()
+        Snackbar.make(b.root, "No due cards. Opening ${fallback.deck.title} in normal review.", Snackbar.LENGTH_SHORT).show()
         openDeck(fallback.deck)
     }
 

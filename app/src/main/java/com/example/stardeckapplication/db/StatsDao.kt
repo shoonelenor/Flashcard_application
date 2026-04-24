@@ -289,4 +289,43 @@ class StatsDao(private val dbHelper: StarDeckDbHelper) {
             arrayOf(DbContract.REPORT_OPEN)
         ).use { return if (it.moveToFirst()) it.getInt(0) else 0 }
     }
+
+    // ══════════════════════════════════════════════════════════════════════
+//  7-DAY CHART DATA
+// ══════════════════════════════════════════════════════════════════════
+
+    data class DayCount(
+        val label: String,   // e.g. "Mon", "Tue"
+        val count: Int,
+        val isToday: Boolean
+    )
+
+    fun getLast7DaysStudyCounts(userId: Long): List<DayCount> {
+        val zone  = java.time.ZoneId.systemDefault()
+        val today = java.time.LocalDate.now(zone)
+        val result = mutableListOf<DayCount>()
+
+        for (i in 6 downTo 0) {
+            val day   = today.minusDays(i.toLong())
+            val start = day.atStartOfDay(zone).toInstant().toEpochMilli()
+            val end   = day.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
+
+            val count = readable.rawQuery(
+                """
+            SELECT COUNT(*)
+            FROM   ${DbContract.T_STUDY_SESSIONS}
+            WHERE  ${DbContract.S_USER_ID}    = ?
+              AND  ${DbContract.S_CREATED_AT} >= ?
+              AND  ${DbContract.S_CREATED_AT}  < ?
+            """.trimIndent(),
+                arrayOf(userId.toString(), start.toString(), end.toString())
+            ).use { c -> if (c.moveToFirst()) c.getInt(0) else 0 }
+
+            val label = day.dayOfWeek.getDisplayName(
+                java.time.format.TextStyle.SHORT, java.util.Locale.getDefault()
+            )
+            result.add(DayCount(label = label, count = count, isToday = i == 0))
+        }
+        return result
+    }
 }
