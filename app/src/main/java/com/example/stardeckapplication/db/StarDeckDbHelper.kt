@@ -21,14 +21,20 @@ class StarDeckDbHelper(context: Context) :
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL("PRAGMA foreign_keys = ON")
         DbSchema.createAllTables(db)
-
-        // Uncomment this only if your DbSeeder really has a method named seed(db)
-        // DbSeeder.seed(db)
+        // ✅ FIXED: seed all initial data on fresh install
+        DbSeeder.seedStaffAccounts(db)
+        DbSeeder.seedReportReasons(db)
+        DbSeeder.seedDemoDecksAndCards(db)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         db.execSQL("PRAGMA foreign_keys = ON")
         DbMigration.migrate(db, oldVersion, newVersion)
+        // ✅ FIXED: re-seed staff accounts & report reasons after any migration
+        // (uses INSERT OR IGNORE so no duplicates are created)
+        DbSeeder.seedStaffAccounts(db)
+        DbSeeder.seedReportReasons(db)
+        DbSeeder.seedDemoDecksAndCards(db)
     }
 
     override fun onOpen(db: SQLiteDatabase) {
