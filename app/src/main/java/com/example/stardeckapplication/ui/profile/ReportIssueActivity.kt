@@ -3,7 +3,13 @@ package com.example.stardeckapplication.ui.profile
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
-import android.widget.*
+import android.widget.ArrayAdapter
+import android.widget.Button
+import android.widget.EditText
+import android.widget.ProgressBar
+import android.widget.Spinner
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.stardeckapplication.R
 import com.example.stardeckapplication.db.ReportDao
@@ -32,29 +38,39 @@ class ReportIssueActivity : AppCompatActivity() {
             setDisplayHomeAsUpEnabled(true)
         }
 
-        dao     = ReportDao(StarDeckDbHelper(this))
+        dao = ReportDao(StarDeckDbHelper(this))
         session = SessionManager(this)
 
-        spinner     = findViewById(R.id.spinnerReasonReport)
-        etDetails   = findViewById(R.id.etReportDetails)
-        btnSubmit   = findViewById(R.id.btnSubmitReport)
-        tvSuccess   = findViewById(R.id.tvReportSuccess)
+        spinner = findViewById(R.id.spinnerReasonReport)
+        etDetails = findViewById(R.id.etReportDetails)
+        btnSubmit = findViewById(R.id.btnSubmitReport)
+        tvSuccess = findViewById(R.id.tvReportSuccess)
         progressBar = findViewById(R.id.progressReport)
 
         loadReasons()
-
         btnSubmit.setOnClickListener { submitReport() }
     }
 
     private fun loadReasons() {
         reasons = dao.getActiveReportReasons()
+
         if (reasons.isEmpty()) {
-            Toast.makeText(this, "No issue categories available. Please try again later.", Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                this,
+                "No Help / Report Issue categories are available right now.",
+                Toast.LENGTH_LONG
+            ).show()
             btnSubmit.isEnabled = false
             return
         }
+
         val labels = reasons.map { it.name }
-        spinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, labels)
+        spinner.adapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_dropdown_item,
+            labels
+        )
+        btnSubmit.isEnabled = true
     }
 
     private fun submitReport() {
@@ -76,6 +92,7 @@ class ReportIssueActivity : AppCompatActivity() {
             etDetails.requestFocus()
             return
         }
+
         if (details.length < 10) {
             etDetails.error = "Description is too short (minimum 10 characters)"
             etDetails.requestFocus()
@@ -84,24 +101,29 @@ class ReportIssueActivity : AppCompatActivity() {
 
         progressBar.visibility = View.VISIBLE
         btnSubmit.isEnabled = false
+        tvSuccess.visibility = View.GONE
 
-        val reasonId = reasons[selectedIndex].id
         val rowId = dao.submitReport(
             reporterUserId = user.id,
-            reasonId       = reasonId,
-            details        = details
+            reasonId = reasons[selectedIndex].id,
+            details = details
         )
 
         progressBar.visibility = View.GONE
 
-        if (rowId > 0) {
+        if (rowId > 0L) {
             tvSuccess.visibility = View.VISIBLE
             etDetails.text.clear()
             spinner.setSelection(0)
-            Toast.makeText(this, "Report submitted successfully!", Toast.LENGTH_LONG).show()
+            btnSubmit.isEnabled = true
+            Toast.makeText(this, "Issue submitted successfully!", Toast.LENGTH_LONG).show()
         } else {
             btnSubmit.isEnabled = true
-            Toast.makeText(this, "Failed to submit report. Please try again.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                this,
+                "Failed to submit Help / Report Issue ticket. Please try again.",
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 

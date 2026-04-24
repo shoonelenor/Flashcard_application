@@ -38,7 +38,12 @@ class ReportReasonDao(private val dbHelper: StarDeckDbHelper) {
             FROM ${DbContract.T_REPORT_REASONS} rr
             LEFT JOIN ${DbContract.T_REPORTS} r
                 ON r.${DbContract.R_REASON_ID} = rr.${DbContract.RR_ID}
-               AND r.${DbContract.R_DECK_ID} IS NULL
+               AND (r.${DbContract.R_DECK_ID} IS NULL OR r.${DbContract.R_DECK_ID} = 0)
+            WHERE (
+                    rr.${DbContract.RR_TYPE} = ?
+                    OR rr.${DbContract.RR_TYPE} IS NULL
+                    OR TRIM(rr.${DbContract.RR_TYPE}) = ''
+                  )
             GROUP BY
                 rr.${DbContract.RR_ID},
                 rr.${DbContract.RR_NAME},
@@ -51,7 +56,7 @@ class ReportReasonDao(private val dbHelper: StarDeckDbHelper) {
                 rr.${DbContract.RR_SORT_ORDER} ASC,
                 rr.${DbContract.RR_NAME} ASC
             """.trimIndent(),
-            null
+            arrayOf(DbContract.RR_TYPE_HELP)
         ).use { c ->
             while (c.moveToNext()) {
                 out += ReportReasonRow(
@@ -77,9 +82,14 @@ class ReportReasonDao(private val dbHelper: StarDeckDbHelper) {
             SELECT ${DbContract.RR_ID}, ${DbContract.RR_NAME}
             FROM ${DbContract.T_REPORT_REASONS}
             WHERE ${DbContract.RR_IS_ACTIVE} = 1
+              AND (
+                    ${DbContract.RR_TYPE} = ?
+                    OR ${DbContract.RR_TYPE} IS NULL
+                    OR TRIM(${DbContract.RR_TYPE}) = ''
+                  )
             ORDER BY ${DbContract.RR_SORT_ORDER} ASC, ${DbContract.RR_NAME} ASC
             """.trimIndent(),
-            null
+            arrayOf(DbContract.RR_TYPE_HELP)
         ).use { c ->
             while (c.moveToNext()) {
                 out += ActiveReason(
@@ -97,8 +107,13 @@ class ReportReasonDao(private val dbHelper: StarDeckDbHelper) {
             """
             SELECT COALESCE(MAX(${DbContract.RR_SORT_ORDER}), 0) + 10
             FROM ${DbContract.T_REPORT_REASONS}
+            WHERE (
+                    ${DbContract.RR_TYPE} = ?
+                    OR ${DbContract.RR_TYPE} IS NULL
+                    OR TRIM(${DbContract.RR_TYPE}) = ''
+                  )
             """.trimIndent(),
-            null
+            arrayOf(DbContract.RR_TYPE_HELP)
         ).use { c ->
             if (c.moveToFirst()) return c.getInt(0)
         }
@@ -115,7 +130,11 @@ class ReportReasonDao(private val dbHelper: StarDeckDbHelper) {
                 SELECT 1
                 FROM ${DbContract.T_REPORT_REASONS}
                 WHERE ${DbContract.RR_NAME} = ?
-                COLLATE NOCASE
+                  AND (
+                        ${DbContract.RR_TYPE} = ?
+                        OR ${DbContract.RR_TYPE} IS NULL
+                        OR TRIM(${DbContract.RR_TYPE}) = ''
+                      )
                 """.trimIndent()
             )
             if (excludeId != null) {
@@ -125,9 +144,9 @@ class ReportReasonDao(private val dbHelper: StarDeckDbHelper) {
         }
 
         val args = if (excludeId != null) {
-            arrayOf(clean, excludeId.toString())
+            arrayOf(clean, DbContract.RR_TYPE_HELP, excludeId.toString())
         } else {
-            arrayOf(clean)
+            arrayOf(clean, DbContract.RR_TYPE_HELP)
         }
 
         readable.rawQuery(sql, args).use { c ->
@@ -145,6 +164,7 @@ class ReportReasonDao(private val dbHelper: StarDeckDbHelper) {
         require(cleanName.isNotBlank()) { "Reason name is required." }
 
         val cv = ContentValues().apply {
+            put(DbContract.RR_TYPE, DbContract.RR_TYPE_HELP)
             put(DbContract.RR_NAME, cleanName)
             put(DbContract.RR_DESCRIPTION, description?.trim()?.ifBlank { null })
             put(DbContract.RR_IS_ACTIVE, if (isActive) 1 else 0)
@@ -166,6 +186,7 @@ class ReportReasonDao(private val dbHelper: StarDeckDbHelper) {
         require(cleanName.isNotBlank()) { "Reason name is required." }
 
         val cv = ContentValues().apply {
+            put(DbContract.RR_TYPE, DbContract.RR_TYPE_HELP)
             put(DbContract.RR_NAME, cleanName)
             put(DbContract.RR_DESCRIPTION, description?.trim()?.ifBlank { null })
             put(DbContract.RR_IS_ACTIVE, if (isActive) 1 else 0)
@@ -209,7 +230,7 @@ class ReportReasonDao(private val dbHelper: StarDeckDbHelper) {
             SELECT COUNT(*)
             FROM ${DbContract.T_REPORTS}
             WHERE ${DbContract.R_REASON_ID} = ?
-              AND ${DbContract.R_DECK_ID} IS NULL
+              AND (${DbContract.R_DECK_ID} IS NULL OR ${DbContract.R_DECK_ID} = 0)
             """.trimIndent(),
             arrayOf(reasonId.toString())
         ).use { c ->
