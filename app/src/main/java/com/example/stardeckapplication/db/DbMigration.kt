@@ -14,6 +14,7 @@ object DbMigration {
         if (oldVersion < 17) addSubscriptionPlanSupport(db)
         if (oldVersion < 18) fixReportsTableForDualUse(db)
         if (oldVersion < 19) addReasonTypeToReportReasons(db)
+        if (oldVersion < 20) addFriendshipsSupport(db)
     }
 
     private fun addReasonTypeToReportReasons(db: SQLiteDatabase) {
@@ -304,5 +305,33 @@ object DbMigration {
             )
         } catch (_: Exception) {
         }
+    }
+
+    private fun addFriendshipsSupport(db: SQLiteDatabase) {
+        try {
+            db.execSQL(
+                """
+            CREATE TABLE IF NOT EXISTS ${DbContract.TFRIENDSHIPS} (
+                ${DbContract.FID}              INTEGER PRIMARY KEY AUTOINCREMENT,
+                ${DbContract.FREQUESTERUSERID} INTEGER NOT NULL,
+                ${DbContract.FADDRESSEEUSERID} INTEGER NOT NULL,
+                ${DbContract.FSTATUS}          TEXT NOT NULL DEFAULT '${DbContract.FRIEND_PENDING}',
+                ${DbContract.FCREATEDAT}       INTEGER NOT NULL,
+                ${DbContract.FRESPONDEDAT}     INTEGER,
+                FOREIGN KEY(${DbContract.FREQUESTERUSERID}) REFERENCES ${DbContract.TUSERS}(${DbContract.UID}) ON DELETE CASCADE,
+                FOREIGN KEY(${DbContract.FADDRESSEEUSERID}) REFERENCES ${DbContract.TUSERS}(${DbContract.UID}) ON DELETE CASCADE,
+                CHECK(${DbContract.FREQUESTERUSERID} <> ${DbContract.FADDRESSEEUSERID})
+            )
+            """.trimIndent()
+            )
+        } catch (_: Exception) { }
+
+        try {
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_friendships_requester ON ${DbContract.TFRIENDSHIPS}(${DbContract.FREQUESTERUSERID}, ${DbContract.FSTATUS})")
+        } catch (_: Exception) { }
+
+        try {
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_friendships_addressee ON ${DbContract.TFRIENDSHIPS}(${DbContract.FADDRESSEEUSERID}, ${DbContract.FSTATUS})")
+        } catch (_: Exception) { }
     }
 }

@@ -19,6 +19,7 @@ object DbSchema {
         createReportsTable(db)
         createUserAchievementsTable(db)
         createUserSubscriptionsTable(db)
+        createFriendshipsTable(db)          // ← NEW
     }
 
     fun recreateReportReasonsTable(db: SQLiteDatabase) {
@@ -172,12 +173,11 @@ object DbSchema {
             )
             """.trimIndent()
         )
-
-        db.execSQL("CREATE INDEX IF NOT EXISTS idx_decks_owner ON ${DbContract.TDECKS}(${DbContract.DOWNERUSERID})")
-        db.execSQL("CREATE INDEX IF NOT EXISTS idx_decks_status ON ${DbContract.TDECKS}(${DbContract.DSTATUS})")
-        db.execSQL("CREATE INDEX IF NOT EXISTS idx_decks_public ON ${DbContract.TDECKS}(${DbContract.DISPUBLIC})")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_decks_owner    ON ${DbContract.TDECKS}(${DbContract.DOWNERUSERID})")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_decks_status   ON ${DbContract.TDECKS}(${DbContract.DSTATUS})")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_decks_public   ON ${DbContract.TDECKS}(${DbContract.DISPUBLIC})")
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_decks_category ON ${DbContract.TDECKS}(${DbContract.DCATEGORYID})")
-        db.execSQL("CREATE INDEX IF NOT EXISTS idx_decks_subject ON ${DbContract.TDECKS}(${DbContract.DSUBJECTID})")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_decks_subject  ON ${DbContract.TDECKS}(${DbContract.DSUBJECTID})")
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_decks_language ON ${DbContract.TDECKS}(${DbContract.DLANGUAGEID})")
     }
 
@@ -216,7 +216,7 @@ object DbSchema {
             )
             """.trimIndent()
         )
-        db.execSQL("CREATE INDEX IF NOT EXISTS idx_cardprogress_due ON ${DbContract.TCARDPROGRESS}(${DbContract.PUSERID}, ${DbContract.PDUEAT})")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_cardprogress_due  ON ${DbContract.TCARDPROGRESS}(${DbContract.PUSERID}, ${DbContract.PDUEAT})")
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_cardprogress_card ON ${DbContract.TCARDPROGRESS}(${DbContract.PCARDID})")
     }
 
@@ -269,14 +269,14 @@ object DbSchema {
                 ${DbContract.RSTATUS}         TEXT NOT NULL DEFAULT '${DbContract.REPORTOPEN}',
                 ${DbContract.RCREATEDAT}      INTEGER NOT NULL,
                 FOREIGN KEY(${DbContract.RREPORTERUSERID}) REFERENCES ${DbContract.TUSERS}(${DbContract.UID}) ON DELETE CASCADE,
-                FOREIGN KEY(${DbContract.RDECKID}) REFERENCES ${DbContract.TDECKS}(${DbContract.DID}) ON DELETE CASCADE,
-                FOREIGN KEY(${DbContract.RREASONID}) REFERENCES ${DbContract.TREPORTREASONS}(${DbContract.RRID}) ON DELETE SET NULL
+                FOREIGN KEY(${DbContract.RDECKID})         REFERENCES ${DbContract.TDECKS}(${DbContract.DID}) ON DELETE CASCADE,
+                FOREIGN KEY(${DbContract.RREASONID})       REFERENCES ${DbContract.TREPORTREASONS}(${DbContract.RRID}) ON DELETE SET NULL
             )
             """.trimIndent()
         )
-        db.execSQL("CREATE INDEX IF NOT EXISTS idx_reports_deck ON ${DbContract.TREPORTS}(${DbContract.RDECKID})")
-        db.execSQL("CREATE INDEX IF NOT EXISTS idx_reports_status ON ${DbContract.TREPORTS}(${DbContract.RSTATUS})")
-        db.execSQL("CREATE INDEX IF NOT EXISTS idx_reports_created ON ${DbContract.TREPORTS}(${DbContract.RCREATEDAT})")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_reports_deck      ON ${DbContract.TREPORTS}(${DbContract.RDECKID})")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_reports_status    ON ${DbContract.TREPORTS}(${DbContract.RSTATUS})")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_reports_created   ON ${DbContract.TREPORTS}(${DbContract.RCREATEDAT})")
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_reports_reason_id ON ${DbContract.TREPORTS}(${DbContract.RREASONID})")
     }
 
@@ -288,7 +288,7 @@ object DbSchema {
                 ${DbContract.UAACHIEVEMENTID} INTEGER NOT NULL,
                 ${DbContract.UAUNLOCKEDAT}    INTEGER NOT NULL,
                 PRIMARY KEY(${DbContract.UAUSERID}, ${DbContract.UAACHIEVEMENTID}),
-                FOREIGN KEY(${DbContract.UAUSERID}) REFERENCES ${DbContract.TUSERS}(${DbContract.UID}) ON DELETE CASCADE,
+                FOREIGN KEY(${DbContract.UAUSERID})        REFERENCES ${DbContract.TUSERS}(${DbContract.UID}) ON DELETE CASCADE,
                 FOREIGN KEY(${DbContract.UAACHIEVEMENTID}) REFERENCES ${DbContract.TACHIEVEMENTS}(${DbContract.AID}) ON DELETE CASCADE
             )
             """.trimIndent()
@@ -312,5 +312,26 @@ object DbSchema {
             """.trimIndent()
         )
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_user_subscriptions_user_active ON ${DbContract.TUSERSUBSCRIPTIONS}(${DbContract.USUSERID}, ${DbContract.USISACTIVE})")
+    }
+
+    // ── NEW: Friendships ─────────────────────────────────────────────────────
+    private fun createFriendshipsTable(db: SQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS ${DbContract.TFRIENDSHIPS} (
+                ${DbContract.FID}                 INTEGER PRIMARY KEY AUTOINCREMENT,
+                ${DbContract.FREQUESTERUSERID}    INTEGER NOT NULL,
+                ${DbContract.FADDRESSEEUSERID}    INTEGER NOT NULL,
+                ${DbContract.FSTATUS}             TEXT NOT NULL DEFAULT '${DbContract.FRIEND_PENDING}',
+                ${DbContract.FCREATEDAT}          INTEGER NOT NULL,
+                ${DbContract.FRESPONDEDAT}        INTEGER,
+                FOREIGN KEY(${DbContract.FREQUESTERUSERID}) REFERENCES ${DbContract.TUSERS}(${DbContract.UID}) ON DELETE CASCADE,
+                FOREIGN KEY(${DbContract.FADDRESSEEUSERID}) REFERENCES ${DbContract.TUSERS}(${DbContract.UID}) ON DELETE CASCADE,
+                CHECK(${DbContract.FREQUESTERUSERID} <> ${DbContract.FADDRESSEEUSERID})
+            )
+            """.trimIndent()
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_friendships_requester ON ${DbContract.TFRIENDSHIPS}(${DbContract.FREQUESTERUSERID}, ${DbContract.FSTATUS})")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_friendships_addressee ON ${DbContract.TFRIENDSHIPS}(${DbContract.FADDRESSEEUSERID}, ${DbContract.FSTATUS})")
     }
 }

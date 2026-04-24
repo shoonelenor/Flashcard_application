@@ -4,7 +4,7 @@ object DbContract {
 
     const val DB_NAME = "stardeck.db"
     const val DBNAME = DB_NAME
-    const val DB_VERSION = 19
+    const val DB_VERSION = 20
     const val DBVERSION = DB_VERSION
 
     // ── Tables ──────────────────────────────────────────────────────────────
@@ -331,4 +331,25 @@ object DbContract {
     const val BILLINGMONTHLY = BILLING_MONTHLY
     const val BILLING_YEARLY = "yearly"
     const val BILLINGYEARLY = BILLING_YEARLY
+
+    // ── Friend ───────────────────────────────────────────────────────
+    const val T_FRIENDSHIPS = "friendships"
+    const val TFRIENDSHIPS = T_FRIENDSHIPS
+
+    const val F_ID = "id"
+    const val FID = F_ID
+    const val F_REQUESTER_USER_ID = "requester_user_id"
+    const val FREQUESTERUSERID = F_REQUESTER_USER_ID
+    const val F_ADDRESSEE_USER_ID = "addressee_user_id"
+    const val FADDRESSEEUSERID = F_ADDRESSEE_USER_ID
+    const val F_STATUS = "status"
+    const val FSTATUS = F_STATUS
+    const val F_CREATED_AT = "created_at"
+    const val FCREATEDAT = F_CREATED_AT
+    const val F_RESPONDED_AT = "responded_at"
+    const val FRESPONDEDAT = F_RESPONDED_AT
+
+    const val FRIEND_PENDING = "pending"
+    const val FRIEND_ACCEPTED = "accepted"
+    const val FRIEND_DECLINED = "declined"
 }

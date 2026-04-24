@@ -73,7 +73,9 @@ class UserProfileFragment : Fragment(R.layout.fragment_user_profile) {
             startActivity(Intent(requireContext(), ReportIssueActivity::class.java))
         }
 
-        b.btnFriends.setOnClickListener { showComingSoon("Friends") }
+        b.btnFriends.setOnClickListener {
+            startActivity(Intent(requireContext(), com.example.stardeckapplication.ui.profile.FriendsActivity::class.java))
+        }
 
         b.btnLogout.setOnClickListener {
             MaterialAlertDialogBuilder(requireContext())

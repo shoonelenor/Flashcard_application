@@ -61,6 +61,8 @@
         <activity android:name=".ui.profile.ReportIssueActivity" />
         <activity android:name=".ui.admin.AdminTicketsActivity" />
 
+        <activity android:name=".ui.profile.FriendsActivity" />
+
     </application>
 
 </manifest>
