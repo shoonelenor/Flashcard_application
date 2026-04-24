@@ -1,11 +1,13 @@
 package com.example.stardeckapplication.ui.home
 
+import android.content.ContentValues
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
+import android.widget.EditText
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DiffUtil
@@ -56,7 +58,8 @@ class UserExploreFragment : Fragment(R.layout.fragment_user_explore) {
     private val adapter = PublicDeckAdapter(
         onOpen = { openDeck(it) },
         onCopy = { copyDeck(it) },
-        onPreview = { previewDeck(it) }
+        onPreview = { previewDeck(it) },
+        onReport = { reportDeck(it) }
     )
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -387,7 +390,8 @@ class UserExploreFragment : Fragment(R.layout.fragment_user_explore) {
                 .setTitle("Premium: ${row.title}")
                 .setMessage(
                     "This is a premium deck.\n\n" +
-                            "Upgrade to open the full deck, report issues, or copy it."
+                            "Upgrade to open the full deck or copy it to your library.\n\n" +
+                            "You can still use the Report button on the deck card to submit a content report."
                 )
                 .setPositiveButton("Go Premium") { _, _ ->
                     startActivity(
@@ -438,15 +442,146 @@ class UserExploreFragment : Fragment(R.layout.fragment_user_explore) {
             .show()
     }
 
+    private fun reportDeck(row: ExploreDao.PublicDeckCatalogRow) {
+        val me = session.load()
+        if (me == null) {
+            Snackbar.make(b.root, "Please log in first.", Snackbar.LENGTH_SHORT).show()
+            return
+        }
+
+        val reasons = loadContentReportReasons()
+        if (reasons.isEmpty()) {
+            Snackbar.make(b.root, "No content report reasons available.", Snackbar.LENGTH_LONG).show()
+            return
+        }
+
+        val labels = reasons.map { it.name }.toTypedArray()
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Report deck")
+            .setItems(labels) { _, which ->
+                val selected = reasons[which]
+                showReportDetailsDialog(row, me.id.toLong(), selected)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun showReportDetailsDialog(
+        row: ExploreDao.PublicDeckCatalogRow,
+        reporterUserId: Long,
+        reason: ReportReasonChoice
+    ) {
+        val input = EditText(requireContext()).apply {
+            hint = "Add details (optional)"
+            minLines = 3
+            maxLines = 5
+        }
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Report: ${row.title}")
+            .setMessage("Reason: ${reason.name}")
+            .setView(input)
+            .setPositiveButton("Submit") { _, _ ->
+                val details = input.text?.toString()?.trim().orEmpty()
+                val ok = submitContentReport(
+                    reporterUserId = reporterUserId,
+                    deckId = row.deckId,
+                    reason = reason,
+                    details = details
+                )
+
+                if (ok) {
+                    Snackbar.make(b.root, "Report submitted.", Snackbar.LENGTH_LONG).show()
+                } else {
+                    Snackbar.make(b.root, "Could not submit report.", Snackbar.LENGTH_LONG).show()
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun loadContentReportReasons(): List<ReportReasonChoice> {
+        val db = dbHelper.readableDatabase
+        val out = mutableListOf<ReportReasonChoice>()
+
+        val selection = "${DbContract.RRISACTIVE} = 1 AND ${DbContract.RRTYPE} = ?"
+        val selectionArgs = arrayOf(DbContract.RR_TYPE_CONTENT)
+
+        db.query(
+            DbContract.TREPORTREASONS,
+            arrayOf(DbContract.RRID, DbContract.RRNAME, DbContract.RRDESCRIPTION),
+            selection,
+            selectionArgs,
+            null,
+            null,
+            "${DbContract.RRSORTORDER} ASC, ${DbContract.RRNAME} ASC"
+        ).use { c ->
+            while (c.moveToNext()) {
+                out += ReportReasonChoice(
+                    id = c.getLong(c.getColumnIndexOrThrow(DbContract.RRID)),
+                    name = c.getString(c.getColumnIndexOrThrow(DbContract.RRNAME)),
+                    description = c.getString(c.getColumnIndexOrThrow(DbContract.RRDESCRIPTION))
+                )
+            }
+        }
+
+        if (out.isNotEmpty()) return out
+
+        return listOf(
+            ReportReasonChoice(0L, "Incorrect content", null),
+            ReportReasonChoice(0L, "Spam", null),
+            ReportReasonChoice(0L, "Offensive content", null),
+            ReportReasonChoice(0L, "Copyright issue", null),
+            ReportReasonChoice(0L, "Other", null)
+        )
+    }
+
+    private fun submitContentReport(
+        reporterUserId: Long,
+        deckId: Long,
+        reason: ReportReasonChoice,
+        details: String?
+    ): Boolean {
+        return runCatching {
+            val values = ContentValues().apply {
+                put(DbContract.RREPORTERUSERID, reporterUserId)
+                put(DbContract.RDECKID, deckId)
+                if (reason.id > 0L) {
+                    put(DbContract.RREASONID, reason.id)
+                } else {
+                    putNull(DbContract.RREASONID)
+                }
+                put(DbContract.RREASON, reason.name)
+                if (details.isNullOrBlank()) {
+                    putNull(DbContract.RDETAILS)
+                } else {
+                    put(DbContract.RDETAILS, details)
+                }
+                put(DbContract.RSTATUS, DbContract.REPORTOPEN)
+                put(DbContract.RCREATEDAT, System.currentTimeMillis())
+            }
+
+            dbHelper.writableDatabase.insert(DbContract.TREPORTS, null, values) > 0L
+        }.getOrElse { false }
+    }
+
     private data class FilterOption(
         val id: Long,
         val label: String
     )
 
+    private data class ReportReasonChoice(
+        val id: Long,
+        val name: String,
+        val description: String?
+    )
+
     private class PublicDeckAdapter(
         private val onOpen: (ExploreDao.PublicDeckCatalogRow) -> Unit,
         private val onCopy: (ExploreDao.PublicDeckCatalogRow) -> Unit,
-        private val onPreview: (ExploreDao.PublicDeckCatalogRow) -> Unit
+        private val onPreview: (ExploreDao.PublicDeckCatalogRow) -> Unit,
+        private val onReport: (ExploreDao.PublicDeckCatalogRow) -> Unit
     ) : ListAdapter<ExploreDao.PublicDeckCatalogRow, PublicDeckAdapter.VH>(Diff) {
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
@@ -455,7 +590,7 @@ class UserExploreFragment : Fragment(R.layout.fragment_user_explore) {
                 parent,
                 false
             )
-            return VH(binding, onOpen, onCopy, onPreview)
+            return VH(binding, onOpen, onCopy, onPreview, onReport)
         }
 
         override fun onBindViewHolder(holder: VH, position: Int) {
@@ -466,7 +601,8 @@ class UserExploreFragment : Fragment(R.layout.fragment_user_explore) {
             private val b: ItemPublicDeckBinding,
             private val onOpen: (ExploreDao.PublicDeckCatalogRow) -> Unit,
             private val onCopy: (ExploreDao.PublicDeckCatalogRow) -> Unit,
-            private val onPreview: (ExploreDao.PublicDeckCatalogRow) -> Unit
+            private val onPreview: (ExploreDao.PublicDeckCatalogRow) -> Unit,
+            private val onReport: (ExploreDao.PublicDeckCatalogRow) -> Unit
         ) : RecyclerView.ViewHolder(b.root) {
 
             fun bind(row: ExploreDao.PublicDeckCatalogRow) {
@@ -510,6 +646,7 @@ class UserExploreFragment : Fragment(R.layout.fragment_user_explore) {
                 b.btnOpen.setOnClickListener { onOpen(row) }
                 b.btnCopy.setOnClickListener { onCopy(row) }
                 b.btnPreview.setOnClickListener { onPreview(row) }
+                b.btnReport.setOnClickListener { onReport(row) }
                 b.root.setOnClickListener { onOpen(row) }
             }
         }
