@@ -14,7 +14,7 @@
         android:layout_height="wrap_content"
         android:padding="16dp">
 
-        <!-- Front -->
+        <!-- Front text -->
         <TextView
             android:id="@+id/tvFront"
             android:layout_width="0dp"
@@ -26,7 +26,20 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <!-- Hint -->
+        <!-- Front image (always visible if present) -->
+        <ImageView
+            android:id="@+id/imgFront"
+            android:layout_width="0dp"
+            android:layout_height="140dp"
+            android:layout_marginTop="8dp"
+            android:contentDescription="Front image"
+            android:scaleType="centerCrop"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="@id/tvFront"
+            app:layout_constraintStart_toStartOf="@id/tvFront"
+            app:layout_constraintTop_toBottomOf="@id/tvFront" />
+
+        <!-- Hint (tap to show/hide) -->
         <TextView
             android:id="@+id/tvHint"
             android:layout_width="0dp"
@@ -35,7 +48,7 @@
             android:textAppearance="@style/TextAppearance.Material3.BodySmall"
             app:layout_constraintEnd_toEndOf="@id/tvFront"
             app:layout_constraintStart_toStartOf="@id/tvFront"
-            app:layout_constraintTop_toBottomOf="@id/tvFront" />
+            app:layout_constraintTop_toBottomOf="@id/imgFront" />
 
         <!-- Divider (only visible when answer is shown) -->
         <View
@@ -49,7 +62,7 @@
             app:layout_constraintStart_toStartOf="@id/tvFront"
             app:layout_constraintTop_toBottomOf="@id/tvHint" />
 
-        <!-- Back (Answer) -->
+        <!-- Back text (only shown when expanded) -->
         <TextView
             android:id="@+id/tvBack"
             android:layout_width="0dp"
@@ -61,7 +74,20 @@
             app:layout_constraintStart_toStartOf="@id/tvFront"
             app:layout_constraintTop_toBottomOf="@id/divider" />
 
-        <!-- Actions -->
+        <!-- Back image (only visible when expanded and image exists) -->
+        <ImageView
+            android:id="@+id/imgBack"
+            android:layout_width="0dp"
+            android:layout_height="140dp"
+            android:layout_marginTop="8dp"
+            android:contentDescription="Back image"
+            android:scaleType="centerCrop"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="@id/tvFront"
+            app:layout_constraintStart_toStartOf="@id/tvFront"
+            app:layout_constraintTop_toBottomOf="@id/tvBack" />
+
+        <!-- Actions (Edit / Delete buttons) -->
         <LinearLayout
             android:id="@+id/actionRow"
             android:layout_width="wrap_content"
