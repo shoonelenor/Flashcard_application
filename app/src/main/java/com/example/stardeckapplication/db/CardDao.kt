@@ -11,10 +11,12 @@ class CardDao(private val dbHelper: StarDeckDbHelper) {
     // ---------- MODEL ----------
 
     data class CardRow(
-        val id        : Long,
-        val front     : String,
-        val back      : String,
-        val createdAt : Long
+        val id              : Long,
+        val front           : String,
+        val back            : String,
+        val createdAt       : Long,
+        val frontImagePath  : String? = null,
+        val backImagePath   : String? = null
     )
 
     // ---------- HELPERS ----------
@@ -41,22 +43,41 @@ class CardDao(private val dbHelper: StarDeckDbHelper) {
 
     // ---------- OWNER CARD CRUD ----------
 
-    fun createCard(ownerUserId: Long, deckId: Long, front: String, back: String): Long {
+    fun createCard(
+        ownerUserId: Long,
+        deckId: Long,
+        front: String,
+        back: String,
+        frontImagePath: String? = null,
+        backImagePath: String? = null
+    ): Long {
         val cleanFront = front.trim()
         val cleanBack  = back.trim()
         if (cleanFront.isBlank() && cleanBack.isBlank()) return -1L
         if (!ownerOwnsActiveDeck(ownerUserId, deckId)) return -1L
 
         val cv = ContentValues().apply {
-            put(DbContract.C_DECK_ID,    deckId)
-            put(DbContract.C_FRONT,      cleanFront)
-            put(DbContract.C_BACK,       cleanBack)
-            put(DbContract.C_CREATED_AT, System.currentTimeMillis())
+            put(DbContract.C_DECK_ID,         deckId)
+            put(DbContract.C_FRONT,           cleanFront)
+            put(DbContract.C_BACK,            cleanBack)
+            put(DbContract.C_CREATED_AT,      System.currentTimeMillis())
+            if (frontImagePath != null) put(DbContract.C_FRONT_IMAGE_PATH, frontImagePath)
+            if (backImagePath  != null) put(DbContract.C_BACK_IMAGE_PATH,  backImagePath)
         }
         return writable.insertOrThrow(DbContract.T_CARDS, null, cv)
     }
 
-    fun updateCard(ownerUserId: Long, deckId: Long, cardId: Long, front: String, back: String): Int {
+    fun updateCard(
+        ownerUserId: Long,
+        deckId: Long,
+        cardId: Long,
+        front: String,
+        back: String,
+        frontImagePath: String? = null,
+        backImagePath: String? = null,
+        clearFrontImage: Boolean = false,
+        clearBackImage: Boolean = false
+    ): Int {
         val cleanFront = front.trim()
         val cleanBack  = back.trim()
         if (cleanFront.isBlank() && cleanBack.isBlank()) return 0
@@ -65,6 +86,14 @@ class CardDao(private val dbHelper: StarDeckDbHelper) {
         val cv = ContentValues().apply {
             put(DbContract.C_FRONT, cleanFront)
             put(DbContract.C_BACK,  cleanBack)
+            when {
+                clearFrontImage             -> putNull(DbContract.C_FRONT_IMAGE_PATH)
+                frontImagePath != null      -> put(DbContract.C_FRONT_IMAGE_PATH, frontImagePath)
+            }
+            when {
+                clearBackImage              -> putNull(DbContract.C_BACK_IMAGE_PATH)
+                backImagePath  != null      -> put(DbContract.C_BACK_IMAGE_PATH, backImagePath)
+            }
         }
         return writable.update(
             DbContract.T_CARDS, cv,
@@ -87,7 +116,8 @@ class CardDao(private val dbHelper: StarDeckDbHelper) {
         readable.rawQuery(
             """
             SELECT c.${DbContract.C_ID}, c.${DbContract.C_FRONT},
-                   c.${DbContract.C_BACK}, c.${DbContract.C_CREATED_AT}
+                   c.${DbContract.C_BACK}, c.${DbContract.C_CREATED_AT},
+                   c.${DbContract.C_FRONT_IMAGE_PATH}, c.${DbContract.C_BACK_IMAGE_PATH}
             FROM   ${DbContract.T_CARDS} c
             JOIN   ${DbContract.T_DECKS} d ON d.${DbContract.D_ID} = c.${DbContract.C_DECK_ID}
             WHERE  c.${DbContract.C_DECK_ID}       = ?
@@ -98,7 +128,14 @@ class CardDao(private val dbHelper: StarDeckDbHelper) {
             arrayOf(deckId.toString(), ownerUserId.toString(), DbContract.DECK_ACTIVE)
         ).use { c ->
             while (c.moveToNext()) {
-                out += CardRow(c.getLong(0), c.getString(1), c.getString(2), c.getLong(3))
+                out += CardRow(
+                    id             = c.getLong(0),
+                    front          = c.getString(1),
+                    back           = c.getString(2),
+                    createdAt      = c.getLong(3),
+                    frontImagePath = c.getString(4),
+                    backImagePath  = c.getString(5)
+                )
             }
         }
         return out
@@ -107,7 +144,6 @@ class CardDao(private val dbHelper: StarDeckDbHelper) {
     // ---------- PUBLIC LIBRARY ----------
 
     fun getPublicDeckCardsForUser(userId: Long, deckId: Long): List<CardRow> {
-        // If deck is locked for this user, return empty
         val isLocked = readable.rawQuery(
             """
             SELECT CASE
@@ -130,7 +166,8 @@ class CardDao(private val dbHelper: StarDeckDbHelper) {
         readable.rawQuery(
             """
             SELECT c.${DbContract.C_ID}, c.${DbContract.C_FRONT},
-                   c.${DbContract.C_BACK}, c.${DbContract.C_CREATED_AT}
+                   c.${DbContract.C_BACK}, c.${DbContract.C_CREATED_AT},
+                   c.${DbContract.C_FRONT_IMAGE_PATH}, c.${DbContract.C_BACK_IMAGE_PATH}
             FROM   ${DbContract.T_CARDS} c
             INNER  JOIN ${DbContract.T_DECKS} d ON d.${DbContract.D_ID} = c.${DbContract.C_DECK_ID}
             WHERE  d.${DbContract.D_ID}     = ?
@@ -141,7 +178,14 @@ class CardDao(private val dbHelper: StarDeckDbHelper) {
             arrayOf(deckId.toString(), DbContract.DECK_ACTIVE)
         ).use { c ->
             while (c.moveToNext()) {
-                out += CardRow(c.getLong(0), c.getString(1), c.getString(2), c.getLong(3))
+                out += CardRow(
+                    id             = c.getLong(0),
+                    front          = c.getString(1),
+                    back           = c.getString(2),
+                    createdAt      = c.getLong(3),
+                    frontImagePath = c.getString(4),
+                    backImagePath  = c.getString(5)
+                )
             }
         }
         return out
@@ -154,7 +198,8 @@ class CardDao(private val dbHelper: StarDeckDbHelper) {
         readable.rawQuery(
             """
             SELECT ${DbContract.C_ID}, ${DbContract.C_FRONT},
-                   ${DbContract.C_BACK}, ${DbContract.C_CREATED_AT}
+                   ${DbContract.C_BACK}, ${DbContract.C_CREATED_AT},
+                   ${DbContract.C_FRONT_IMAGE_PATH}, ${DbContract.C_BACK_IMAGE_PATH}
             FROM   ${DbContract.T_CARDS}
             WHERE  ${DbContract.C_DECK_ID} = ?
             ORDER  BY ${DbContract.C_CREATED_AT} DESC
@@ -162,7 +207,14 @@ class CardDao(private val dbHelper: StarDeckDbHelper) {
             arrayOf(deckId.toString())
         ).use { c ->
             while (c.moveToNext()) {
-                out += CardRow(c.getLong(0), c.getString(1), c.getString(2), c.getLong(3))
+                out += CardRow(
+                    id             = c.getLong(0),
+                    front          = c.getString(1),
+                    back           = c.getString(2),
+                    createdAt      = c.getLong(3),
+                    frontImagePath = c.getString(4),
+                    backImagePath  = c.getString(5)
+                )
             }
         }
         return out
@@ -180,21 +232,38 @@ class CardDao(private val dbHelper: StarDeckDbHelper) {
         ).use { return if (it.moveToFirst()) it.getInt(0) else 0 }
     }
 
-    fun createCardAny(deckId: Long, front: String, back: String): Long {
+    fun createCardAny(
+        deckId: Long,
+        front: String,
+        back: String,
+        frontImagePath: String? = null,
+        backImagePath: String? = null
+    ): Long {
         if (!deckExistsAny(deckId)) return -1L
         val cv = ContentValues().apply {
             put(DbContract.C_DECK_ID,    deckId)
             put(DbContract.C_FRONT,      front.trim())
             put(DbContract.C_BACK,       back.trim())
             put(DbContract.C_CREATED_AT, System.currentTimeMillis())
+            if (frontImagePath != null) put(DbContract.C_FRONT_IMAGE_PATH, frontImagePath)
+            if (backImagePath  != null) put(DbContract.C_BACK_IMAGE_PATH,  backImagePath)
         }
         return writable.insertOrThrow(DbContract.T_CARDS, null, cv)
     }
 
-    fun updateCardAny(deckId: Long, cardId: Long, front: String, back: String): Int {
+    fun updateCardAny(
+        deckId: Long,
+        cardId: Long,
+        front: String,
+        back: String,
+        frontImagePath: String? = null,
+        backImagePath: String? = null
+    ): Int {
         val cv = ContentValues().apply {
             put(DbContract.C_FRONT, front.trim())
             put(DbContract.C_BACK,  back.trim())
+            if (frontImagePath != null) put(DbContract.C_FRONT_IMAGE_PATH, frontImagePath)
+            if (backImagePath  != null) put(DbContract.C_BACK_IMAGE_PATH,  backImagePath)
         }
         return writable.update(
             DbContract.T_CARDS, cv,

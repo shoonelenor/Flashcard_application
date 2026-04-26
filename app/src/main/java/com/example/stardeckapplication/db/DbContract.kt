@@ -4,7 +4,7 @@ object DbContract {
 
     const val DB_NAME = "stardeck.db"
     const val DBNAME = DB_NAME
-    const val DB_VERSION = 20
+    const val DB_VERSION = 21          // bumped from 20 → 21 for image columns
     const val DBVERSION = DB_VERSION
 
     // ── Tables ──────────────────────────────────────────────────────────────
@@ -213,6 +213,11 @@ object DbContract {
     const val CBACK = C_BACK
     const val C_CREATED_AT = "created_at"
     const val CCREATEDAT = C_CREATED_AT
+    // ── NEW: image columns added in DB_VERSION 21 ────────────────────────────
+    const val C_FRONT_IMAGE_PATH = "front_image_path"
+    const val CFRONTIMAGEPATH = C_FRONT_IMAGE_PATH
+    const val C_BACK_IMAGE_PATH = "back_image_path"
+    const val CBACKIMAGEPATH = C_BACK_IMAGE_PATH
 
     // ── Card progress ───────────────────────────────────────────────────────
     const val P_USER_ID = "user_id"

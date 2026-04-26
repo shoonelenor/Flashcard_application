@@ -19,7 +19,7 @@ object DbSchema {
         createReportsTable(db)
         createUserAchievementsTable(db)
         createUserSubscriptionsTable(db)
-        createFriendshipsTable(db)          // ← NEW
+        createFriendshipsTable(db)
     }
 
     fun recreateReportReasonsTable(db: SQLiteDatabase) {
@@ -185,11 +185,13 @@ object DbSchema {
         db.execSQL(
             """
             CREATE TABLE IF NOT EXISTS ${DbContract.TCARDS} (
-                ${DbContract.CID}        INTEGER PRIMARY KEY AUTOINCREMENT,
-                ${DbContract.CDECKID}    INTEGER NOT NULL,
-                ${DbContract.CFRONT}     TEXT NOT NULL,
-                ${DbContract.CBACK}      TEXT NOT NULL,
-                ${DbContract.CCREATEDAT} INTEGER NOT NULL,
+                ${DbContract.CID}              INTEGER PRIMARY KEY AUTOINCREMENT,
+                ${DbContract.CDECKID}          INTEGER NOT NULL,
+                ${DbContract.CFRONT}           TEXT NOT NULL,
+                ${DbContract.CBACK}            TEXT NOT NULL,
+                ${DbContract.CFRONTIMAGEPATH}  TEXT,
+                ${DbContract.CBACKIMAGEPATH}   TEXT,
+                ${DbContract.CCREATEDAT}       INTEGER NOT NULL,
                 FOREIGN KEY(${DbContract.CDECKID}) REFERENCES ${DbContract.TDECKS}(${DbContract.DID}) ON DELETE CASCADE
             )
             """.trimIndent()
@@ -314,7 +316,6 @@ object DbSchema {
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_user_subscriptions_user_active ON ${DbContract.TUSERSUBSCRIPTIONS}(${DbContract.USUSERID}, ${DbContract.USISACTIVE})")
     }
 
-    // ── NEW: Friendships ─────────────────────────────────────────────────────
     private fun createFriendshipsTable(db: SQLiteDatabase) {
         db.execSQL(
             """

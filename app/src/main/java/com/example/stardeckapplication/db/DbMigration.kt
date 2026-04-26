@@ -15,6 +15,22 @@ object DbMigration {
         if (oldVersion < 18) fixReportsTableForDualUse(db)
         if (oldVersion < 19) addReasonTypeToReportReasons(db)
         if (oldVersion < 20) addFriendshipsSupport(db)
+        if (oldVersion < 21) addCardImageColumns(db)  // NEW: image support
+    }
+
+    // ── NEW: v21 – image columns on cards ────────────────────────────────────
+    private fun addCardImageColumns(db: SQLiteDatabase) {
+        try {
+            db.execSQL(
+                "ALTER TABLE ${DbContract.T_CARDS} ADD COLUMN ${DbContract.C_FRONT_IMAGE_PATH} TEXT"
+            )
+        } catch (_: Exception) { }
+
+        try {
+            db.execSQL(
+                "ALTER TABLE ${DbContract.T_CARDS} ADD COLUMN ${DbContract.C_BACK_IMAGE_PATH} TEXT"
+            )
+        } catch (_: Exception) { }
     }
 
     private fun addReasonTypeToReportReasons(db: SQLiteDatabase) {
