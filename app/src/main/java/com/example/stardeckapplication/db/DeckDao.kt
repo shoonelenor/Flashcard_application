@@ -207,6 +207,12 @@ class DeckDao(private val dbHelper: StarDeckDbHelper) {
         ).use { return if (it.moveToFirst()) it.getString(0) else null }
     }
 
+    /**
+     * Gets the title of any active deck regardless of ownership.
+     * Used by StudyActivity when studying a public deck.
+     */
+    fun getDeckTitle(deckId: Long): String? = getDeckTitleAny(deckId)
+
     fun getCardsForDeck(ownerUserId: Long, deckId: Long): List<CardRow> {
         val out = mutableListOf<CardRow>()
         readable.rawQuery(
@@ -224,6 +230,33 @@ class DeckDao(private val dbHelper: StarDeckDbHelper) {
         ).use { c ->
             while (c.moveToNext())
                 out += CardRow(c.getLong(0), c.getString(1), c.getString(2), c.getLong(3))
+        }
+        return out
+    }
+
+    /**
+     * Gets all cards for any active public deck regardless of ownership.
+     * Used by StudyActivity when studying a public deck.
+     * Does NOT check premium lock — caller should check isDeckLockedForUser() first if needed.
+     */
+    fun getCardsForPublicDeck(deckId: Long): List<CardRow> {
+        val out = mutableListOf<CardRow>()
+        readable.rawQuery(
+            """
+            SELECT c.${DbContract.C_ID}, c.${DbContract.C_FRONT},
+                   c.${DbContract.C_BACK}, c.${DbContract.C_CREATED_AT}
+            FROM   ${DbContract.T_CARDS} c
+            INNER  JOIN ${DbContract.T_DECKS} d ON d.${DbContract.D_ID} = c.${DbContract.C_DECK_ID}
+            WHERE  d.${DbContract.D_ID} = ?
+              AND  d.${DbContract.D_STATUS} = ?
+              AND  COALESCE(d.${DbContract.D_IS_PUBLIC}, 0) = 1
+            ORDER  BY c.${DbContract.C_CREATED_AT} DESC
+            """.trimIndent(),
+            arrayOf(deckId.toString(), DbContract.DECK_ACTIVE)
+        ).use { c ->
+            while (c.moveToNext()) {
+                out += CardRow(c.getLong(0), c.getString(1), c.getString(2), c.getLong(3))
+            }
         }
         return out
     }
