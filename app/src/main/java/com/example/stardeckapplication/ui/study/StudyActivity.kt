@@ -19,7 +19,8 @@ import kotlin.random.Random
 class StudyActivity : AppCompatActivity() {
 
     companion object {
-        const val EXTRA_DECK_ID        = "extra_deck_id"
+        const val EXTRA_DECK_ID          = "extra_deck_id"
+        const val EXTRA_READ_ONLY_PUBLIC = "extra_read_only_public"
         private const val S_INDEX              = "s_index"
         private const val S_SHOW_BACK          = "s_show_back"
         private const val S_KNOWN              = "s_known"
@@ -53,6 +54,9 @@ class StudyActivity : AppCompatActivity() {
     private var userId: Long = -1L
     private var deckId: Long = -1L
 
+    // true when the user is studying a public deck they do NOT own
+    private var readOnlyPublic = false
+
     private var baseCards : List<DeckDao.CardRow>        = emptyList()
     private var order     : MutableList<DeckDao.CardRow> = mutableListOf()
 
@@ -83,11 +87,17 @@ class StudyActivity : AppCompatActivity() {
         val me = session.load()
         if (me == null || me.role != DbContract.ROLE_USER) { finish(); return }
 
-        userId = me.id
-        deckId = intent.getLongExtra(EXTRA_DECK_ID, -1L)
+        userId         = me.id
+        deckId         = intent.getLongExtra(EXTRA_DECK_ID, -1L)
+        readOnlyPublic = intent.getBooleanExtra(EXTRA_READ_ONLY_PUBLIC, false)
         if (deckId <= 0L) { safeFinishWithMessage("Invalid deck"); return }
 
-        val title = runCatching { deckDao.getDeckTitleForOwner(userId, deckId) }.getOrNull()
+        val title = if (readOnlyPublic) {
+            // For public decks we cannot use getDeckTitleForOwner (ownership check fails)
+            runCatching { deckDao.getDeckTitle(deckId) }.getOrNull()
+        } else {
+            runCatching { deckDao.getDeckTitleForOwner(userId, deckId) }.getOrNull()
+        }
         if (title.isNullOrBlank()) { safeFinishWithMessage("Deck not found"); return }
         supportActionBar?.title = title
 
@@ -161,27 +171,40 @@ class StudyActivity : AppCompatActivity() {
     }
 
     private fun loadStudyCardsSafely() {
-        val dueLoaded = runCatching {
-            val count       = studyDao.getDueCountForDeck(userId, deckId)
-            dueCountAtStart = count
-            dueMode         = count > 0
-            if (dueMode) {
-                val dueCards = studyDao.getDueCardsForDeck(userId, deckId)
-                val mapped   = mutableListOf<DeckDao.CardRow>()
-                for (due in dueCards) {
-                    mapped.add(DeckDao.CardRow(id = due.id, front = due.front, back = due.back, createdAt = due.createdAt))
+        // For public decks, skip Due Mode (progress rows may not exist yet for this user)
+        if (!readOnlyPublic) {
+            val dueLoaded = runCatching {
+                val count       = studyDao.getDueCountForDeck(userId, deckId)
+                dueCountAtStart = count
+                dueMode         = count > 0
+                if (dueMode) {
+                    val dueCards = studyDao.getDueCardsForDeck(userId, deckId)
+                    val mapped   = mutableListOf<DeckDao.CardRow>()
+                    for (due in dueCards) {
+                        mapped.add(DeckDao.CardRow(id = due.id, front = due.front, back = due.back, createdAt = due.createdAt))
+                    }
+                    baseCards = mapped
                 }
-                baseCards = mapped
-            }
-        }.isSuccess
+            }.isSuccess
 
-        if (!dueLoaded || baseCards.isEmpty()) {
+            if (!dueLoaded || baseCards.isEmpty()) {
+                dueMode         = false
+                dueCountAtStart = 0
+                baseCards = runCatching { deckDao.getCardsForDeck(userId, deckId) }.getOrDefault(emptyList())
+            }
+        } else {
+            // Public deck — load all cards directly (no ownership filter)
             dueMode         = false
             dueCountAtStart = 0
-            baseCards = runCatching { deckDao.getCardsForDeck(userId, deckId) }.getOrDefault(emptyList())
+            baseCards = runCatching { deckDao.getCardsForPublicDeck(deckId) }.getOrDefault(emptyList())
         }
 
-        supportActionBar?.subtitle = if (dueMode) "Due Now • $dueCountAtStart card(s)" else "Normal Review"
+        val modeLabel = when {
+            readOnlyPublic -> "Public Deck"
+            dueMode        -> "Due Now • $dueCountAtStart card(s)"
+            else           -> "Normal Review"
+        }
+        supportActionBar?.subtitle = modeLabel
     }
 
     private fun onSwipeLeft()  { if (!showBack) nextQuestion() else markHard()  }
@@ -209,10 +232,25 @@ class StudyActivity : AppCompatActivity() {
         val card = order.getOrNull(index) ?: return
 
         val srsWorked = runCatching {
-            val snapshot  = studyDao.getCardProgressSnapshot(userId, card.id)
-            val sessionId = studyDao.applySrsReview(
-                ownerUserId = userId, deckId = deckId, cardId = card.id, result = result
-            )
+            val snapshot = studyDao.getCardProgressSnapshot(userId, card.id)
+
+            // Route to the correct SRS function based on deck ownership
+            val sessionId = if (readOnlyPublic) {
+                studyDao.applySrsReviewForPublicDeck(
+                    studyingUserId = userId,
+                    deckId         = deckId,
+                    cardId         = card.id,
+                    result         = result
+                )
+            } else {
+                studyDao.applySrsReview(
+                    ownerUserId = userId,
+                    deckId      = deckId,
+                    cardId      = card.id,
+                    result      = result
+                )
+            }
+
             if (sessionId > 0L) {
                 val ids = LongArray(order.size)
                 for (i in order.indices) ids[i] = order[i].id
@@ -293,13 +331,16 @@ class StudyActivity : AppCompatActivity() {
         else showSummary()
     }
 
-    // ── FIXED showSummary: improved result display with accuracy % and emoji ──
     private fun showSummary() {
         val total    = order.size
         val studied  = (knownCount + hardCount).coerceAtMost(total)
         val skipped  = (total - studied).coerceAtLeast(0)
         val pct      = if (studied > 0) (knownCount * 100 / studied) else 0
-        val mode     = if (dueMode) "Due Now" else "Normal Review"
+        val mode     = when {
+            readOnlyPublic -> "Public Deck"
+            dueMode        -> "Due Now"
+            else           -> "Normal Review"
+        }
         val unlocked = runCatching { achievementSync.syncForUser(userId) }.getOrDefault(0)
 
         val emoji = when {
@@ -363,7 +404,11 @@ class StudyActivity : AppCompatActivity() {
     private fun updateTopUi() {
         val left        = (order.size - index).coerceAtLeast(1)
         val shuffleText = if (shuffled) "On"  else "Off"
-        val modeText    = if (dueMode)  "Due" else "All"
+        val modeText    = when {
+            readOnlyPublic -> "Public"
+            dueMode        -> "Due"
+            else           -> "All"
+        }
         b.tvCardsLeft.text = "$left cards left"
         b.tvStats.text     = "Known $knownCount • Hard $hardCount • Shuffle $shuffleText • $modeText"
     }

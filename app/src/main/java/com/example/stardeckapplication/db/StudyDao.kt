@@ -277,10 +277,10 @@ class StudyDao(private val dbHelper: StarDeckDbHelper) {
         return out
     }
 
-    // ---------- APPLY REVIEW (SRS) ----------
+    // ---------- APPLY REVIEW (SRS) — owned deck ----------
 
     /**
-     * Apply SRS review result for a card in a deck the user owns.
+     * Apply SRS review result for a card in a deck the user OWNS.
      * Returns new study session id, or -1L on error/invalid.
      */
     fun applySrsReview(
@@ -323,6 +323,78 @@ class StudyDao(private val dbHelper: StarDeckDbHelper) {
                 userId = ownerUserId,
                 deckId = deckId,
                 result = result,
+                createdAt = reviewedAt
+            )
+
+            db.setTransactionSuccessful()
+            sessionId
+        } finally {
+            db.endTransaction()
+        }
+    }
+
+    // ---------- APPLY REVIEW (SRS) — public / shared deck ----------
+
+    /**
+     * Apply SRS review for a card in ANY deck (including public decks the user does NOT own).
+     * The card_progress row is keyed by (studyingUserId, cardId) so it never
+     * conflicts with the deck owner's own progress.
+     * Returns new study session id, or -1L on error.
+     */
+    fun applySrsReviewForPublicDeck(
+        studyingUserId: Long,
+        deckId: Long,
+        cardId: Long,
+        result: String,
+        reviewedAt: Long = System.currentTimeMillis()
+    ): Long {
+        if (result != DbContract.RESULT_KNOWN && result != DbContract.RESULT_HARD) return -1L
+
+        val db = writable
+        db.beginTransaction()
+        return try {
+            // Ensure a progress row exists for this (user, card) pair
+            db.execSQL(
+                """
+                INSERT OR IGNORE INTO ${DbContract.TCARDPROGRESS} (
+                    ${DbContract.PUSERID},
+                    ${DbContract.PCARDID},
+                    ${DbContract.PDUEAT},
+                    ${DbContract.PLASTREVIEWEDAT},
+                    ${DbContract.PINTERVALDAYS},
+                    ${DbContract.PEASEFACTOR},
+                    ${DbContract.PREVIEWCOUNT},
+                    ${DbContract.PLAPSECOUNT},
+                    ${DbContract.PLASTRESULT}
+                ) VALUES (?, ?, 0, NULL, 0, 2.5, 0, 0, NULL)
+                """.trimIndent(),
+                arrayOf(studyingUserId, cardId)
+            )
+
+            val current = readCardProgressRow(db, studyingUserId, cardId)
+            val next    = computeNextSrsState(current, result, reviewedAt)
+
+            val cv = ContentValues().apply {
+                put(DbContract.PDUEAT,          next.dueAt)
+                put(DbContract.PLASTREVIEWEDAT, next.lastReviewedAt)
+                put(DbContract.PINTERVALDAYS,   next.intervalDays)
+                put(DbContract.PEASEFACTOR,     next.easeFactor)
+                put(DbContract.PREVIEWCOUNT,    next.reviewCount)
+                put(DbContract.PLAPSECOUNT,     next.lapseCount)
+                put(DbContract.PLASTRESULT,     next.lastResult)
+            }
+            db.update(
+                DbContract.TCARDPROGRESS,
+                cv,
+                "${DbContract.PUSERID} = ? AND ${DbContract.PCARDID} = ?",
+                arrayOf(studyingUserId.toString(), cardId.toString())
+            )
+
+            val sessionId = insertStudySessionRow(
+                db        = db,
+                userId    = studyingUserId,
+                deckId    = deckId,
+                result    = result,
                 createdAt = reviewedAt
             )
 
