@@ -1,7 +1,6 @@
 package com.example.stardeckapplication.ui.cards
 
 import android.Manifest
-import android.app.Activity
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
@@ -27,13 +26,13 @@ import java.io.File
 class DeckCardsActivity : AppCompatActivity() {
 
     companion object {
-        const val EXTRA_DECK_ID           = "deck_id"
-        const val EXTRA_READ_ONLY_PUBLIC  = "read_only_public"
+        const val EXTRA_DECK_ID          = "deck_id"
+        const val EXTRA_READ_ONLY_PUBLIC = "read_only_public"
     }
 
     // ── DAO & state ───────────────────────────────────────────────────────────
     private lateinit var cardDao: CardDao
-    private var deckId: Long    = -1L
+    private var deckId: Long      = -1L
     private var deckTitle: String = ""
     private var isReadOnly: Boolean = false
 
@@ -47,6 +46,7 @@ class DeckCardsActivity : AppCompatActivity() {
     private lateinit var toolbar:             MaterialToolbar
     private lateinit var tvCount:             TextView
     private lateinit var btnStudy:            MaterialButton
+    private lateinit var btnQuiz:             MaterialButton
     private lateinit var btnReport:           MaterialButton
     private lateinit var rvCards:             RecyclerView
     private lateinit var groupEmpty:          View
@@ -115,8 +115,8 @@ class DeckCardsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_deck_cards)
 
-        deckId    = intent.getLongExtra(EXTRA_DECK_ID, -1L)
-        deckTitle = intent.getStringExtra("deck_title") ?: ""
+        deckId     = intent.getLongExtra(EXTRA_DECK_ID, -1L)
+        deckTitle  = intent.getStringExtra("deck_title") ?: ""
         isReadOnly = intent.getBooleanExtra(EXTRA_READ_ONLY_PUBLIC, false)
         if (deckId == -1L) { finish(); return }
 
@@ -129,6 +129,7 @@ class DeckCardsActivity : AppCompatActivity() {
         setupReadOnlyMode()
         setupFab()
         setupFormButtons()
+        setupActionButtons()
     }
 
     // ── Binding ───────────────────────────────────────────────────────────────
@@ -136,6 +137,7 @@ class DeckCardsActivity : AppCompatActivity() {
         toolbar             = findViewById(R.id.toolbar)
         tvCount             = findViewById(R.id.tvCount)
         btnStudy            = findViewById(R.id.btnStudy)
+        btnQuiz             = findViewById(R.id.btnQuiz)
         btnReport           = findViewById(R.id.btnReport)
         rvCards             = findViewById(R.id.rvCards)
         groupEmpty          = findViewById(R.id.groupEmpty)
@@ -156,7 +158,7 @@ class DeckCardsActivity : AppCompatActivity() {
     private fun setupToolbar() {
         setSupportActionBar(toolbar)
         supportActionBar?.apply {
-            title         = deckTitle
+            title = deckTitle
             setDisplayHomeAsUpEnabled(true)
         }
         toolbar.setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
@@ -164,8 +166,13 @@ class DeckCardsActivity : AppCompatActivity() {
 
     private fun setupReadOnlyMode() {
         if (isReadOnly) {
+            // In read-only/public mode: hide FAB & Quiz, show Report
             fabAdd.hide()
+            btnQuiz.visibility   = View.GONE
             btnReport.visibility = View.VISIBLE
+        } else {
+            // Owner mode: show Quiz button (only if deck has >= 2 cards)
+            btnReport.visibility = View.GONE
         }
     }
 
@@ -173,7 +180,6 @@ class DeckCardsActivity : AppCompatActivity() {
     private fun setupFab() {
         fabAdd.setOnClickListener { showAddForm() }
         btnCloseForm.setOnClickListener { dismissAddForm() }
-        // Also allow tapping the empty-state button
         findViewById<MaterialButton>(R.id.btnCreateFirst).setOnClickListener { showAddForm() }
     }
 
@@ -188,6 +194,58 @@ class DeckCardsActivity : AppCompatActivity() {
         etFront.text?.clear()
         etBack.text?.clear()
         clearAddFormImages()
+    }
+
+    // ── Study / Quiz / Report buttons ─────────────────────────────────────────
+    private fun setupActionButtons() {
+        // Study — uses "extra_deck_id" as required by StudyActivity
+        btnStudy.setOnClickListener {
+            val intent = android.content.Intent(
+                this,
+                com.example.stardeckapplication.ui.study.StudyActivity::class.java
+            )
+            intent.putExtra("extra_deck_id", deckId)
+            intent.putExtra("extra_read_only_public", isReadOnly)
+            startActivity(intent)
+        }
+
+        // Quiz — uses "extra_deck_id" as required by QuizActivity
+        btnQuiz.setOnClickListener {
+            if (cardList.size < 2) {
+                Toast.makeText(this, "You need at least 2 cards to start a quiz", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            val intent = android.content.Intent(
+                this,
+                com.example.stardeckapplication.ui.quiz.QuizActivity::class.java
+            )
+            intent.putExtra("extra_deck_id", deckId)
+            startActivity(intent)
+        }
+
+        // Report — show dialog (no separate ReportActivity found)
+        btnReport.setOnClickListener {
+            showReportDialog()
+        }
+    }
+
+    private fun showReportDialog() {
+        val reasons = arrayOf(
+            "Incorrect information",
+            "Inappropriate content",
+            "Duplicate deck",
+            "Spam",
+            "Other"
+        )
+        var selectedReason = reasons[0]
+        android.app.AlertDialog.Builder(this)
+            .setTitle("Report this deck")
+            .setSingleChoiceItems(reasons, 0) { _, which -> selectedReason = reasons[which] }
+            .setPositiveButton("Submit Report") { _, _ ->
+                Toast.makeText(this, "Report submitted: $selectedReason", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     // ── Form buttons ──────────────────────────────────────────────────────────
@@ -209,18 +267,10 @@ class DeckCardsActivity : AppCompatActivity() {
         btnRemoveBackImage.setOnClickListener {
             pendingBackImagePath = null
             imgBackPreview.setImageDrawable(null)
-            imgBackPreview.visibility    = View.GONE
+            imgBackPreview.visibility     = View.GONE
             btnRemoveBackImage.visibility = View.GONE
         }
         btnSaveCard.setOnClickListener { saveCard() }
-        btnStudy.setOnClickListener {
-            // launch StudyActivity
-            val intent = android.content.Intent(this,
-                com.example.stardeckapplication.ui.study.StudyActivity::class.java)
-            intent.putExtra("deck_id", deckId)
-            intent.putExtra("deck_title", deckTitle)
-            startActivity(intent)
-        }
     }
 
     // ── RecyclerView ──────────────────────────────────────────────────────────
@@ -239,9 +289,13 @@ class DeckCardsActivity : AppCompatActivity() {
         cardList.addAll(cardDao.getCardListByDeck(deckId))
         adapter.notifyDataSetChanged()
         val count = cardList.size
-        tvCount.text = "$count card${if (count == 1) "" else "s"}"
+        tvCount.text          = "$count card${if (count == 1) "" else "s"}"
         groupEmpty.visibility = if (count == 0) View.VISIBLE else View.GONE
         rvCards.visibility    = if (count == 0) View.GONE    else View.VISIBLE
+        // Show Quiz button only if owner and has enough cards
+        if (!isReadOnly) {
+            btnQuiz.visibility = if (count >= 2) View.VISIBLE else View.GONE
+        }
     }
 
     // ── Save new card ─────────────────────────────────────────────────────────
@@ -322,8 +376,8 @@ class DeckCardsActivity : AppCompatActivity() {
         btnRemBack.setOnClickListener {
             editBackImagePath = null
             editImgBackPreview?.setImageDrawable(null)
-            editImgBackPreview?.visibility  = View.GONE
-            btnRemBack.visibility           = View.GONE
+            editImgBackPreview?.visibility = View.GONE
+            btnRemBack.visibility          = View.GONE
         }
 
         AlertDialog.Builder(this)
