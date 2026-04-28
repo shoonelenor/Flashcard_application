@@ -50,7 +50,7 @@
                 android:inputType="text" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Count + Study row -->
+        <!-- Count + Study + Quiz row -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -75,6 +75,22 @@
                 android:text="Report"
                 android:textAllCaps="false"
                 android:visibility="gone" />
+
+            <!-- Quiz button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnQuiz"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:text="Quiz"
+                android:textAllCaps="false"
+                app:cornerRadius="24dp"
+                app:icon="@android:drawable/ic_menu_edit"
+                app:iconPadding="6dp"
+                app:iconSize="16dp"
+                app:strokeColor="@color/stardeck_primary"
+                app:strokeWidth="1dp" />
 
             <!-- Filled pill Study button -->
             <com.google.android.material.button.MaterialButton

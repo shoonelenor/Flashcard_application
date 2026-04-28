@@ -52,6 +52,7 @@
         <activity android:name=".ui.decks.MyDecksActivity" android:exported="false" />
         <activity android:name=".ui.cards.DeckCardsActivity" android:exported="false" />
         <activity android:name=".ui.study.StudyActivity" android:exported="false" />
+        <activity android:name=".ui.quiz.QuizActivity" android:exported="false" />
         <activity android:name=".ui.manager.ManagerDeckCardsActivity" android:exported="false" />
 
         <activity android:name=".ui.profile.AchievementsActivity" android:exported="false" />
