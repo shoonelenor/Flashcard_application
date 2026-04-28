@@ -1,141 +1,356 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<!--
+    Restored to the Version-11 CoordinatorLayout design.
+    The "Add New Card" form (with image support) now lives in
+    a NestedScrollView bottom-sheet-style panel that is toggled
+    by the FAB — all original view IDs kept so DeckCardsActivity.kt
+    requires zero changes.
+-->
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true"
-    tools:context=".ui.cards.DeckCardsActivity">
+    android:background="@color/stardeck_bg_bottom">
 
-    <LinearLayout
+    <!-- ── AppBar ──────────────────────────────────────────────────────── -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@color/stardeck_bg_bottom"
+        app:elevation="0dp"
+        app:liftOnScroll="true">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/stardeck_bg_bottom"
+            app:navigationIconTint="@color/stardeck_text_primary"
+            app:titleTextColor="@color/stardeck_text_primary" />
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!-- ── Main content (scrollable card list) ────────────────────────── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="16dp"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <!-- ── Add-Card Form ──────────────────────────────────────────────── -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Add New Card"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp" />
-
-        <!-- Front text -->
-        <EditText
-            android:id="@+id/etFront"
+        <!-- Search -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilSearch"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Front (question / term)"
-            android:inputType="textMultiLine"
-            android:minLines="2"
-            android:layout_marginBottom="4dp" />
+            android:hint="Search cards"
+            app:endIconMode="clear_text"
+            app:startIconDrawable="@android:drawable/ic_menu_search">
 
-        <!-- Front image preview -->
-        <ImageView
-            android:id="@+id/imgFrontPreview"
-            android:layout_width="match_parent"
-            android:layout_height="160dp"
-            android:scaleType="centerCrop"
-            android:visibility="gone"
-            android:contentDescription="Front image preview"
-            android:layout_marginBottom="4dp" />
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etSearch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:imeOptions="actionSearch"
+                android:inputType="text" />
 
-        <!-- Front image buttons row -->
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Card count + Study button row -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
+            android:layout_marginTop="12dp"
             android:gravity="center_vertical"
-            android:layout_marginBottom="12dp">
+            android:orientation="horizontal">
 
-            <Button
-                android:id="@+id/btnAddFrontImage"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            <TextView
+                android:id="@+id/tvCount"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Add Front Image" />
+                android:text="0 cards"
+                android:textColor="@color/stardeck_primary"
+                android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
 
-            <ImageButton
-                android:id="@+id/btnRemoveFrontImage"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:src="@android:drawable/ic_delete"
-                android:contentDescription="Remove front image"
-                android:visibility="gone"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:layout_marginStart="8dp" />
-        </LinearLayout>
-
-        <!-- Back text -->
-        <EditText
-            android:id="@+id/etBack"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Back (answer / definition)"
-            android:inputType="textMultiLine"
-            android:minLines="2"
-            android:layout_marginBottom="4dp" />
-
-        <!-- Back image preview -->
-        <ImageView
-            android:id="@+id/imgBackPreview"
-            android:layout_width="match_parent"
-            android:layout_height="160dp"
-            android:scaleType="centerCrop"
-            android:visibility="gone"
-            android:contentDescription="Back image preview"
-            android:layout_marginBottom="4dp" />
-
-        <!-- Back image buttons row -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="16dp">
-
-            <Button
-                android:id="@+id/btnAddBackImage"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="0dp"
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnReport"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Add Back Image" />
+                android:text="Report"
+                android:textAllCaps="false"
+                android:visibility="gone" />
 
-            <ImageButton
-                android:id="@+id/btnRemoveBackImage"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:src="@android:drawable/ic_delete"
-                android:contentDescription="Remove back image"
-                android:visibility="gone"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:layout_marginStart="8dp" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnStudy"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Study"
+                android:textAllCaps="false"
+                app:backgroundTint="@color/stardeck_primary"
+                app:cornerRadius="24dp"
+                app:icon="@android:drawable/ic_media_play"
+                app:iconPadding="8dp"
+                app:iconSize="16dp"
+                app:iconTint="@color/white" />
+
         </LinearLayout>
 
-        <Button
-            android:id="@+id/btnSaveCard"
+        <!-- Card list / Empty state -->
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Save Card"
-            android:layout_marginBottom="24dp" />
+            android:layout_height="0dp"
+            android:layout_marginTop="12dp"
+            android:layout_weight="1">
 
-        <!-- ── Cards list ─────────────────────────────────────────────────── -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Cards in this Deck"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp" />
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycler"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:paddingBottom="88dp" />
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvCards"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nestedScrollingEnabled="false" />
+            <!-- Empty state -->
+            <LinearLayout
+                android:id="@+id/groupEmpty"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="No cards yet"
+                    android:textColor="@color/stardeck_text_primary"
+                    android:textAppearance="@style/TextAppearance.Material3.TitleLarge" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:gravity="center"
+                    android:text="Tap the + button to create your first flashcard."
+                    android:textColor="@color/stardeck_text_secondary"
+                    android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnCreateFirst"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="Create Card"
+                    android:textAllCaps="false"
+                    app:backgroundTint="@color/stardeck_primary"
+                    app:cornerRadius="24dp" />
+
+            </LinearLayout>
+
+        </FrameLayout>
 
     </LinearLayout>
-</ScrollView>
+
+    <!-- ── Add Card panel (shown/hidden by FAB) ───────────────────────── -->
+    <!--
+        This panel is GONE by default.
+        DeckCardsActivity shows it when the FAB is tapped and hides it
+        after Save Card / cancel.  All IDs are identical to what the
+        image-feature commit used, so the Kotlin needs no changes.
+    -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardAddForm"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:visibility="gone"
+        app:cardBackgroundColor="@color/stardeck_dialog_bg"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="12dp"
+        app:strokeColor="@color/stardeck_dialog_stroke"
+        app:strokeWidth="1dp">
+
+        <androidx.core.widget.NestedScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:maxHeight="520dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <!-- Form title row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="16dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Add New Card"
+                        android:textColor="@color/stardeck_text_primary"
+                        android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                        android:textStyle="bold" />
+
+                    <ImageButton
+                        android:id="@+id/btnCloseForm"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="Close form"
+                        android:src="@android:drawable/ic_menu_close_clear_cancel"
+                        app:tint="@color/stardeck_text_secondary" />
+
+                </LinearLayout>
+
+                <!-- Front text -->
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:hint="Front (question / term)">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etFront"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textMultiLine"
+                        android:minLines="2" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Front image preview -->
+                <ImageView
+                    android:id="@+id/imgFrontPreview"
+                    android:layout_width="match_parent"
+                    android:layout_height="140dp"
+                    android:layout_marginBottom="4dp"
+                    android:contentDescription="Front image preview"
+                    android:scaleType="centerCrop"
+                    android:visibility="gone" />
+
+                <!-- Front image buttons -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="14dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnAddFrontImage"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Add Front Image"
+                        android:textAllCaps="false" />
+
+                    <ImageButton
+                        android:id="@+id/btnRemoveFrontImage"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_marginStart="8dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="Remove front image"
+                        android:src="@android:drawable/ic_delete"
+                        android:visibility="gone" />
+
+                </LinearLayout>
+
+                <!-- Back text -->
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:hint="Back (answer / definition)">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etBack"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textMultiLine"
+                        android:minLines="2" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Back image preview -->
+                <ImageView
+                    android:id="@+id/imgBackPreview"
+                    android:layout_width="match_parent"
+                    android:layout_height="140dp"
+                    android:layout_marginBottom="4dp"
+                    android:contentDescription="Back image preview"
+                    android:scaleType="centerCrop"
+                    android:visibility="gone" />
+
+                <!-- Back image buttons -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="20dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnAddBackImage"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Add Back Image"
+                        android:textAllCaps="false" />
+
+                    <ImageButton
+                        android:id="@+id/btnRemoveBackImage"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_marginStart="8dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="Remove back image"
+                        android:src="@android:drawable/ic_delete"
+                        android:visibility="gone" />
+
+                </LinearLayout>
+
+                <!-- Save button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSaveCard"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:text="Save Card"
+                    android:textAllCaps="false"
+                    android:textStyle="bold"
+                    app:backgroundTint="@color/stardeck_primary"
+                    app:cornerRadius="12dp" />
+
+            </LinearLayout>
+        </androidx.core.widget.NestedScrollView>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- ── FAB ────────────────────────────────────────────────────────── -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabAdd"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:contentDescription="Add card"
+        app:backgroundTint="@color/stardeck_primary"
+        app:srcCompat="@android:drawable/ic_input_add"
+        app:tint="@color/white" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
