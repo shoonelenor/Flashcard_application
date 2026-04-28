@@ -1,311 +1,208 @@
 package com.example.stardeckapplication.db
 
 import android.content.ContentValues
+import android.content.Context
+import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 
-class CardDao(private val dbHelper: StarDeckDbHelper) {
+class CardDao(context: Context) {
 
-    private val readable: SQLiteDatabase get() = dbHelper.readableDatabase
-    private val writable: SQLiteDatabase get() = dbHelper.writableDatabase
+    private val dbHelper = StarDeckDbHelper(context)
 
-    // ---------- MODEL ----------
+    // ── helpers ──────────────────────────────────────────────────────────────
 
-    data class CardRow(
-        val id              : Long,
-        val front           : String,
-        val back            : String,
-        val createdAt       : Long,
-        val frontImagePath  : String? = null,
-        val backImagePath   : String? = null
-    )
+    private fun getReadableDb(): SQLiteDatabase = dbHelper.readableDatabase
+    private fun getWritableDb(): SQLiteDatabase = dbHelper.writableDatabase
 
-    // ---------- HELPERS ----------
+    // ── CRUD ─────────────────────────────────────────────────────────────────
 
-    private fun ownerOwnsActiveDeck(ownerUserId: Long, deckId: Long): Boolean {
-        readable.rawQuery(
-            """
-            SELECT 1 FROM ${DbContract.T_DECKS}
-            WHERE ${DbContract.D_OWNER_USER_ID} = ?
-              AND ${DbContract.D_ID} = ?
-              AND ${DbContract.D_STATUS} = ?
-            LIMIT 1
-            """.trimIndent(),
-            arrayOf(ownerUserId.toString(), deckId.toString(), DbContract.DECK_ACTIVE)
-        ).use { return it.moveToFirst() }
-    }
-
-    private fun deckExistsAny(deckId: Long): Boolean {
-        readable.rawQuery(
-            "SELECT 1 FROM ${DbContract.T_DECKS} WHERE ${DbContract.D_ID} = ? LIMIT 1",
-            arrayOf(deckId.toString())
-        ).use { return it.moveToFirst() }
-    }
-
-    // ---------- OWNER CARD CRUD ----------
-
-    fun createCard(
-        ownerUserId: Long,
+    /**
+     * Insert a new card. Returns the new row id, or -1 on failure.
+     * @param deckId      parent deck
+     * @param front       front text
+     * @param back        back text
+     * @param frontImagePath  optional absolute path saved in internal storage
+     * @param backImagePath   optional absolute path saved in internal storage
+     */
+    fun insertCard(
         deckId: Long,
         front: String,
         back: String,
         frontImagePath: String? = null,
         backImagePath: String? = null
     ): Long {
-        val cleanFront = front.trim()
-        val cleanBack  = back.trim()
-        if (cleanFront.isBlank() && cleanBack.isBlank()) return -1L
-        if (!ownerOwnsActiveDeck(ownerUserId, deckId)) return -1L
-
+        val db = getWritableDb()
         val cv = ContentValues().apply {
-            put(DbContract.C_DECK_ID,         deckId)
-            put(DbContract.C_FRONT,           cleanFront)
-            put(DbContract.C_BACK,            cleanBack)
-            put(DbContract.C_CREATED_AT,      System.currentTimeMillis())
-            if (frontImagePath != null) put(DbContract.C_FRONT_IMAGE_PATH, frontImagePath)
-            if (backImagePath  != null) put(DbContract.C_BACK_IMAGE_PATH,  backImagePath)
+            put(DbContract.CDECKID, deckId)
+            put(DbContract.CFRONT, front.trim())
+            put(DbContract.CBACK, back.trim())
+            put(DbContract.CFRONTIMAGEPATH, frontImagePath)
+            put(DbContract.CBACKIMAGEPATH, backImagePath)
+            put(DbContract.CCREATEDAT, System.currentTimeMillis())
         }
-        return writable.insertOrThrow(DbContract.T_CARDS, null, cv)
+        return db.insert(DbContract.TCARDS, null, cv)
     }
 
+    /**
+     * Update an existing card by its id.
+     * @return number of rows affected (1 on success, 0 if not found)
+     */
     fun updateCard(
-        ownerUserId: Long,
-        deckId: Long,
-        cardId: Long,
-        front: String,
-        back: String,
-        frontImagePath: String? = null,
-        backImagePath: String? = null,
-        clearFrontImage: Boolean = false,
-        clearBackImage: Boolean = false
-    ): Int {
-        val cleanFront = front.trim()
-        val cleanBack  = back.trim()
-        if (cleanFront.isBlank() && cleanBack.isBlank()) return 0
-        if (!ownerOwnsActiveDeck(ownerUserId, deckId)) return 0
-
-        val cv = ContentValues().apply {
-            put(DbContract.C_FRONT, cleanFront)
-            put(DbContract.C_BACK,  cleanBack)
-            when {
-                clearFrontImage             -> putNull(DbContract.C_FRONT_IMAGE_PATH)
-                frontImagePath != null      -> put(DbContract.C_FRONT_IMAGE_PATH, frontImagePath)
-            }
-            when {
-                clearBackImage              -> putNull(DbContract.C_BACK_IMAGE_PATH)
-                backImagePath  != null      -> put(DbContract.C_BACK_IMAGE_PATH, backImagePath)
-            }
-        }
-        return writable.update(
-            DbContract.T_CARDS, cv,
-            "${DbContract.C_ID} = ? AND ${DbContract.C_DECK_ID} = ?",
-            arrayOf(cardId.toString(), deckId.toString())
-        )
-    }
-
-    fun deleteCard(ownerUserId: Long, deckId: Long, cardId: Long): Int {
-        if (!ownerOwnsActiveDeck(ownerUserId, deckId)) return 0
-        return writable.delete(
-            DbContract.T_CARDS,
-            "${DbContract.C_ID} = ? AND ${DbContract.C_DECK_ID} = ?",
-            arrayOf(cardId.toString(), deckId.toString())
-        )
-    }
-
-    fun getCardsForDeck(ownerUserId: Long, deckId: Long): List<CardRow> {
-        val out = mutableListOf<CardRow>()
-        readable.rawQuery(
-            """
-            SELECT c.${DbContract.C_ID}, c.${DbContract.C_FRONT},
-                   c.${DbContract.C_BACK}, c.${DbContract.C_CREATED_AT},
-                   c.${DbContract.C_FRONT_IMAGE_PATH}, c.${DbContract.C_BACK_IMAGE_PATH}
-            FROM   ${DbContract.T_CARDS} c
-            JOIN   ${DbContract.T_DECKS} d ON d.${DbContract.D_ID} = c.${DbContract.C_DECK_ID}
-            WHERE  c.${DbContract.C_DECK_ID}       = ?
-              AND  d.${DbContract.D_OWNER_USER_ID}  = ?
-              AND  d.${DbContract.D_STATUS}         = ?
-            ORDER  BY c.${DbContract.C_CREATED_AT} DESC
-            """.trimIndent(),
-            arrayOf(deckId.toString(), ownerUserId.toString(), DbContract.DECK_ACTIVE)
-        ).use { c ->
-            while (c.moveToNext()) {
-                out += CardRow(
-                    id             = c.getLong(0),
-                    front          = c.getString(1),
-                    back           = c.getString(2),
-                    createdAt      = c.getLong(3),
-                    frontImagePath = c.getString(4),
-                    backImagePath  = c.getString(5)
-                )
-            }
-        }
-        return out
-    }
-
-    // ---------- PUBLIC LIBRARY ----------
-
-    fun getPublicDeckCardsForUser(userId: Long, deckId: Long): List<CardRow> {
-        val isLocked = readable.rawQuery(
-            """
-            SELECT CASE
-                WHEN COALESCE(d.${DbContract.D_IS_PREMIUM}, 0) = 1
-                     AND COALESCE(u.${DbContract.U_IS_PREMIUM_USER}, 0) = 0
-                THEN 1 ELSE 0 END
-            FROM   ${DbContract.T_DECKS} d
-            LEFT   JOIN ${DbContract.T_USERS} u ON u.${DbContract.U_ID} = ?
-            WHERE  d.${DbContract.D_ID}     = ?
-              AND  d.${DbContract.D_STATUS} = ?
-              AND  COALESCE(d.${DbContract.D_IS_PUBLIC}, 0) = 1
-            LIMIT  1
-            """.trimIndent(),
-            arrayOf(userId.toString(), deckId.toString(), DbContract.DECK_ACTIVE)
-        ).use { c -> c.moveToFirst() && c.getInt(0) == 1 }
-
-        if (isLocked) return emptyList()
-
-        val out = mutableListOf<CardRow>()
-        readable.rawQuery(
-            """
-            SELECT c.${DbContract.C_ID}, c.${DbContract.C_FRONT},
-                   c.${DbContract.C_BACK}, c.${DbContract.C_CREATED_AT},
-                   c.${DbContract.C_FRONT_IMAGE_PATH}, c.${DbContract.C_BACK_IMAGE_PATH}
-            FROM   ${DbContract.T_CARDS} c
-            INNER  JOIN ${DbContract.T_DECKS} d ON d.${DbContract.D_ID} = c.${DbContract.C_DECK_ID}
-            WHERE  d.${DbContract.D_ID}     = ?
-              AND  d.${DbContract.D_STATUS} = ?
-              AND  COALESCE(d.${DbContract.D_IS_PUBLIC}, 0) = 1
-            ORDER  BY c.${DbContract.C_CREATED_AT} DESC
-            """.trimIndent(),
-            arrayOf(deckId.toString(), DbContract.DECK_ACTIVE)
-        ).use { c ->
-            while (c.moveToNext()) {
-                out += CardRow(
-                    id             = c.getLong(0),
-                    front          = c.getString(1),
-                    back           = c.getString(2),
-                    createdAt      = c.getLong(3),
-                    frontImagePath = c.getString(4),
-                    backImagePath  = c.getString(5)
-                )
-            }
-        }
-        return out
-    }
-
-    // ---------- GENERIC / COMPAT METHODS ----------
-
-    fun getCardsForDeckAny(deckId: Long): List<CardRow> {
-        val out = mutableListOf<CardRow>()
-        readable.rawQuery(
-            """
-            SELECT ${DbContract.C_ID}, ${DbContract.C_FRONT},
-                   ${DbContract.C_BACK}, ${DbContract.C_CREATED_AT},
-                   ${DbContract.C_FRONT_IMAGE_PATH}, ${DbContract.C_BACK_IMAGE_PATH}
-            FROM   ${DbContract.T_CARDS}
-            WHERE  ${DbContract.C_DECK_ID} = ?
-            ORDER  BY ${DbContract.C_CREATED_AT} DESC
-            """.trimIndent(),
-            arrayOf(deckId.toString())
-        ).use { c ->
-            while (c.moveToNext()) {
-                out += CardRow(
-                    id             = c.getLong(0),
-                    front          = c.getString(1),
-                    back           = c.getString(2),
-                    createdAt      = c.getLong(3),
-                    frontImagePath = c.getString(4),
-                    backImagePath  = c.getString(5)
-                )
-            }
-        }
-        return out
-    }
-
-    fun managerGetCardsForDeck(deckId: Long): List<CardRow> = getCardsForDeckAny(deckId)
-
-    fun getCardCountForDeck(deckId: Long): Int {
-        readable.rawQuery(
-            """
-        SELECT COUNT(*) FROM ${DbContract.T_CARDS}
-        WHERE  ${DbContract.C_DECK_ID} = ?
-        """.trimIndent(),
-            arrayOf(deckId.toString())
-        ).use { return if (it.moveToFirst()) it.getInt(0) else 0 }
-    }
-
-    fun createCardAny(
-        deckId: Long,
-        front: String,
-        back: String,
-        frontImagePath: String? = null,
-        backImagePath: String? = null
-    ): Long {
-        if (!deckExistsAny(deckId)) return -1L
-        val cv = ContentValues().apply {
-            put(DbContract.C_DECK_ID,    deckId)
-            put(DbContract.C_FRONT,      front.trim())
-            put(DbContract.C_BACK,       back.trim())
-            put(DbContract.C_CREATED_AT, System.currentTimeMillis())
-            if (frontImagePath != null) put(DbContract.C_FRONT_IMAGE_PATH, frontImagePath)
-            if (backImagePath  != null) put(DbContract.C_BACK_IMAGE_PATH,  backImagePath)
-        }
-        return writable.insertOrThrow(DbContract.T_CARDS, null, cv)
-    }
-
-    fun updateCardAny(
-        deckId: Long,
         cardId: Long,
         front: String,
         back: String,
         frontImagePath: String? = null,
         backImagePath: String? = null
     ): Int {
+        val db = getWritableDb()
         val cv = ContentValues().apply {
-            put(DbContract.C_FRONT, front.trim())
-            put(DbContract.C_BACK,  back.trim())
-            if (frontImagePath != null) put(DbContract.C_FRONT_IMAGE_PATH, frontImagePath)
-            if (backImagePath  != null) put(DbContract.C_BACK_IMAGE_PATH,  backImagePath)
+            put(DbContract.CFRONT, front.trim())
+            put(DbContract.CBACK, back.trim())
+            put(DbContract.CFRONTIMAGEPATH, frontImagePath)
+            put(DbContract.CBACKIMAGEPATH, backImagePath)
         }
-        return writable.update(
-            DbContract.T_CARDS, cv,
-            "${DbContract.C_ID} = ? AND ${DbContract.C_DECK_ID} = ?",
-            arrayOf(cardId.toString(), deckId.toString())
+        return db.update(
+            DbContract.TCARDS,
+            cv,
+            "${DbContract.CID} = ?",
+            arrayOf(cardId.toString())
         )
     }
 
-    fun deleteCardAny(deckId: Long, cardId: Long): Int =
-        writable.delete(
-            DbContract.T_CARDS,
-            "${DbContract.C_ID} = ? AND ${DbContract.C_DECK_ID} = ?",
-            arrayOf(cardId.toString(), deckId.toString())
+    /** Delete a single card by id. Returns rows affected. */
+    fun deleteCard(cardId: Long): Int {
+        val db = getWritableDb()
+        return db.delete(
+            DbContract.TCARDS,
+            "${DbContract.CID} = ?",
+            arrayOf(cardId.toString())
         )
-
-    fun adminCreateCardContent(deckId: Long, front: String, back: String): Long {
-        val f = front.trim(); val b = back.trim()
-        if (f.isBlank() && b.isBlank()) return -1L
-        if (!deckExistsAny(deckId)) return -1L
-        return createCardAny(deckId, f, b)
     }
 
-    fun adminUpdateCardContent(deckId: Long, cardId: Long, front: String, back: String): Int {
-        val f = front.trim(); val b = back.trim()
-        if (f.isBlank() && b.isBlank()) return 0
-        if (!deckExistsAny(deckId)) return 0
-        return updateCardAny(deckId, cardId, f, b)
+    /** Delete all cards belonging to a deck. Returns rows affected. */
+    fun deleteCardsByDeck(deckId: Long): Int {
+        val db = getWritableDb()
+        return db.delete(
+            DbContract.TCARDS,
+            "${DbContract.CDECKID} = ?",
+            arrayOf(deckId.toString())
+        )
     }
 
-    fun adminDeleteCardContent(deckId: Long, cardId: Long): Int {
-        if (!deckExistsAny(deckId)) return 0
-        return deleteCardAny(deckId, cardId)
+    // ── Queries ───────────────────────────────────────────────────────────────
+
+    /**
+     * Return a Cursor of all cards for [deckId], ordered by creation time.
+     * Caller is responsible for closing the cursor.
+     */
+    fun getCardsByDeck(deckId: Long): Cursor {
+        val db = getReadableDb()
+        return db.query(
+            DbContract.TCARDS,
+            arrayOf(
+                DbContract.CID,
+                DbContract.CDECKID,
+                DbContract.CFRONT,
+                DbContract.CBACK,
+                DbContract.CFRONTIMAGEPATH,
+                DbContract.CBACKIMAGEPATH,
+                DbContract.CCREATEDAT
+            ),
+            "${DbContract.CDECKID} = ?",
+            arrayOf(deckId.toString()),
+            null, null,
+            "${DbContract.CCREATEDAT} ASC"
+        )
     }
 
-    fun getTotalCardCountForOwnerAllStatuses(ownerUserId: Long): Int {
-        readable.rawQuery(
-            """
-            SELECT COUNT(*) FROM ${DbContract.T_CARDS} c
-            JOIN ${DbContract.T_DECKS} d ON d.${DbContract.D_ID} = c.${DbContract.C_DECK_ID}
-            WHERE d.${DbContract.D_OWNER_USER_ID} = ?
-            """.trimIndent(),
-            arrayOf(ownerUserId.toString())
-        ).use { return if (it.moveToFirst()) it.getInt(0) else 0 }
+    /**
+     * Return a Cursor for a single card by [cardId].
+     * Caller is responsible for closing the cursor.
+     */
+    fun getCardById(cardId: Long): Cursor {
+        val db = getReadableDb()
+        return db.query(
+            DbContract.TCARDS,
+            arrayOf(
+                DbContract.CID,
+                DbContract.CDECKID,
+                DbContract.CFRONT,
+                DbContract.CBACK,
+                DbContract.CFRONTIMAGEPATH,
+                DbContract.CBACKIMAGEPATH,
+                DbContract.CCREATEDAT
+            ),
+            "${DbContract.CID} = ?",
+            arrayOf(cardId.toString()),
+            null, null, null
+        )
     }
+
+    /** Return the total number of cards in a deck. */
+    fun getCardCountByDeck(deckId: Long): Int {
+        val db = getReadableDb()
+        val cursor = db.rawQuery(
+            "SELECT COUNT(*) FROM ${DbContract.TCARDS} WHERE ${DbContract.CDECKID} = ?",
+            arrayOf(deckId.toString())
+        )
+        return cursor.use {
+            if (it.moveToFirst()) it.getInt(0) else 0
+        }
+    }
+
+    // ── Convenience data-class mapper ─────────────────────────────────────────
+
+    /** Convenience: return all cards for [deckId] as a list of [Card] objects. */
+    fun getCardListByDeck(deckId: Long): List<Card> {
+        val result = mutableListOf<Card>()
+        getCardsByDeck(deckId).use { cursor ->
+            val idIdx            = cursor.getColumnIndexOrThrow(DbContract.CID)
+            val deckIdIdx        = cursor.getColumnIndexOrThrow(DbContract.CDECKID)
+            val frontIdx         = cursor.getColumnIndexOrThrow(DbContract.CFRONT)
+            val backIdx          = cursor.getColumnIndexOrThrow(DbContract.CBACK)
+            val frontImageIdx    = cursor.getColumnIndexOrThrow(DbContract.CFRONTIMAGEPATH)
+            val backImageIdx     = cursor.getColumnIndexOrThrow(DbContract.CBACKIMAGEPATH)
+            val createdAtIdx     = cursor.getColumnIndexOrThrow(DbContract.CCREATEDAT)
+            while (cursor.moveToNext()) {
+                result += Card(
+                    id             = cursor.getLong(idIdx),
+                    deckId         = cursor.getLong(deckIdIdx),
+                    front          = cursor.getString(frontIdx),
+                    back           = cursor.getString(backIdx),
+                    frontImagePath = cursor.getString(frontImageIdx),
+                    backImagePath  = cursor.getString(backImageIdx),
+                    createdAt      = cursor.getLong(createdAtIdx)
+                )
+            }
+        }
+        return result
+    }
+
+    /** Convenience: fetch a single [Card] or null if not found. */
+    fun getCardOrNull(cardId: Long): Card? {
+        getCardById(cardId).use { cursor ->
+            if (!cursor.moveToFirst()) return null
+            return Card(
+                id             = cursor.getLong(cursor.getColumnIndexOrThrow(DbContract.CID)),
+                deckId         = cursor.getLong(cursor.getColumnIndexOrThrow(DbContract.CDECKID)),
+                front          = cursor.getString(cursor.getColumnIndexOrThrow(DbContract.CFRONT)),
+                back           = cursor.getString(cursor.getColumnIndexOrThrow(DbContract.CBACK)),
+                frontImagePath = cursor.getString(cursor.getColumnIndexOrThrow(DbContract.CFRONTIMAGEPATH)),
+                backImagePath  = cursor.getString(cursor.getColumnIndexOrThrow(DbContract.CBACKIMAGEPATH)),
+                createdAt      = cursor.getLong(cursor.getColumnIndexOrThrow(DbContract.CCREATEDAT))
+            )
+        }
+    }
+
+    // ── Data class ────────────────────────────────────────────────────────────
+
+    data class Card(
+        val id: Long = 0L,
+        val deckId: Long,
+        val front: String,
+        val back: String,
+        val frontImagePath: String? = null,
+        val backImagePath: String? = null,
+        val createdAt: Long = System.currentTimeMillis()
+    )
 }
