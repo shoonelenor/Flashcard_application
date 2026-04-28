@@ -47,7 +47,7 @@ class DeckCardsActivity : AppCompatActivity() {
     private lateinit var tvCount:             TextView
     private lateinit var btnStudy:            MaterialButton
     private lateinit var btnQuiz:             MaterialButton
-    private lateinit var btnReport:           MaterialButton
+    private lateinit var btnOverflow:         ImageButton   // was btnReport — matches R.id.btnOverflow in layout
     private lateinit var rvCards:             RecyclerView
     private lateinit var groupEmpty:          View
     private lateinit var fabAdd:              FloatingActionButton
@@ -138,7 +138,7 @@ class DeckCardsActivity : AppCompatActivity() {
         tvCount             = findViewById(R.id.tvCount)
         btnStudy            = findViewById(R.id.btnStudy)
         btnQuiz             = findViewById(R.id.btnQuiz)
-        btnReport           = findViewById(R.id.btnReport)
+        btnOverflow         = findViewById(R.id.btnOverflow)   // fixed: was R.id.btnReport
         rvCards             = findViewById(R.id.rvCards)
         groupEmpty          = findViewById(R.id.groupEmpty)
         fabAdd              = findViewById(R.id.fabAdd)
@@ -166,13 +166,13 @@ class DeckCardsActivity : AppCompatActivity() {
 
     private fun setupReadOnlyMode() {
         if (isReadOnly) {
-            // In read-only/public mode: hide FAB & Quiz, show Report
+            // In read-only/public mode: hide FAB & Quiz, show Overflow (report) button
             fabAdd.hide()
-            btnQuiz.visibility   = View.GONE
-            btnReport.visibility = View.VISIBLE
+            btnQuiz.visibility    = View.GONE
+            btnOverflow.visibility = View.VISIBLE
         } else {
-            // Owner mode: show Quiz button (only if deck has >= 2 cards)
-            btnReport.visibility = View.GONE
+            // Owner mode: hide overflow button
+            btnOverflow.visibility = View.GONE
         }
     }
 
@@ -223,8 +223,8 @@ class DeckCardsActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
-        // Report — show dialog (no separate ReportActivity found)
-        btnReport.setOnClickListener {
+        // Overflow / Report button (visible only in read-only/public mode)
+        btnOverflow.setOnClickListener {
             showReportDialog()
         }
     }
