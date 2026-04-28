@@ -35,4 +35,8 @@
 
     <!-- Stats screen background -->
     <color name="colorBackground">#FF0D1736</color>
+
+    <!-- Aliases used by AdminStatsFragment / ManagerStatsFragment -->
+    <color name="colorPrimary">#FF4F6BFF</color>
+    <color name="teal_700">#FF3A8DFF</color>
 </resources>
