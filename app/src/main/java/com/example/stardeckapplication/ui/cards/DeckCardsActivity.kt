@@ -30,6 +30,7 @@ import com.example.stardeckapplication.db.DbContract
 import com.example.stardeckapplication.db.DeckDao
 import com.example.stardeckapplication.db.ReportReasonDao
 import com.example.stardeckapplication.db.StarDeckDbHelper
+import com.example.stardeckapplication.ui.quiz.QuizActivity
 import com.example.stardeckapplication.ui.study.StudyActivity
 import com.example.stardeckapplication.util.AchievementSyncHelper
 import com.example.stardeckapplication.util.SessionManager
@@ -149,6 +150,18 @@ class DeckCardsActivity : AppCompatActivity() {
             startActivity(
                 Intent(this, StudyActivity::class.java)
                     .putExtra(StudyActivity.EXTRA_DECK_ID, deckId)
+            )
+        }
+
+        b.btnQuiz.setOnClickListener {
+            val cardCount = cardDao.getCardsForDeck(me.id, deckId).size
+            if (cardCount < 2) {
+                Snackbar.make(b.root, "You need at least 2 cards to start a quiz", Snackbar.LENGTH_LONG).show()
+                return@setOnClickListener
+            }
+            startActivity(
+                Intent(this, QuizActivity::class.java)
+                    .putExtra(QuizActivity.EXTRA_DECK_ID, deckId)
             )
         }
 
@@ -353,6 +366,7 @@ class DeckCardsActivity : AppCompatActivity() {
         val count = all.size
         b.tvCount.text    = if (count == 1) "1 card" else "$count cards"
         b.btnStudy.isEnabled = count > 0
+        b.btnQuiz.isEnabled  = count >= 2
 
         filter(b.etSearch.text?.toString().orEmpty())
     }
