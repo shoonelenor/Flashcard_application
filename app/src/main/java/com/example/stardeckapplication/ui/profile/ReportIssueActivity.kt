@@ -27,6 +27,9 @@ class ReportIssueActivity : AppCompatActivity() {
     private lateinit var progressBar: ProgressBar
     private lateinit var tvSuccess: TextView
 
+    // Holds the loaded reason list so we can look up the ID by spinner position
+    private var reasons = listOf<ReportDao.ReportReasonItem>()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_report_issue)
@@ -46,19 +49,7 @@ class ReportIssueActivity : AppCompatActivity() {
         progressBar = findViewById(R.id.progressReport)
         tvSuccess   = findViewById(R.id.tvReportSuccess)
 
-        val categories = listOf(
-            "Bug / App Crash",
-            "Account Issue",
-            "Content Problem",
-            "Performance Issue",
-            "Feature Request",
-            "Other"
-        )
-        spinner.adapter = ArrayAdapter(
-            this,
-            android.R.layout.simple_spinner_dropdown_item,
-            categories
-        )
+        loadReasons()
 
         btnSubmit.setOnClickListener { submitReport() }
     }
@@ -68,6 +59,22 @@ class ReportIssueActivity : AppCompatActivity() {
     override fun onSupportNavigateUp(): Boolean {
         finish()
         return true
+    }
+
+    // ── Load spinner reasons from DB ──────────────────────────────────────────
+
+    private fun loadReasons() {
+        reasons = dao.getActiveReportReasons()
+        val labels = if (reasons.isEmpty()) {
+            listOf("General Issue")
+        } else {
+            reasons.map { it.name }
+        }
+        spinner.adapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_dropdown_item,
+            labels
+        )
     }
 
     // ── Submit ────────────────────────────────────────────────────────────────
@@ -80,8 +87,7 @@ class ReportIssueActivity : AppCompatActivity() {
             return
         }
 
-        val category = spinner.selectedItem?.toString().orEmpty()
-        val details  = etDetails.text.toString().trim()
+        val details = etDetails.text.toString().trim()
 
         if (details.length < 10) {
             etDetails.error = "Please enter at least 10 characters."
@@ -89,13 +95,17 @@ class ReportIssueActivity : AppCompatActivity() {
             return
         }
 
+        // Look up the reasonId from the selected spinner position
+        val reasonId: Long = if (reasons.isEmpty()) -1L
+                             else reasons[spinner.selectedItemPosition].id
+
         progressBar.visibility = View.VISIBLE
         btnSubmit.isEnabled    = false
 
-        val result = dao.insertReport(
-            userId   = me.id.toLong(),
-            category = category,
-            details  = details
+        val result = dao.submitReport(
+            reporterUserId = me.id.toLong(),
+            reasonId       = reasonId,
+            details        = details
         )
 
         progressBar.visibility = View.GONE
