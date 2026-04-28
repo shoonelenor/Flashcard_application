@@ -50,7 +50,7 @@ class DeckCardsActivity : AppCompatActivity() {
     private lateinit var tvCount:             TextView
     private lateinit var btnStudy:            MaterialButton
     private lateinit var btnQuiz:             MaterialButton
-    private lateinit var btnReport:           ImageButton      // ← always visible
+    private lateinit var btnReport:           ImageButton      // top-right toolbar flag
     private lateinit var rvCards:             RecyclerView
     private lateinit var groupEmpty:          View
     private lateinit var fabAdd:              FloatingActionButton
@@ -141,7 +141,7 @@ class DeckCardsActivity : AppCompatActivity() {
         tvCount             = findViewById(R.id.tvCount)
         btnStudy            = findViewById(R.id.btnStudy)
         btnQuiz             = findViewById(R.id.btnQuiz)
-        btnReport           = findViewById(R.id.btnReport)   // ← new
+        btnReport           = findViewById(R.id.btnReport)   // toolbar flag icon
         rvCards             = findViewById(R.id.rvCards)
         groupEmpty          = findViewById(R.id.groupEmpty)
         fabAdd              = findViewById(R.id.fabAdd)
@@ -167,16 +167,12 @@ class DeckCardsActivity : AppCompatActivity() {
         toolbar.setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
     }
 
-    // ── Read-only mode (Explore) vs editable mode (Library) ──────────────────────
-    // Consistent design:
-    //   Both modes: Study button + Quiz button (when >=2 cards) + Report button
-    //   Library only: FAB (add card) visible
-    //   Explore only: FAB hidden (user cannot add cards to others' decks)
+    // ── Read-only (Explore) vs editable (Library) ──────────────────────────────
+    // Both modes show: toolbar Report flag + Study button + Quiz (when >=2 cards)
+    // Library only: FAB (add card) is visible
+    // Explore only: FAB is hidden
     private fun setupReadOnlyMode() {
-        if (isReadOnly) {
-            fabAdd.hide()
-        }
-        // btnReport is ALWAYS visible — no visibility toggling needed here
+        if (isReadOnly) fabAdd.hide()
     }
 
     // ── FAB / form panel ──────────────────────────────────────────────────────
@@ -224,20 +220,17 @@ class DeckCardsActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
-        // Report button — available on BOTH Library and Explore decks
-        btnReport.setOnClickListener {
-            showReportDialog()
-        }
+        // Report flag — top-right toolbar, both Library and Explore
+        btnReport.setOnClickListener { showReportDialog() }
     }
 
     // ── Report Dialog ────────────────────────────────────────────────────────
     private fun showReportDialog() {
         val me = SessionManager(this).load()
-        val dialog = DeckContentReportDialogFragment.newInstance(
+        DeckContentReportDialogFragment.newInstance(
             deckId         = deckId.toInt(),
             reporterUserId = (me?.id ?: 0L).toInt()
-        )
-        dialog.show(supportFragmentManager, "deck_report")
+        ).show(supportFragmentManager, "deck_report")
     }
 
     // ── Form buttons ──────────────────────────────────────────────────────────
@@ -284,7 +277,7 @@ class DeckCardsActivity : AppCompatActivity() {
         tvCount.text          = "$count card${if (count == 1) "" else "s"}"
         groupEmpty.visibility = if (count == 0) View.VISIBLE else View.GONE
         rvCards.visibility    = if (count == 0) View.GONE    else View.VISIBLE
-        // Quiz requires at least 2 cards — same rule for both Library and Explore
+        // Quiz shown when >= 2 cards — same rule for Library and Explore
         btnQuiz.visibility = if (count >= 2) View.VISIBLE else View.GONE
     }
 

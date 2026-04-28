@@ -21,7 +21,25 @@
             android:layout_height="?attr/actionBarSize"
             android:background="@color/stardeck_bg_bottom"
             app:navigationIconTint="@color/stardeck_text_primary"
-            app:titleTextColor="@color/stardeck_text_primary" />
+            app:titleTextColor="@color/stardeck_text_primary">
+
+            <!--
+                Report / Flag button — top-right corner of toolbar, beside deck title.
+                Always VISIBLE for both Library and Explore decks.
+                Clicking it shows the DeckContentReportDialogFragment.
+            -->
+            <ImageButton
+                android:id="@+id/btnReport"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_gravity="end"
+                android:layout_marginEnd="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Report deck"
+                android:src="@drawable/ic_flag"
+                android:tint="@color/stardeck_text_primary" />
+
+        </com.google.android.material.appbar.MaterialToolbar>
 
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -53,13 +71,10 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <!--
-            Card count + action buttons row.
-            ALL THREE buttons (Quiz, Study, Report) are always in the layout.
-            Visibility is managed in code:
-              - btnQuiz  : VISIBLE when cardList.size >= 2, else GONE
-              - btnStudy : always VISIBLE
-              - btnReport: always VISIBLE (both Library and Explore)
-              - FAB      : VISIBLE in Library, HIDDEN in Explore (read-only)
+            Card count + Quiz / Study action row.
+            btnReport has been moved to the toolbar (top-right).
+            btnQuiz: VISIBLE when cardList.size >= 2, else GONE
+            btnStudy: always VISIBLE
         -->
         <LinearLayout
             android:layout_width="match_parent"
@@ -106,20 +121,6 @@
                 app:iconPadding="8dp"
                 app:iconSize="16dp"
                 app:iconTint="@color/white" />
-
-            <!--
-                Report button — always visible for all decks (Library + Explore).
-                Uses ic_flag vector drawable. Tinted with stardeck_text_primary.
-            -->
-            <ImageButton
-                android:id="@+id/btnReport"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_marginStart="4dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Report deck"
-                android:src="@drawable/ic_flag"
-                android:tint="@color/stardeck_text_primary" />
 
         </LinearLayout>
 
@@ -199,7 +200,6 @@
                 android:orientation="vertical"
                 android:padding="20dp">
 
-                <!-- Form title row -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
