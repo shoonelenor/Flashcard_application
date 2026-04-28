@@ -4,6 +4,7 @@ import android.database.sqlite.SQLiteDatabase
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import java.util.TimeZone
 
 /**
  * Read-only queries that power the Statistics screens
@@ -73,11 +74,13 @@ class StatsDao(private val helper: StarDeckDbHelper) {
         val studyCount: Int
     )
 
-    /** Row in the leaderboard */
+    /**
+     * Row in the leaderboard.
+     * Email removed for privacy — never expose other users' emails in UI.
+     */
     data class LeaderboardRow(
         val userId: Long,
         val name: String,
-        val email: String,
         val streakDays: Int,
         val totalStudy: Int
     )
@@ -113,7 +116,12 @@ class StatsDao(private val helper: StarDeckDbHelper) {
         }
     }
 
-    /** Number of consecutive days (streak) the user has studied */
+    /**
+     * Number of consecutive days (streak) the user has studied.
+     *
+     * FIX: Both the SQL date formatting and the Java calendar now use UTC
+     * so they always agree, even in UTC+6:30 (Yangon) near midnight.
+     */
     fun getStudyStreakDays(userId: Long): Int {
         val sql = """
             SELECT DISTINCT strftime('%Y-%m-%d', ${DbContract.SCREATEDAT} / 1000, 'unixepoch') AS day
@@ -121,12 +129,13 @@ class StatsDao(private val helper: StarDeckDbHelper) {
             WHERE ${DbContract.SUSERID} = ?
             ORDER BY day DESC
         """.trimIndent()
-        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        val cal = Calendar.getInstance()
+        // Use UTC for both SQL ('unixepoch' is UTC) and Java Calendar
+        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US).apply { timeZone = TimeZone.getTimeZone("UTC") }
+        val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
         var streak = 0
         db.rawQuery(sql, arrayOf(userId.toString())).use { c ->
             while (c.moveToNext()) {
-                val dayStr = c.getString(0)
+                val dayStr   = c.getString(0)
                 val expected = sdf.format(cal.time)
                 if (dayStr == expected) {
                     streak++
@@ -199,8 +208,9 @@ class StatsDao(private val helper: StarDeckDbHelper) {
         }
 
         val result   = mutableListOf<DayCount>()
-        val cal      = Calendar.getInstance()
-        val sdf      = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        // Use UTC to match SQLite 'unixepoch'
+        val cal      = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+        val sdf      = SimpleDateFormat("yyyy-MM-dd", Locale.US).apply { timeZone = TimeZone.getTimeZone("UTC") }
         val labelFmt = SimpleDateFormat("EEE", Locale.getDefault())
         val todayStr = sdf.format(cal.time)
         cal.add(Calendar.DAY_OF_YEAR, -6)
@@ -216,31 +226,72 @@ class StatsDao(private val helper: StarDeckDbHelper) {
         return result
     }
 
-    /** Leaderboard: all users ranked by streak days then total sessions */
+    /**
+     * Leaderboard: top 50 active users ranked by live streak, then total sessions.
+     *
+     * FIX 1 — Streak is now calculated LIVE from study_sessions using a correlated
+     *          subquery instead of reading a stale cached column.
+     * FIX 2 — Email removed from the result (privacy).
+     * FIX 3 — LIMIT 50 added to avoid loading all users into memory.
+     *
+     * How the live streak subquery works:
+     *   For each user, it counts how many consecutive UTC days (starting from today
+     *   and going backwards) appear in their study_sessions.
+     *   SQLite does not have a window LAG(), so we do this in two steps:
+     *     Step A: get all distinct study days for this user as a numbered list
+     *             (row_number via a self-join count).
+     *     Step B: a day is "in a consecutive run" when
+     *             (today_epoch_days - day_epoch_days) == (row_number - 1).
+     *   We count rows that satisfy that condition starting from today.
+     */
     fun getLocalLeaderboard(): List<LeaderboardRow> {
         val sql = """
             SELECT
                 u.${DbContract.UID},
                 u.${DbContract.UNAME},
-                u.${DbContract.UEMAIL},
-                COALESCE(u.${DbContract.ACHMETRICSTREAKDAYS}, 0) AS streak,
-                COUNT(s.${DbContract.SDECKID}) AS total
+                (
+                    SELECT COUNT(*)
+                    FROM (
+                        SELECT
+                            CAST(strftime('%s', day) / 86400 AS INTEGER) AS day_num,
+                            (
+                                SELECT COUNT(*)
+                                FROM (
+                                    SELECT DISTINCT
+                                        strftime('%Y-%m-%d', ${DbContract.SCREATEDAT} / 1000, 'unixepoch') AS d2
+                                    FROM ${DbContract.TSTUDYSESSIONS}
+                                    WHERE ${DbContract.SUSERID} = u.${DbContract.UID}
+                                ) AS inner2
+                                WHERE inner2.d2 >= day
+                            ) AS rn
+                        FROM (
+                            SELECT DISTINCT
+                                strftime('%Y-%m-%d', ${DbContract.SCREATEDAT} / 1000, 'unixepoch') AS day
+                            FROM ${DbContract.TSTUDYSESSIONS}
+                            WHERE ${DbContract.SUSERID} = u.${DbContract.UID}
+                        ) AS days
+                    ) AS numbered
+                    WHERE CAST(strftime('%s','now') / 86400 AS INTEGER) - day_num = rn - 1
+                ) AS streak,
+                COUNT(s.${DbContract.SID}) AS total
             FROM ${DbContract.TUSERS} u
-            LEFT JOIN ${DbContract.TSTUDYSESSIONS} s ON s.${DbContract.SUSERID} = u.${DbContract.UID}
-            WHERE u.${DbContract.UROLE} = '${DbContract.ROLE_USER}'
+            LEFT JOIN ${DbContract.TSTUDYSESSIONS} s
+                   ON s.${DbContract.SUSERID} = u.${DbContract.UID}
+            WHERE u.${DbContract.UROLE}  = '${DbContract.ROLE_USER}'
               AND u.${DbContract.USTATUS} = '${DbContract.STATUS_ACTIVE}'
             GROUP BY u.${DbContract.UID}
             ORDER BY streak DESC, total DESC
+            LIMIT 50
         """.trimIndent()
+
         val result = mutableListOf<LeaderboardRow>()
         db.rawQuery(sql, null).use { c ->
             while (c.moveToNext()) {
                 result += LeaderboardRow(
                     userId     = c.getLong(0),
                     name       = c.getString(1),
-                    email      = c.getString(2),
-                    streakDays = c.getInt(3),
-                    totalStudy = c.getInt(4)
+                    streakDays = c.getInt(2),
+                    totalStudy = c.getInt(3)
                 )
             }
         }
@@ -339,8 +390,8 @@ class StatsDao(private val helper: StarDeckDbHelper) {
             while (c.moveToNext()) map[c.getString(0)] = c.getInt(1)
         }
         val result   = mutableListOf<Pair<String, Int>>()
-        val cal      = Calendar.getInstance()
-        val sdf      = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val cal      = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+        val sdf      = SimpleDateFormat("yyyy-MM-dd", Locale.US).apply { timeZone = TimeZone.getTimeZone("UTC") }
         val labelFmt = SimpleDateFormat("EEE", Locale.getDefault())
         cal.add(Calendar.DAY_OF_YEAR, -6)
         repeat(7) {
