@@ -21,6 +21,11 @@ class QuizActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_DECK_ID = "extra_deck_id"
         private const val MIN_CARDS = 2
+        // Match your app's stardeck_primary #FF4F6BFF
+        private const val COLOR_PRIMARY  = 0xFF4F6BFF.toInt()
+        private const val COLOR_CORRECT  = 0xFF2E7D32.toInt()  // dark green
+        private const val COLOR_WRONG    = 0xFFC62828.toInt()  // dark red
+        private const val COLOR_NEUTRAL  = 0xFF37474F.toInt()  // dark grey
     }
 
     private lateinit var b: ActivityQuizBinding
@@ -31,8 +36,8 @@ class QuizActivity : AppCompatActivity() {
 
     private var deckId: Long = -1L
 
-    private var allCards: List<DeckDao.CardRow> = emptyList()
-    private var questions: List<QuizQuestion>   = emptyList()
+    private var allCards : List<DeckDao.CardRow> = emptyList()
+    private var questions: List<QuizQuestion>    = emptyList()
     private var currentIndex = 0
     private var score        = 0
     private var answered     = false
@@ -40,9 +45,9 @@ class QuizActivity : AppCompatActivity() {
     private val optionButtons get() = listOf(b.btnOption1, b.btnOption2, b.btnOption3, b.btnOption4)
 
     data class QuizQuestion(
-        val questionText: String,
+        val questionText : String,
         val correctAnswer: String,
-        val options: List<String>   // always 4, shuffled
+        val options      : List<String>  // 4 choices, shuffled
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -84,20 +89,16 @@ class QuizActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
             currentIndex++
-            if (currentIndex < questions.size) {
-                showQuestion()
-            } else {
-                showSummary()
-            }
+            if (currentIndex < questions.size) showQuestion() else showSummary()
         }
     }
 
     private fun buildQuestions() {
         val shuffled = allCards.shuffled()
         questions = shuffled.map { card ->
-            val wrongPool = allCards.filter { it.id != card.id }.shuffled()
+            val wrongPool   = allCards.filter { it.id != card.id }.shuffled()
             val wrongAnswers = wrongPool.take(3).map { it.back }
-            val options = (wrongAnswers + card.back).shuffled()
+            val options      = (wrongAnswers + card.back).shuffled()
             QuizQuestion(
                 questionText  = card.front,
                 correctAnswer = card.back,
@@ -110,16 +111,16 @@ class QuizActivity : AppCompatActivity() {
         answered = false
         val q = questions[currentIndex]
 
-        b.tvProgress.text   = "Question ${currentIndex + 1} / ${questions.size}"
-        b.progressBar.max   = questions.size
+        b.tvProgress.text      = "Question ${currentIndex + 1} / ${questions.size}"
+        b.progressBar.max      = questions.size
         b.progressBar.progress = currentIndex + 1
-        b.tvQuestion.text   = q.questionText
+        b.tvQuestion.text      = q.questionText
         b.tvFeedback.visibility = View.GONE
         b.btnNext.visibility    = View.GONE
 
         optionButtons.forEachIndexed { i, btn ->
             btn.text = q.options.getOrElse(i) { "" }
-            resetButtonStyle(btn)
+            setButtonColor(btn, COLOR_PRIMARY)
             btn.isEnabled = true
             btn.setOnClickListener { onOptionSelected(btn, q) }
         }
@@ -135,31 +136,26 @@ class QuizActivity : AppCompatActivity() {
         optionButtons.forEach { btn ->
             btn.isEnabled = false
             when {
-                btn.text.toString().trim() == q.correctAnswer.trim() ->
-                    btn.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#388E3C"))  // green
-                btn == selected && !isCorrect ->
-                    btn.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#D32F2F"))  // red
-                else ->
-                    btn.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#757575"))  // grey
+                btn.text.toString().trim() == q.correctAnswer.trim() -> setButtonColor(btn, COLOR_CORRECT)
+                btn == selected && !isCorrect                        -> setButtonColor(btn, COLOR_WRONG)
+                else                                                 -> setButtonColor(btn, COLOR_NEUTRAL)
             }
         }
 
         b.tvFeedback.text = if (isCorrect) "✅ Correct!" else "❌ Wrong! Answer: ${q.correctAnswer}"
         b.tvFeedback.setTextColor(
-            if (isCorrect) Color.parseColor("#388E3C") else Color.parseColor("#D32F2F")
+            if (isCorrect) Color.parseColor("#2E7D32") else Color.parseColor("#C62828")
         )
         b.tvFeedback.visibility = View.VISIBLE
 
-        // Auto-show Next button after short delay
         Handler(Looper.getMainLooper()).postDelayed({
             b.btnNext.visibility = View.VISIBLE
             b.btnNext.text = if (currentIndex < questions.lastIndex) "Next →" else "See Results"
         }, 800)
     }
 
-    private fun resetButtonStyle(btn: Button) {
-        // Use a neutral Material teal to match app theme
-        btn.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#01696F"))
+    private fun setButtonColor(btn: Button, color: Int) {
+        btn.backgroundTintList = ColorStateList.valueOf(color)
     }
 
     private fun showSummary() {
@@ -171,20 +167,17 @@ class QuizActivity : AppCompatActivity() {
             pct >= 40 -> "📚 Keep going!"
             else      -> "💪 Keep practicing!"
         }
-
         val message = buildString {
             append("📊 Quiz Results\n")
             append("────────────────\n")
-            append("Score:  $score / $total  ($pct%)\n\n")
+            append("Score: $score / $total  ($pct%)\n\n")
             append(emoji)
         }
-
         MaterialAlertDialogBuilder(this)
             .setTitle("Quiz Complete")
             .setMessage(message)
             .setPositiveButton("Play Again") { _, _ ->
-                currentIndex = 0
-                score        = 0
+                currentIndex = 0; score = 0
                 buildQuestions()
                 showQuestion()
             }

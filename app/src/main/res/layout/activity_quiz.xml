@@ -36,7 +36,7 @@
             android:orientation="vertical"
             android:padding="20dp">
 
-            <!-- Progress -->
+            <!-- Progress label -->
             <TextView
                 android:id="@+id/tvProgress"
                 android:layout_width="wrap_content"
@@ -45,13 +45,14 @@
                 android:textColor="@color/stardeck_text_secondary"
                 android:textAppearance="@style/TextAppearance.Material3.LabelLarge" />
 
+            <!-- Progress bar -->
             <com.google.android.material.progressindicator.LinearProgressIndicator
                 android:id="@+id/progressBar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 app:indicatorColor="@color/stardeck_primary"
-                app:trackColor="@color/stardeck_bg_surface"
+                app:trackColor="@color/stardeck_field_bg"
                 app:trackCornerRadius="4dp" />
 
             <!-- Question card -->
@@ -59,9 +60,11 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                app:cardBackgroundColor="@color/stardeck_bg_surface"
+                app:cardBackgroundColor="@color/stardeck_field_bg"
                 app:cardCornerRadius="16dp"
-                app:cardElevation="2dp">
+                app:cardElevation="2dp"
+                app:strokeColor="@color/stardeck_field_stroke"
+                app:strokeWidth="1dp">
 
                 <TextView
                     android:id="@+id/tvQuestion"
