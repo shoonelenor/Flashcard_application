@@ -28,12 +28,12 @@ class CardDao {
         this.dbHelper = dbHelper
     }
 
-    // ── helpers ──────────────────────────────────────────────────────────────
+    // ── helpers ────────────────────────────────────────────────────────────────────
 
     private fun getReadableDb(): SQLiteDatabase = dbHelper.readableDatabase
     private fun getWritableDb(): SQLiteDatabase = dbHelper.writableDatabase
 
-    // ── CRUD ─────────────────────────────────────────────────────────────────
+    // ── CRUD ──────────────────────────────────────────────────────────────────────
 
     /**
      * Insert a new card. Returns the new row id, or -1 on failure.
@@ -115,7 +115,7 @@ class CardDao {
         )
     }
 
-    // ── Queries ───────────────────────────────────────────────────────────────
+    // ── Queries ───────────────────────────────────────────────────────────────────
 
     /**
      * Return a Cursor of all cards for [deckId], ordered by creation time.
@@ -177,6 +177,12 @@ class CardDao {
     }
 
     /**
+     * Alias for [getCardCountByDeck] — used by UserStudyFragment.
+     * Both names refer to the exact same query.
+     */
+    fun getCardCountForDeck(deckId: Long): Int = getCardCountByDeck(deckId)
+
+    /**
      * Return the total number of cards across ALL decks owned by [ownerUserId],
      * regardless of card status.  Used by UserDecksFragment for the stats banner.
      */
@@ -221,7 +227,7 @@ class CardDao {
         return result
     }
 
-    // ── Convenience data-class mapper ─────────────────────────────────────────
+    // ── Convenience data-class mapper ───────────────────────────────────────────────
 
     /** Convenience: return all cards for [deckId] as a list of [Card] objects. */
     fun getCardListByDeck(deckId: Long): List<Card> {
@@ -265,7 +271,7 @@ class CardDao {
         }
     }
 
-    // ── Data classes ──────────────────────────────────────────────────────────
+    // ── Data classes ──────────────────────────────────────────────────────────────────
 
     /**
      * Lightweight row used by [managerGetCardsForDeck].
