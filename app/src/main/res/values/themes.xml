@@ -96,4 +96,17 @@
         <item name="strokeWidth">1dp</item>
     </style>
 
+    <!-- ── Dialog Styles ────────────────────────────────────────────── -->
+
+    <!--
+        TransparentDialog: used for fully custom dialog layouts (e.g. Session Complete).
+        Strips the default white/surface background so only the custom CardView is visible.
+    -->
+    <style name="TransparentDialog"
+        parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="android:background">@android:color/transparent</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="backgroundTint">@android:color/transparent</item>
+    </style>
+
 </resources>
