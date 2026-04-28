@@ -21,28 +21,7 @@
             android:layout_height="?attr/actionBarSize"
             android:background="@color/stardeck_bg_bottom"
             app:navigationIconTint="@color/stardeck_text_primary"
-            app:titleTextColor="@color/stardeck_text_primary">
-
-            <!--
-                ⋮ Overflow / Report button — top-right corner of the toolbar.
-                Visibility is controlled in code:
-                  btnOverflow.visibility = View.VISIBLE   (public / read-only deck)
-                  btnOverflow.visibility = View.GONE      (own deck)
-                Clicking it shows a PopupMenu with "Report Deck" (and future actions).
-            -->
-            <ImageButton
-                android:id="@+id/btnOverflow"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_gravity="end"
-                android:layout_marginEnd="4dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="More options"
-                android:src="@drawable/ic_more_vert"
-                android:tint="@color/stardeck_text_primary"
-                android:visibility="gone" />
-
-        </com.google.android.material.appbar.MaterialToolbar>
+            app:titleTextColor="@color/stardeck_text_primary" />
 
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -73,7 +52,15 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Card count + Quiz / Study buttons row -->
+        <!--
+            Card count + action buttons row.
+            ALL THREE buttons (Quiz, Study, Report) are always in the layout.
+            Visibility is managed in code:
+              - btnQuiz  : VISIBLE when cardList.size >= 2, else GONE
+              - btnStudy : always VISIBLE
+              - btnReport: always VISIBLE (both Library and Explore)
+              - FAB      : VISIBLE in Library, HIDDEN in Explore (read-only)
+        -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -90,7 +77,7 @@
                 android:textColor="@color/stardeck_primary"
                 android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
 
-            <!-- Quiz button -->
+            <!-- Quiz button (shown when >= 2 cards) -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnQuiz"
                 style="@style/Widget.Material3.Button.OutlinedButton"
@@ -105,7 +92,7 @@
                 app:iconSize="16dp"
                 android:visibility="gone" />
 
-            <!-- Study button -->
+            <!-- Study button (always visible) -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnStudy"
                 android:layout_width="wrap_content"
@@ -119,6 +106,20 @@
                 app:iconPadding="8dp"
                 app:iconSize="16dp"
                 app:iconTint="@color/white" />
+
+            <!--
+                Report button — always visible for all decks (Library + Explore).
+                Uses ic_flag vector drawable. Tinted with stardeck_text_primary.
+            -->
+            <ImageButton
+                android:id="@+id/btnReport"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Report deck"
+                android:src="@drawable/ic_flag"
+                android:tint="@color/stardeck_text_primary" />
 
         </LinearLayout>
 
@@ -345,7 +346,7 @@
         </androidx.core.widget.NestedScrollView>
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- FAB -->
+    <!-- FAB (Library only — hidden in Explore/read-only mode) -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabAdd"
         android:layout_width="wrap_content"
