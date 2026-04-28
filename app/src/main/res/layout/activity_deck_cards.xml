@@ -21,7 +21,28 @@
             android:layout_height="?attr/actionBarSize"
             android:background="@color/stardeck_bg_bottom"
             app:navigationIconTint="@color/stardeck_text_primary"
-            app:titleTextColor="@color/stardeck_text_primary" />
+            app:titleTextColor="@color/stardeck_text_primary">
+
+            <!--
+                ⋮ Overflow / Report button — top-right corner of the toolbar.
+                Visibility is controlled in code:
+                  btnOverflow.visibility = View.VISIBLE   (public / read-only deck)
+                  btnOverflow.visibility = View.GONE      (own deck)
+                Clicking it shows a PopupMenu with "Report Deck" (and future actions).
+            -->
+            <ImageButton
+                android:id="@+id/btnOverflow"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_gravity="end"
+                android:layout_marginEnd="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="More options"
+                android:src="@drawable/ic_more_vert"
+                android:tint="@color/stardeck_text_primary"
+                android:visibility="gone" />
+
+        </com.google.android.material.appbar.MaterialToolbar>
 
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -52,7 +73,7 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Card count + action buttons row -->
+        <!-- Card count + Quiz / Study buttons row -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -68,16 +89,6 @@
                 android:text="0 cards"
                 android:textColor="@color/stardeck_primary"
                 android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
-
-            <!-- Report button (only shown in read-only/public mode) -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnReport"
-                style="@style/Widget.Material3.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Report"
-                android:textAllCaps="false"
-                android:visibility="gone" />
 
             <!-- Quiz button -->
             <com.google.android.material.button.MaterialButton
