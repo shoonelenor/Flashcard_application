@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorBackground"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Statistics"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="?attr/colorOnSurface"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Content &amp; activity overview"
+            android:textSize="12sp"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:layout_marginBottom="20dp" />
+
+        <!-- Decks & Cards -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_card_rounded"
+            android:padding="12dp"
+            android:layout_marginBottom="20dp">
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="DECKS &amp; CARDS" android:textSize="11sp" android:textStyle="bold" android:letterSpacing="0.1" android:textColor="?attr/colorPrimary" android:layout_marginBottom="8dp" />
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Total Decks" android:textSize="13sp" android:textColor="?attr/colorOnSurfaceVariant" />
+                <TextView android:id="@+id/tvMgrStatTotalDecks" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="—" android:textSize="15sp" android:textStyle="bold" android:textColor="?attr/colorOnSurface" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Active Decks" android:textSize="13sp" android:textColor="?attr/colorOnSurfaceVariant" />
+                <TextView android:id="@+id/tvMgrStatActiveDecks" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="—" android:textSize="15sp" android:textStyle="bold" android:textColor="?attr/colorOnSurface" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Hidden Decks" android:textSize="13sp" android:textColor="?attr/colorOnSurfaceVariant" />
+                <TextView android:id="@+id/tvMgrStatHiddenDecks" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="—" android:textSize="15sp" android:textStyle="bold" android:textColor="?attr/colorOnSurface" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Public Decks" android:textSize="13sp" android:textColor="?attr/colorOnSurfaceVariant" />
+                <TextView android:id="@+id/tvMgrStatPublicDecks" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="—" android:textSize="15sp" android:textStyle="bold" android:textColor="?attr/colorOnSurface" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Premium Decks" android:textSize="13sp" android:textColor="?attr/colorOnSurfaceVariant" />
+                <TextView android:id="@+id/tvMgrStatPremiumDecks" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="—" android:textSize="15sp" android:textStyle="bold" android:textColor="?attr/colorOnSurface" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Total Cards" android:textSize="13sp" android:textColor="?attr/colorOnSurfaceVariant" />
+                <TextView android:id="@+id/tvMgrStatTotalCards" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="—" android:textSize="15sp" android:textStyle="bold" android:textColor="?attr/colorOnSurface" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Study Sessions -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_card_rounded"
+            android:padding="12dp"
+            android:layout_marginBottom="20dp">
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="STUDY SESSIONS" android:textSize="11sp" android:textStyle="bold" android:letterSpacing="0.1" android:textColor="?attr/colorPrimary" android:layout_marginBottom="8dp" />
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Total Sessions" android:textSize="13sp" android:textColor="?attr/colorOnSurfaceVariant" />
+                <TextView android:id="@+id/tvMgrStatSessions" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="—" android:textSize="15sp" android:textStyle="bold" android:textColor="?attr/colorOnSurface" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Known" android:textSize="13sp" android:textColor="?attr/colorOnSurfaceVariant" />
+                <TextView android:id="@+id/tvMgrStatKnown" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="—" android:textSize="15sp" android:textStyle="bold" android:textColor="?attr/colorOnSurface" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Hard" android:textSize="13sp" android:textColor="?attr/colorOnSurfaceVariant" />
+                <TextView android:id="@+id/tvMgrStatHard" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="—" android:textSize="15sp" android:textStyle="bold" android:textColor="?attr/colorOnSurface" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Reports -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_card_rounded"
+            android:padding="12dp"
+            android:layout_marginBottom="20dp">
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="REPORTS" android:textSize="11sp" android:textStyle="bold" android:letterSpacing="0.1" android:textColor="?attr/colorPrimary" android:layout_marginBottom="8dp" />
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Open" android:textSize="13sp" android:textColor="?attr/colorOnSurfaceVariant" />
+                <TextView android:id="@+id/tvMgrStatOpenRep" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="—" android:textSize="15sp" android:textStyle="bold" android:textColor="?attr/colorOnSurface" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Resolved" android:textSize="13sp" android:textColor="?attr/colorOnSurfaceVariant" />
+                <TextView android:id="@+id/tvMgrStatResolvedRep" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="—" android:textSize="15sp" android:textStyle="bold" android:textColor="?attr/colorOnSurface" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Bar Chart: Sessions 7 days -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="STUDY ACTIVITY — LAST 7 DAYS"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.1"
+            android:textColor="?attr/colorPrimary"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_card_rounded"
+            android:padding="12dp"
+            android:layout_marginBottom="20dp">
+            <LinearLayout
+                android:id="@+id/mgrBarChartSessions"
+                android:layout_width="match_parent"
+                android:layout_height="140dp"
+                android:orientation="horizontal"
+                android:gravity="bottom|center_horizontal" />
+        </LinearLayout>
+
+        <!-- Bar Chart: Top decks -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="TOP DECKS BY CARD COUNT"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.1"
+            android:textColor="?attr/colorPrimary"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_card_rounded"
+            android:padding="12dp"
+            android:layout_marginBottom="32dp">
+            <LinearLayout
+                android:id="@+id/mgrBarChartTopDecks"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

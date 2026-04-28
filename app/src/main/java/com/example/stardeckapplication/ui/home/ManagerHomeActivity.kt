@@ -6,6 +6,7 @@ import androidx.fragment.app.Fragment
 import com.example.stardeckapplication.R
 import com.example.stardeckapplication.databinding.ActivityManagerHomeBinding
 import com.example.stardeckapplication.db.DbContract
+import com.example.stardeckapplication.ui.stats.ManagerStatsFragment
 import com.example.stardeckapplication.util.SessionManager
 
 class ManagerHomeActivity : AppCompatActivity() {
@@ -41,6 +42,11 @@ class ManagerHomeActivity : AppCompatActivity() {
                     true
                 }
 
+                R.id.manager_nav_stats -> {
+                    showTab(TAG_STATS) { ManagerStatsFragment() }
+                    true
+                }
+
                 R.id.manager_nav_reports -> {
                     showTab(TAG_REPORTS) { ManagerReportsTabFragment() }
                     true
@@ -59,10 +65,11 @@ class ManagerHomeActivity : AppCompatActivity() {
             b.bottomNav.selectedItemId = R.id.manager_nav_home
         } else {
             b.bottomNav.selectedItemId = when (activeTag) {
-                TAG_DECKS -> R.id.manager_nav_decks
+                TAG_DECKS   -> R.id.manager_nav_decks
+                TAG_STATS   -> R.id.manager_nav_stats
                 TAG_REPORTS -> R.id.manager_nav_reports
                 TAG_PROFILE -> R.id.manager_nav_profile
-                else -> R.id.manager_nav_home
+                else        -> R.id.manager_nav_home
             }
         }
     }
@@ -101,8 +108,9 @@ class ManagerHomeActivity : AppCompatActivity() {
     private companion object {
         private const val KEY_ACTIVE_TAG = "manager_active_tag"
 
-        private const val TAG_HOME = "manager_tab_home"
-        private const val TAG_DECKS = "manager_tab_decks"
+        private const val TAG_HOME    = "manager_tab_home"
+        private const val TAG_DECKS   = "manager_tab_decks"
+        private const val TAG_STATS   = "manager_tab_stats"
         private const val TAG_REPORTS = "manager_tab_reports"
         private const val TAG_PROFILE = "manager_tab_profile"
     }

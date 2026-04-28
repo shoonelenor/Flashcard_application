@@ -8,6 +8,7 @@ import com.example.stardeckapplication.R
 import com.example.stardeckapplication.databinding.ActivityAdminHomeBinding
 import com.example.stardeckapplication.db.DbContract
 import com.example.stardeckapplication.ui.admin.AdminTicketsActivity
+import com.example.stardeckapplication.ui.stats.AdminStatsFragment
 import com.example.stardeckapplication.util.SessionManager
 
 class AdminHomeActivity : AppCompatActivity() {
@@ -43,17 +44,21 @@ class AdminHomeActivity : AppCompatActivity() {
                     true
                 }
 
+                R.id.admin_nav_stats -> {
+                    showTab(TAG_STATS) { AdminStatsFragment() }
+                    true
+                }
+
                 R.id.admin_nav_reports -> {
                     showTab(TAG_REPORTS) { ManagerReportsTabFragment() }
                     true
                 }
 
                 R.id.admin_nav_ticket -> {
-                    // Launch AdminTicketsActivity as a full screen instead of a fragment placeholder
                     startActivity(Intent(this, AdminTicketsActivity::class.java))
-                    // Reselect the previous tab so the bottom nav doesn't stay highlighted on "Ticket"
                     b.bottomNav.selectedItemId = when (activeTag) {
                         TAG_MASTER_DATA -> R.id.admin_nav_master_data
+                        TAG_STATS       -> R.id.admin_nav_stats
                         TAG_REPORTS     -> R.id.admin_nav_reports
                         TAG_PROFILE     -> R.id.admin_nav_profile
                         else            -> R.id.admin_nav_dashboard
@@ -75,6 +80,7 @@ class AdminHomeActivity : AppCompatActivity() {
         } else {
             b.bottomNav.selectedItemId = when (activeTag) {
                 TAG_MASTER_DATA -> R.id.admin_nav_master_data
+                TAG_STATS       -> R.id.admin_nav_stats
                 TAG_REPORTS     -> R.id.admin_nav_reports
                 TAG_TICKET      -> R.id.admin_nav_ticket
                 TAG_PROFILE     -> R.id.admin_nav_profile
@@ -117,10 +123,11 @@ class AdminHomeActivity : AppCompatActivity() {
     private companion object {
         private const val KEY_ACTIVE_TAG = "admin_active_tag"
 
-        private const val TAG_DASHBOARD  = "admin_tab_dashboard"
+        private const val TAG_DASHBOARD   = "admin_tab_dashboard"
         private const val TAG_MASTER_DATA = "admin_tab_master_data"
-        private const val TAG_REPORTS    = "admin_tab_reports"
-        private const val TAG_TICKET     = "admin_tab_ticket"
-        private const val TAG_PROFILE    = "admin_tab_profile"
+        private const val TAG_STATS       = "admin_tab_stats"
+        private const val TAG_REPORTS     = "admin_tab_reports"
+        private const val TAG_TICKET      = "admin_tab_ticket"
+        private const val TAG_PROFILE     = "admin_tab_profile"
     }
 }

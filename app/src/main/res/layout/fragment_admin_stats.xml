@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorBackground"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Header -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="System Statistics"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="?attr/colorOnSurface"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Live data from the database"
+            android:textSize="12sp"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:layout_marginBottom="20dp" />
+
+        <!-- ── Section: Users ── -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="USERS"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.1"
+            android:textColor="?attr/colorPrimary"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <include layout="@layout/item_stat_card"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:id="@+id/cardTotalUsers" />
+
+            <include layout="@layout/item_stat_card"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:id="@+id/cardActiveUsers" />
+
+            <include layout="@layout/item_stat_card"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:id="@+id/cardDisabled" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="20dp">
+
+            <include layout="@layout/item_stat_card"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:id="@+id/cardPremium" />
+
+            <include layout="@layout/item_stat_card"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:id="@+id/cardManagers" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp" />
+        </LinearLayout>
+
+        <!-- Values wired by Fragment via direct TextView IDs -->
+        <!-- We use individual TextViews so the fragment can find them by ID -->
+
+        <!-- Hidden value holders (used by fragment, visible through item_stat_card) -->
+        <!-- Instead, we embed stat cards manually so we can assign IDs directly -->
+
+        <!-- ── Inline stat grid: users ── -->
+        <!-- Replaced by direct-ID cards below -->
+
+        <!-- Direct stat TextViews (invisible layout trick: each "card" is a simple card) -->
+
+        <!-- ── Section: Decks ── -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="DECKS &amp; CARDS"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.1"
+            android:textColor="?attr/colorPrimary"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Stat rows for decks -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_card_rounded"
+            android:padding="12dp"
+            android:layout_marginBottom="20dp">
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Total Decks" android:textSize="13sp" android:textColor="?attr/colorOnSurfaceVariant" />
+                <TextView android:id="@+id/tvStatTotalDecks" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="—" android:textSize="15sp" android:textStyle="bold" android:textColor="?attr/colorOnSurface" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Active Decks" android:textSize="13sp" android:textColor="?attr/colorOnSurfaceVariant" />
+                <TextView android:id="@+id/tvStatActiveDecks" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="—" android:textSize="15sp" android:textStyle="bold" android:textColor="?attr/colorOnSurface" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Hidden Decks" android:textSize="13sp" android:textColor="?attr/colorOnSurfaceVariant" />
+                <TextView android:id="@+id/tvStatHiddenDecks" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="—" android:textSize="15sp" android:textStyle="bold" android:textColor="?attr/colorOnSurface" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Public Decks" android:textSize="13sp" android:textColor="?attr/colorOnSurfaceVariant" />
+                <TextView android:id="@+id/tvStatPublicDecks" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="—" android:textSize="15sp" android:textStyle="bold" android:textColor="?attr/colorOnSurface" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Premium Decks" android:textSize="13sp" android:textColor="?attr/colorOnSurfaceVariant" />
+                <TextView android:id="@+id/tvStatPremiumDecks" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="—" android:textSize="15sp" android:textStyle="bold" android:textColor="?attr/colorOnSurface" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Total Cards" android:textSize="13sp" android:textColor="?attr/colorOnSurfaceVariant" />
+                <TextView android:id="@+id/tvStatTotalCards" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="—" android:textSize="15sp" android:textStyle="bold" android:textColor="?attr/colorOnSurface" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ── Users KPIs (direct IDs) ── -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_card_rounded"
+            android:padding="12dp"
+            android:layout_marginBottom="20dp">
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="USERS" android:textSize="11sp" android:textStyle="bold" android:letterSpacing="0.1" android:textColor="?attr/colorPrimary" android:layout_marginBottom="8dp" />
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Total Users" android:textSize="13sp" android:textColor="?attr/colorOnSurfaceVariant" />
+                <TextView android:id="@+id/tvStatTotalUsers" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="—" android:textSize="15sp" android:textStyle="bold" android:textColor="?attr/colorOnSurface" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Active Users" android:textSize="13sp" android:textColor="?attr/colorOnSurfaceVariant" />
+                <TextView android:id="@+id/tvStatActiveUsers" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="—" android:textSize="15sp" android:textStyle="bold" android:textColor="?attr/colorOnSurface" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Disabled" android:textSize="13sp" android:textColor="?attr/colorOnSurfaceVariant" />
+                <TextView android:id="@+id/tvStatDisabled" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="—" android:textSize="15sp" android:textStyle="bold" android:textColor="?attr/colorOnSurface" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Premium Users" android:textSize="13sp" android:textColor="?attr/colorOnSurfaceVariant" />
+                <TextView android:id="@+id/tvStatPremium" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="—" android:textSize="15sp" android:textStyle="bold" android:textColor="?attr/colorOnSurface" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Managers" android:textSize="13sp" android:textColor="?attr/colorOnSurfaceVariant" />
+                <TextView android:id="@+id/tvStatManagers" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="—" android:textSize="15sp" android:textStyle="bold" android:textColor="?attr/colorOnSurface" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ── Section: Study ── -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_card_rounded"
+            android:padding="12dp"
+            android:layout_marginBottom="20dp">
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="STUDY SESSIONS" android:textSize="11sp" android:textStyle="bold" android:letterSpacing="0.1" android:textColor="?attr/colorPrimary" android:layout_marginBottom="8dp" />
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Total Sessions" android:textSize="13sp" android:textColor="?attr/colorOnSurfaceVariant" />
+                <TextView android:id="@+id/tvStatSessions" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="—" android:textSize="15sp" android:textStyle="bold" android:textColor="?attr/colorOnSurface" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Known" android:textSize="13sp" android:textColor="?attr/colorOnSurfaceVariant" />
+                <TextView android:id="@+id/tvStatKnown" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="—" android:textSize="15sp" android:textStyle="bold" android:textColor="?attr/colorOnSurface" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Hard" android:textSize="13sp" android:textColor="?attr/colorOnSurfaceVariant" />
+                <TextView android:id="@+id/tvStatHard" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="—" android:textSize="15sp" android:textStyle="bold" android:textColor="?attr/colorOnSurface" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ── Section: Reports ── -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_card_rounded"
+            android:padding="12dp"
+            android:layout_marginBottom="20dp">
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="REPORTS" android:textSize="11sp" android:textStyle="bold" android:letterSpacing="0.1" android:textColor="?attr/colorPrimary" android:layout_marginBottom="8dp" />
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Open" android:textSize="13sp" android:textColor="?attr/colorOnSurfaceVariant" />
+                <TextView android:id="@+id/tvStatOpenRep" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="—" android:textSize="15sp" android:textStyle="bold" android:textColor="?attr/colorOnSurface" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Resolved" android:textSize="13sp" android:textColor="?attr/colorOnSurfaceVariant" />
+                <TextView android:id="@+id/tvStatResolvedRep" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="—" android:textSize="15sp" android:textStyle="bold" android:textColor="?attr/colorOnSurface" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ── Chart: Sessions last 7 days ── -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="STUDY ACTIVITY — LAST 7 DAYS"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.1"
+            android:textColor="?attr/colorPrimary"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_card_rounded"
+            android:padding="12dp"
+            android:layout_marginBottom="20dp">
+
+            <LinearLayout
+                android:id="@+id/barChartSessions"
+                android:layout_width="match_parent"
+                android:layout_height="140dp"
+                android:orientation="horizontal"
+                android:gravity="bottom|center_horizontal" />
+        </LinearLayout>
+
+        <!-- ── Chart: Top decks by cards ── -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="TOP DECKS BY CARD COUNT"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.1"
+            android:textColor="?attr/colorPrimary"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_card_rounded"
+            android:padding="12dp"
+            android:layout_marginBottom="32dp">
+
+            <LinearLayout
+                android:id="@+id/barChartTopDecks"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>
