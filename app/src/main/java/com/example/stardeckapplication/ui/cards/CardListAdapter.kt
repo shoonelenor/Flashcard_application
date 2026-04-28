@@ -19,12 +19,13 @@ class CardListAdapter(
 ) : RecyclerView.Adapter<CardListAdapter.CardViewHolder>() {
 
     inner class CardViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val tvFront: TextView      = view.findViewById(R.id.tvCardFront)
-        val tvBack: TextView       = view.findViewById(R.id.tvCardBack)
+        // IDs match item_card.xml
+        val tvFront: TextView      = view.findViewById(R.id.tvFront)
+        val tvBack: TextView       = view.findViewById(R.id.tvBack)
         val imgFront: ImageView    = view.findViewById(R.id.imgCardFront)
         val imgBack: ImageView     = view.findViewById(R.id.imgCardBack)
-        val btnEdit: ImageButton   = view.findViewById(R.id.btnEditCard)
-        val btnDelete: ImageButton = view.findViewById(R.id.btnDeleteCard)
+        val btnEdit: ImageButton   = view.findViewById(R.id.btnEdit)
+        val btnDelete: ImageButton = view.findViewById(R.id.btnDelete)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CardViewHolder {
@@ -38,7 +39,7 @@ class CardListAdapter(
         holder.tvFront.text = card.front
         holder.tvBack.text  = card.back
 
-        // load front image
+        // show front image if available
         val frontFile = card.frontImagePath?.let { File(it) }
         if (frontFile != null && frontFile.exists()) {
             holder.imgFront.setImageURI(Uri.fromFile(frontFile))
@@ -47,7 +48,7 @@ class CardListAdapter(
             holder.imgFront.visibility = View.GONE
         }
 
-        // load back image
+        // show back image if available
         val backFile = card.backImagePath?.let { File(it) }
         if (backFile != null && backFile.exists()) {
             holder.imgBack.setImageURI(Uri.fromFile(backFile))
@@ -55,6 +56,10 @@ class CardListAdapter(
         } else {
             holder.imgBack.visibility = View.GONE
         }
+
+        // always show edit/delete buttons in this adapter (user’s own deck)
+        holder.btnEdit.visibility   = View.VISIBLE
+        holder.btnDelete.visibility = View.VISIBLE
 
         holder.btnEdit.setOnClickListener   { onEdit(card) }
         holder.btnDelete.setOnClickListener { onDelete(card) }

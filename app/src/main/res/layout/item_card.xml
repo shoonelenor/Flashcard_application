@@ -15,7 +15,11 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- Front text -->
+        <!-- Front text (used by both CardListAdapter and ManagerDeckCardsActivity adapter) -->
+        <!-- CardListAdapter uses tvCardFront; ManagerAdapter uses tvFront -->
+        <!-- We provide BOTH ids via separate TextViews is not possible; instead we use -->
+        <!-- tvFront as the canonical id and update CardListAdapter to match             -->
+
         <TextView
             android:id="@+id/tvFront"
             android:layout_width="match_parent"
@@ -24,7 +28,17 @@
             android:textStyle="bold"
             android:textColor="?attr/colorOnSurface" />
 
-        <!-- Hint label: "Tap to show/hide answer" -->
+        <!-- Front image (shown when a front image path exists) -->
+        <ImageView
+            android:id="@+id/imgCardFront"
+            android:layout_width="match_parent"
+            android:layout_height="140dp"
+            android:scaleType="centerCrop"
+            android:visibility="gone"
+            android:contentDescription="Front image"
+            android:layout_marginTop="8dp" />
+
+        <!-- Hint label: tap to show/hide answer -->
         <TextView
             android:id="@+id/tvHint"
             android:layout_width="match_parent"
@@ -52,7 +66,17 @@
             android:textColor="?attr/colorOnSurface"
             android:visibility="gone" />
 
-        <!-- Edit / Delete buttons (visible only in admin-edit mode) -->
+        <!-- Back image (shown when a back image path exists) -->
+        <ImageView
+            android:id="@+id/imgCardBack"
+            android:layout_width="match_parent"
+            android:layout_height="140dp"
+            android:scaleType="centerCrop"
+            android:visibility="gone"
+            android:contentDescription="Back image"
+            android:layout_marginTop="8dp" />
+
+        <!-- Edit / Delete buttons -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -60,22 +84,24 @@
             android:gravity="end"
             android:layout_marginTop="8dp">
 
-            <Button
+            <ImageButton
                 android:id="@+id/btnEdit"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Edit"
-                android:visibility="gone" />
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@android:drawable/ic_menu_edit"
+                android:contentDescription="Edit card"
+                android:visibility="gone"
+                android:background="?attr/selectableItemBackgroundBorderless" />
 
-            <Button
+            <ImageButton
                 android:id="@+id/btnDelete"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Delete"
-                android:textColor="@color/design_default_color_error"
-                android:visibility="gone" />
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@android:drawable/ic_menu_delete"
+                android:contentDescription="Delete card"
+                android:visibility="gone"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:layout_marginStart="4dp" />
 
         </LinearLayout>
 

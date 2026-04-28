@@ -9,7 +9,24 @@
         android:orientation="vertical"
         android:padding="20dp">
 
-        <!-- Dialog title -->
+        <!--
+            tvTitle  – used by ManagerDeckCardsActivity (DialogEditCardBinding)
+            tilFront – used by ManagerDeckCardsActivity for error display
+            etFront  – used by ManagerDeckCardsActivity (inside TextInputLayout)
+            etFrontEdit – used by DeckCardsActivity (plain EditText, same view, aliased via tag)
+
+            Because both activities inflate this same layout:
+              • ManagerDeckCardsActivity uses ViewBinding   → references by binding.etFront
+              • DeckCardsActivity uses findViewById       → references by R.id.etFrontEdit
+
+            We give the TextInputEditText TWO ids is not possible in XML.
+            Solution: give the TextInputEditText id="etFrontEdit" AND give
+            the TextInputLayout id="tilFront". ManagerDeckCardsActivity
+            accesses the text via binding.tilFront.editText which resolves
+            to the inner EditText regardless of its id.
+        -->
+
+        <!-- Dialog title (used by ManagerDeckCardsActivity) -->
         <TextView
             android:id="@+id/tvTitle"
             android:layout_width="wrap_content"
@@ -29,7 +46,7 @@
             android:layout_marginBottom="4dp">
 
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etFront"
+                android:id="@+id/etFrontEdit"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textMultiLine"
@@ -84,7 +101,7 @@
             android:layout_marginBottom="4dp">
 
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etBack"
+                android:id="@+id/etBackEdit"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textMultiLine"
