@@ -17,46 +17,55 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.stardeckapplication.R
 import com.example.stardeckapplication.db.CardDao
 import com.example.stardeckapplication.db.CardDao.Card
+import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.card.MaterialCardView
+import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.textfield.TextInputEditText
 import java.io.File
 
 class DeckCardsActivity : AppCompatActivity() {
 
     companion object {
-        /** Intent extra: the deck id to open (Long). */
-        const val EXTRA_DECK_ID = "deck_id"
-        /** Intent extra: open the deck in read-only / public view mode (Boolean). */
-        const val EXTRA_READ_ONLY_PUBLIC = "read_only_public"
+        const val EXTRA_DECK_ID           = "deck_id"
+        const val EXTRA_READ_ONLY_PUBLIC  = "read_only_public"
     }
 
     // ── DAO & state ───────────────────────────────────────────────────────────
     private lateinit var cardDao: CardDao
-    private var deckId: Long = -1L
+    private var deckId: Long    = -1L
     private var deckTitle: String = ""
+    private var isReadOnly: Boolean = false
 
-    // image path chosen while filling the Add-Card form
     private var pendingFrontImagePath: String? = null
     private var pendingBackImagePath:  String? = null
+    private var editFrontImagePath: String?    = null
+    private var editBackImagePath:  String?    = null
+    private var activePickerSlot: String       = ""
 
-    // image path chosen while filling the Edit-Card dialog
-    private var editFrontImagePath: String? = null
-    private var editBackImagePath:  String? = null
+    // ── Views ─────────────────────────────────────────────────────────────────
+    private lateinit var toolbar:             MaterialToolbar
+    private lateinit var tvCount:             TextView
+    private lateinit var btnStudy:            MaterialButton
+    private lateinit var btnReport:           MaterialButton
+    private lateinit var rvCards:             RecyclerView
+    private lateinit var groupEmpty:          View
+    private lateinit var fabAdd:              FloatingActionButton
+    private lateinit var cardAddForm:         MaterialCardView
+    private lateinit var btnCloseForm:        ImageButton
 
-    // which image slot the picker was launched for ("add_front"/"add_back"/"edit_front"/"edit_back")
-    private var activePickerSlot: String = ""
-
-    // ── Views (Add-Card form) ─────────────────────────────────────────────────
-    private lateinit var etFront: EditText
-    private lateinit var etBack: EditText
-    private lateinit var imgFrontPreview: ImageView
-    private lateinit var imgBackPreview:  ImageView
-    private lateinit var btnAddFrontImage: Button
-    private lateinit var btnAddBackImage:  Button
+    // Add-card form fields
+    private lateinit var etFront:             EditText
+    private lateinit var etBack:              EditText
+    private lateinit var imgFrontPreview:     ImageView
+    private lateinit var imgBackPreview:      ImageView
+    private lateinit var btnAddFrontImage:    MaterialButton
+    private lateinit var btnAddBackImage:     MaterialButton
     private lateinit var btnRemoveFrontImage: ImageButton
     private lateinit var btnRemoveBackImage:  ImageButton
-    private lateinit var btnSaveCard: Button
-    private lateinit var rvCards: RecyclerView
+    private lateinit var btnSaveCard:         MaterialButton
 
-    // ── Edit-dialog views (set when dialog is shown) ──────────────────────────
+    // Edit-dialog views
     private var editImgFrontPreview: ImageView? = null
     private var editImgBackPreview:  ImageView? = null
 
@@ -69,14 +78,14 @@ class DeckCardsActivity : AppCompatActivity() {
                 "add_front"  -> {
                     pendingFrontImagePath = savedPath
                     imgFrontPreview.setImageURI(uri)
-                    imgFrontPreview.visibility  = View.VISIBLE
+                    imgFrontPreview.visibility     = View.VISIBLE
                     btnRemoveFrontImage.visibility = View.VISIBLE
                 }
                 "add_back"   -> {
                     pendingBackImagePath = savedPath
                     imgBackPreview.setImageURI(uri)
-                    imgBackPreview.visibility   = View.VISIBLE
-                    btnRemoveBackImage.visibility  = View.VISIBLE
+                    imgBackPreview.visibility    = View.VISIBLE
+                    btnRemoveBackImage.visibility = View.VISIBLE
                 }
                 "edit_front" -> {
                     editFrontImagePath = savedPath
@@ -91,7 +100,6 @@ class DeckCardsActivity : AppCompatActivity() {
             }
         }
 
-    // ── Permission launcher (Android 13+ READ_MEDIA_IMAGES) ───────────────────
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             if (granted) pickImageLauncher.launch("image/*")
@@ -109,14 +117,81 @@ class DeckCardsActivity : AppCompatActivity() {
 
         deckId    = intent.getLongExtra(EXTRA_DECK_ID, -1L)
         deckTitle = intent.getStringExtra("deck_title") ?: ""
+        isReadOnly = intent.getBooleanExtra(EXTRA_READ_ONLY_PUBLIC, false)
         if (deckId == -1L) { finish(); return }
 
         cardDao = CardDao(this)
 
         bindViews()
+        setupToolbar()
         setupRecyclerView()
         loadCards()
+        setupReadOnlyMode()
+        setupFab()
+        setupFormButtons()
+    }
 
+    // ── Binding ───────────────────────────────────────────────────────────────
+    private fun bindViews() {
+        toolbar             = findViewById(R.id.toolbar)
+        tvCount             = findViewById(R.id.tvCount)
+        btnStudy            = findViewById(R.id.btnStudy)
+        btnReport           = findViewById(R.id.btnReport)
+        rvCards             = findViewById(R.id.rvCards)
+        groupEmpty          = findViewById(R.id.groupEmpty)
+        fabAdd              = findViewById(R.id.fabAdd)
+        cardAddForm         = findViewById(R.id.cardAddForm)
+        btnCloseForm        = findViewById(R.id.btnCloseForm)
+        etFront             = findViewById(R.id.etFront)
+        etBack              = findViewById(R.id.etBack)
+        imgFrontPreview     = findViewById(R.id.imgFrontPreview)
+        imgBackPreview      = findViewById(R.id.imgBackPreview)
+        btnAddFrontImage    = findViewById(R.id.btnAddFrontImage)
+        btnAddBackImage     = findViewById(R.id.btnAddBackImage)
+        btnRemoveFrontImage = findViewById(R.id.btnRemoveFrontImage)
+        btnRemoveBackImage  = findViewById(R.id.btnRemoveBackImage)
+        btnSaveCard         = findViewById(R.id.btnSaveCard)
+    }
+
+    private fun setupToolbar() {
+        setSupportActionBar(toolbar)
+        supportActionBar?.apply {
+            title         = deckTitle
+            setDisplayHomeAsUpEnabled(true)
+        }
+        toolbar.setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
+    }
+
+    private fun setupReadOnlyMode() {
+        if (isReadOnly) {
+            fabAdd.hide()
+            btnReport.visibility = View.VISIBLE
+        }
+    }
+
+    // ── FAB / form panel ──────────────────────────────────────────────────────
+    private fun setupFab() {
+        fabAdd.setOnClickListener { showAddForm() }
+        btnCloseForm.setOnClickListener { dismissAddForm() }
+        // Also allow tapping the empty-state button
+        findViewById<MaterialButton>(R.id.btnCreateFirst).setOnClickListener { showAddForm() }
+    }
+
+    private fun showAddForm() {
+        cardAddForm.visibility = View.VISIBLE
+        fabAdd.hide()
+    }
+
+    private fun dismissAddForm() {
+        cardAddForm.visibility = View.GONE
+        fabAdd.show()
+        etFront.text?.clear()
+        etBack.text?.clear()
+        clearAddFormImages()
+    }
+
+    // ── Form buttons ──────────────────────────────────────────────────────────
+    private fun setupFormButtons() {
         btnAddFrontImage.setOnClickListener {
             activePickerSlot = "add_front"
             launchImagePicker()
@@ -138,37 +213,35 @@ class DeckCardsActivity : AppCompatActivity() {
             btnRemoveBackImage.visibility = View.GONE
         }
         btnSaveCard.setOnClickListener { saveCard() }
-    }
-
-    // ── Binding ───────────────────────────────────────────────────────────────
-    private fun bindViews() {
-        etFront             = findViewById(R.id.etFront)
-        etBack              = findViewById(R.id.etBack)
-        imgFrontPreview     = findViewById(R.id.imgFrontPreview)
-        imgBackPreview      = findViewById(R.id.imgBackPreview)
-        btnAddFrontImage    = findViewById(R.id.btnAddFrontImage)
-        btnAddBackImage     = findViewById(R.id.btnAddBackImage)
-        btnRemoveFrontImage = findViewById(R.id.btnRemoveFrontImage)
-        btnRemoveBackImage  = findViewById(R.id.btnRemoveBackImage)
-        btnSaveCard         = findViewById(R.id.btnSaveCard)
-        rvCards             = findViewById(R.id.rvCards)
+        btnStudy.setOnClickListener {
+            // launch StudyActivity
+            val intent = android.content.Intent(this,
+                com.example.stardeckapplication.ui.study.StudyActivity::class.java)
+            intent.putExtra("deck_id", deckId)
+            intent.putExtra("deck_title", deckTitle)
+            startActivity(intent)
+        }
     }
 
     // ── RecyclerView ──────────────────────────────────────────────────────────
     private fun setupRecyclerView() {
         adapter = CardListAdapter(
-            cards      = cardList,
-            onEdit     = { card -> showEditDialog(card) },
-            onDelete   = { card -> confirmDelete(card) }
+            cards    = cardList,
+            onEdit   = { card -> showEditDialog(card) },
+            onDelete = { card -> confirmDelete(card) }
         )
         rvCards.layoutManager = LinearLayoutManager(this)
-        rvCards.adapter = adapter
+        rvCards.adapter       = adapter
     }
 
     private fun loadCards() {
         cardList.clear()
         cardList.addAll(cardDao.getCardListByDeck(deckId))
         adapter.notifyDataSetChanged()
+        val count = cardList.size
+        tvCount.text = "$count card${if (count == 1) "" else "s"}"
+        groupEmpty.visibility = if (count == 0) View.VISIBLE else View.GONE
+        rvCards.visibility    = if (count == 0) View.GONE    else View.VISIBLE
     }
 
     // ── Save new card ─────────────────────────────────────────────────────────
@@ -187,9 +260,7 @@ class DeckCardsActivity : AppCompatActivity() {
             backImagePath  = pendingBackImagePath
         )
         if (result != -1L) {
-            etFront.text.clear()
-            etBack.text.clear()
-            clearAddFormImages()
+            dismissAddForm()
             loadCards()
             Toast.makeText(this, "Card added", Toast.LENGTH_SHORT).show()
         } else {
@@ -210,13 +281,13 @@ class DeckCardsActivity : AppCompatActivity() {
 
     // ── Edit dialog ───────────────────────────────────────────────────────────
     private fun showEditDialog(card: Card) {
-        val dialogView = layoutInflater.inflate(R.layout.dialog_edit_card, null)
+        val dialogView      = layoutInflater.inflate(R.layout.dialog_edit_card, null)
         val etFrontEdit     = dialogView.findViewById<EditText>(R.id.etFrontEdit)
         val etBackEdit      = dialogView.findViewById<EditText>(R.id.etBackEdit)
         editImgFrontPreview = dialogView.findViewById(R.id.imgFrontPreviewEdit)
         editImgBackPreview  = dialogView.findViewById(R.id.imgBackPreviewEdit)
-        val btnEditFront    = dialogView.findViewById<Button>(R.id.btnEditFrontImage)
-        val btnEditBack     = dialogView.findViewById<Button>(R.id.btnEditBackImage)
+        val btnEditFront    = dialogView.findViewById<android.widget.Button>(R.id.btnEditFrontImage)
+        val btnEditBack     = dialogView.findViewById<android.widget.Button>(R.id.btnEditBackImage)
         val btnRemFront     = dialogView.findViewById<ImageButton>(R.id.btnRemoveFrontImageEdit)
         val btnRemBack      = dialogView.findViewById<ImageButton>(R.id.btnRemoveBackImageEdit)
 
@@ -225,43 +296,34 @@ class DeckCardsActivity : AppCompatActivity() {
         editFrontImagePath = card.frontImagePath
         editBackImagePath  = card.backImagePath
 
-        // load existing images
         card.frontImagePath?.let { path ->
-            val f = File(path)
-            if (f.exists()) {
+            val f = File(path); if (f.exists()) {
                 editImgFrontPreview?.setImageURI(Uri.fromFile(f))
                 editImgFrontPreview?.visibility = View.VISIBLE
-                btnRemFront.visibility = View.VISIBLE
+                btnRemFront.visibility          = View.VISIBLE
             }
         }
         card.backImagePath?.let { path ->
-            val f = File(path)
-            if (f.exists()) {
+            val f = File(path); if (f.exists()) {
                 editImgBackPreview?.setImageURI(Uri.fromFile(f))
                 editImgBackPreview?.visibility  = View.VISIBLE
-                btnRemBack.visibility  = View.VISIBLE
+                btnRemBack.visibility           = View.VISIBLE
             }
         }
 
-        btnEditFront.setOnClickListener {
-            activePickerSlot = "edit_front"
-            launchImagePicker()
-        }
-        btnEditBack.setOnClickListener {
-            activePickerSlot = "edit_back"
-            launchImagePicker()
-        }
+        btnEditFront.setOnClickListener { activePickerSlot = "edit_front"; launchImagePicker() }
+        btnEditBack.setOnClickListener  { activePickerSlot = "edit_back";  launchImagePicker() }
         btnRemFront.setOnClickListener {
             editFrontImagePath = null
             editImgFrontPreview?.setImageDrawable(null)
             editImgFrontPreview?.visibility = View.GONE
-            btnRemFront.visibility = View.GONE
+            btnRemFront.visibility          = View.GONE
         }
         btnRemBack.setOnClickListener {
             editBackImagePath = null
             editImgBackPreview?.setImageDrawable(null)
             editImgBackPreview?.visibility  = View.GONE
-            btnRemBack.visibility  = View.GONE
+            btnRemBack.visibility           = View.GONE
         }
 
         AlertDialog.Builder(this)
@@ -308,12 +370,9 @@ class DeckCardsActivity : AppCompatActivity() {
             Manifest.permission.READ_MEDIA_IMAGES
         else
             Manifest.permission.READ_EXTERNAL_STORAGE
-
         when {
             ContextCompat.checkSelfPermission(this, permission) ==
-                    PackageManager.PERMISSION_GRANTED -> {
-                pickImageLauncher.launch("image/*")
-            }
+                    PackageManager.PERMISSION_GRANTED -> pickImageLauncher.launch("image/*")
             shouldShowRequestPermissionRationale(permission) -> {
                 Toast.makeText(this, "Photo access is needed to add images", Toast.LENGTH_SHORT).show()
                 requestPermissionLauncher.launch(permission)
@@ -324,15 +383,12 @@ class DeckCardsActivity : AppCompatActivity() {
 
     private fun saveImageToInternalStorage(uri: Uri): String? {
         return try {
-            val dir = File(filesDir, "card_images").apply { mkdirs() }
+            val dir  = File(filesDir, "card_images").apply { mkdirs() }
             val file = File(dir, "${System.currentTimeMillis()}.jpg")
             contentResolver.openInputStream(uri)?.use { input ->
                 file.outputStream().use { output -> input.copyTo(output) }
             }
             file.absolutePath
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
-        }
+        } catch (e: Exception) { e.printStackTrace(); null }
     }
 }

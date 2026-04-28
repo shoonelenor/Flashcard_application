@@ -1,11 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    Restored to the Version-11 CoordinatorLayout design.
-    The "Add New Card" form (with image support) now lives in
-    a NestedScrollView bottom-sheet-style panel that is toggled
-    by the FAB — all original view IDs kept so DeckCardsActivity.kt
-    requires zero changes.
--->
 <androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -13,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="@color/stardeck_bg_bottom">
 
-    <!-- ── AppBar ──────────────────────────────────────────────────────── -->
+    <!-- AppBar -->
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
@@ -32,7 +25,7 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <!-- ── Main content (scrollable card list) ────────────────────────── -->
+    <!-- Main content -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -59,7 +52,7 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Card count + Study button row -->
+        <!-- Card count + Study / Quiz / Report row -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -89,6 +82,7 @@
                 android:id="@+id/btnStudy"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
                 android:text="Study"
                 android:textAllCaps="false"
                 app:backgroundTint="@color/stardeck_primary"
@@ -108,7 +102,7 @@
             android:layout_weight="1">
 
             <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recycler"
+                android:id="@+id/rvCards"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:clipToPadding="false"
@@ -155,13 +149,7 @@
 
     </LinearLayout>
 
-    <!-- ── Add Card panel (shown/hidden by FAB) ───────────────────────── -->
-    <!--
-        This panel is GONE by default.
-        DeckCardsActivity shows it when the FAB is tapped and hides it
-        after Save Card / cancel.  All IDs are identical to what the
-        image-feature commit used, so the Kotlin needs no changes.
-    -->
+    <!-- Add Card panel (GONE by default, shown when FAB tapped) -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/cardAddForm"
         android:layout_width="match_parent"
@@ -170,9 +158,7 @@
         android:visibility="gone"
         app:cardBackgroundColor="@color/stardeck_dialog_bg"
         app:cardCornerRadius="20dp"
-        app:cardElevation="12dp"
-        app:strokeColor="@color/stardeck_dialog_stroke"
-        app:strokeWidth="1dp">
+        app:cardElevation="12dp">
 
         <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
@@ -208,8 +194,7 @@
                         android:layout_height="36dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:contentDescription="Close form"
-                        android:src="@android:drawable/ic_menu_close_clear_cancel"
-                        app:tint="@color/stardeck_text_secondary" />
+                        android:src="@android:drawable/ic_menu_close_clear_cancel" />
 
                 </LinearLayout>
 
@@ -340,7 +325,7 @@
         </androidx.core.widget.NestedScrollView>
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- ── FAB ────────────────────────────────────────────────────────── -->
+    <!-- FAB -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabAdd"
         android:layout_width="wrap_content"
