@@ -9,14 +9,17 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="20dp">
+        android:paddingTop="24dp"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="24dp">
 
         <!-- Header icon + title -->
         <ImageView
             android:layout_width="56dp"
             android:layout_height="56dp"
             android:layout_gravity="center_horizontal"
-            android:layout_marginTop="12dp"
+            android:layout_marginBottom="12dp"
             android:src="@drawable/ic_stat_ticket"
             android:contentDescription="Report Issue" />
 
@@ -24,7 +27,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:layout_marginTop="8dp"
             android:text="Help / Report an Issue"
             android:textSize="20sp"
             android:textStyle="bold"
@@ -34,8 +36,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:layout_marginTop="4dp"
-            android:layout_marginBottom="24dp"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="28dp"
             android:text="Tell us what&#8217;s wrong and we&#8217;ll look into it."
             android:textSize="13sp"
             android:textColor="?attr/colorOnSurfaceVariant"
@@ -49,7 +51,7 @@
             android:textSize="14sp"
             android:textStyle="bold"
             android:textColor="?attr/colorOnSurface"
-            android:layout_marginBottom="6dp" />
+            android:layout_marginBottom="8dp" />
 
         <Spinner
             android:id="@+id/spinnerReasonReport"
@@ -57,7 +59,7 @@
             android:layout_height="wrap_content"
             android:background="?attr/colorSurfaceVariant"
             android:padding="12dp"
-            android:layout_marginBottom="20dp" />
+            android:layout_marginBottom="24dp" />
 
         <!-- Details text field -->
         <TextView
@@ -67,7 +69,7 @@
             android:textSize="14sp"
             android:textStyle="bold"
             android:textColor="?attr/colorOnSurface"
-            android:layout_marginBottom="6dp" />
+            android:layout_marginBottom="8dp" />
 
         <EditText
             android:id="@+id/etReportDetails"
@@ -75,11 +77,11 @@
             android:layout_height="wrap_content"
             android:minHeight="120dp"
             android:gravity="top"
-            android:hint="Please describe your issue in detail (minimum 10 characters)…"
+            android:hint="Please describe your issue in detail (minimum 10 characters)&#8230;"
             android:inputType="textMultiLine|textCapSentences"
             android:background="?attr/colorSurfaceVariant"
             android:padding="12dp"
-            android:layout_marginBottom="8dp" />
+            android:layout_marginBottom="10dp" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -87,7 +89,7 @@
             android:text="Your report will be reviewed by the admin team."
             android:textSize="12sp"
             android:textColor="?attr/colorOnSurfaceVariant"
-            android:layout_marginBottom="24dp" />
+            android:layout_marginBottom="28dp" />
 
         <!-- Progress / submit -->
         <ProgressBar
@@ -96,7 +98,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:visibility="gone"
-            android:layout_marginBottom="8dp" />
+            android:layout_marginBottom="10dp" />
 
         <Button
             android:id="@+id/btnSubmitReport"
@@ -112,7 +114,7 @@
             android:id="@+id/tvReportSuccess"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="✓  Your report has been submitted. We&#8217;ll get back to you soon."
+            android:text="&#10003;  Your report has been submitted. We&#8217;ll get back to you soon."
             android:textColor="#2E7D32"
             android:background="#E8F5E9"
             android:padding="12dp"
