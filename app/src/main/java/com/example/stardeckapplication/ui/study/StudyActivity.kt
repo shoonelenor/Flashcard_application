@@ -4,7 +4,9 @@ import android.os.Bundle
 import android.view.MotionEvent
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import com.example.stardeckapplication.R
 import com.example.stardeckapplication.databinding.ActivityStudyBinding
+import com.example.stardeckapplication.databinding.DialogSessionCompleteBinding
 import com.example.stardeckapplication.db.DbContract
 import com.example.stardeckapplication.db.DeckDao
 import com.example.stardeckapplication.db.StarDeckDbHelper
@@ -54,7 +56,6 @@ class StudyActivity : AppCompatActivity() {
     private var userId: Long = -1L
     private var deckId: Long = -1L
 
-    // true when the user is studying a public deck they do NOT own
     private var readOnlyPublic = false
 
     private var baseCards : List<DeckDao.CardRow>        = emptyList()
@@ -93,7 +94,6 @@ class StudyActivity : AppCompatActivity() {
         if (deckId <= 0L) { safeFinishWithMessage("Invalid deck"); return }
 
         val title = if (readOnlyPublic) {
-            // For public decks we cannot use getDeckTitleForOwner (ownership check fails)
             runCatching { deckDao.getDeckTitle(deckId) }.getOrNull()
         } else {
             runCatching { deckDao.getDeckTitleForOwner(userId, deckId) }.getOrNull()
@@ -171,7 +171,6 @@ class StudyActivity : AppCompatActivity() {
     }
 
     private fun loadStudyCardsSafely() {
-        // For public decks, skip Due Mode (progress rows may not exist yet for this user)
         if (!readOnlyPublic) {
             val dueLoaded = runCatching {
                 val count       = studyDao.getDueCountForDeck(userId, deckId)
@@ -193,7 +192,6 @@ class StudyActivity : AppCompatActivity() {
                 baseCards = runCatching { deckDao.getCardsForDeck(userId, deckId) }.getOrDefault(emptyList())
             }
         } else {
-            // Public deck — load all cards directly (no ownership filter)
             dueMode         = false
             dueCountAtStart = 0
             baseCards = runCatching { deckDao.getCardsForPublicDeck(deckId) }.getOrDefault(emptyList())
@@ -201,7 +199,7 @@ class StudyActivity : AppCompatActivity() {
 
         val modeLabel = when {
             readOnlyPublic -> "Public Deck"
-            dueMode        -> "Due Now • $dueCountAtStart card(s)"
+            dueMode        -> "Due Now \u2022 $dueCountAtStart card(s)"
             else           -> "Normal Review"
         }
         supportActionBar?.subtitle = modeLabel
@@ -224,8 +222,8 @@ class StudyActivity : AppCompatActivity() {
 
     private fun toggleFlip() { showBack = !showBack; updateCardUi(); updateButtonsUi() }
 
-    private fun markKnown() { applyReview(DbContract.RESULT_KNOWN, "✅ Marked Known") }
-    private fun markHard()  { applyReview(DbContract.RESULT_HARD,  "🔴 Marked Hard")  }
+    private fun markKnown() { applyReview(DbContract.RESULT_KNOWN, "\u2705 Marked Known") }
+    private fun markHard()  { applyReview(DbContract.RESULT_HARD,  "\uD83D\uDD34 Marked Hard")  }
 
     private fun applyReview(result: String, message: String) {
         if (order.isEmpty()) return
@@ -234,7 +232,6 @@ class StudyActivity : AppCompatActivity() {
         val srsWorked = runCatching {
             val snapshot = studyDao.getCardProgressSnapshot(userId, card.id)
 
-            // Route to the correct SRS function based on deck ownership
             val sessionId = if (readOnlyPublic) {
                 studyDao.applySrsReviewForPublicDeck(
                     studyingUserId = userId,
@@ -332,11 +329,10 @@ class StudyActivity : AppCompatActivity() {
     }
 
     private fun showSummary() {
-        val total    = order.size
-        val studied  = (knownCount + hardCount).coerceAtMost(total)
-        val skipped  = (total - studied).coerceAtLeast(0)
-        val pct      = if (studied > 0) (knownCount * 100 / studied) else 0
-        val mode     = when {
+        val total   = order.size
+        val studied = (knownCount + hardCount).coerceAtMost(total)
+        val pct     = if (studied > 0) (knownCount * 100 / studied) else 0
+        val mode    = when {
             readOnlyPublic -> "Public Deck"
             dueMode        -> "Due Now"
             else           -> "Normal Review"
@@ -344,34 +340,40 @@ class StudyActivity : AppCompatActivity() {
         val unlocked = runCatching { achievementSync.syncForUser(userId) }.getOrDefault(0)
 
         val emoji = when {
-            pct >= 80 -> "🌟 Excellent!"
-            pct >= 60 -> "👍 Good job!"
-            pct >= 40 -> "📚 Keep going!"
-            else      -> "💪 Keep practicing!"
+            pct >= 80 -> "\uD83C\uDF1F Excellent!"
+            pct >= 60 -> "\uD83D\uDC4D Good job!"
+            pct >= 40 -> "\uD83D\uDCDA Keep going!"
+            else      -> "\uD83D\uDCAA Keep practicing!"
         }
 
-        val message = buildString {
-            append("Mode: $mode\n\n")
-            append("📊 Session Results\n")
-            append("─────────────────\n")
-            append("Cards studied:  $studied / $total\n")
-            append("✅ Known:  $knownCount")
-            if (studied > 0) append("  (${knownCount * 100 / studied}%)")
-            append("\n")
-            append("🔴 Hard:   $hardCount")
-            if (studied > 0) append("  (${hardCount * 100 / studied}%)")
-            append("\n")
-            if (skipped > 0) append("⏭ Skipped: $skipped\n")
-            append("\nAccuracy: $pct%  $emoji")
-            if (unlocked > 0) append("\n\n🏆 $unlocked achievement(s) unlocked!")
+        val knownPct = if (studied > 0) knownCount * 100 / studied else 0
+        val hardPct  = if (studied > 0) hardCount  * 100 / studied else 0
+
+        // Inflate the custom dialog view
+        val dialogBinding = DialogSessionCompleteBinding.inflate(layoutInflater)
+        dialogBinding.tvDialogMode.text    = mode
+        dialogBinding.tvDialogStudied.text = "$studied / $total"
+        dialogBinding.tvDialogKnown.text   = "$knownCount ($knownPct%)"
+        dialogBinding.tvDialogHard.text    = "$hardCount ($hardPct%)"
+        dialogBinding.tvDialogAccuracy.text = "$pct%"
+        dialogBinding.tvDialogEmoji.text   = emoji
+
+        if (unlocked > 0) {
+            dialogBinding.rowAchievement.visibility   = View.VISIBLE
+            dialogBinding.tvDialogAchievement.text    = "$unlocked achievement(s) unlocked!"
+        } else {
+            dialogBinding.rowAchievement.visibility = View.GONE
         }
 
-        MaterialAlertDialogBuilder(this)
-            .setTitle("Session Complete")
-            .setMessage(message)
-            .setPositiveButton("Restart") { _, _ -> restartSession() }
-            .setNegativeButton("Done")    { _, _ -> finish() }
-            .show()
+        val dialog = MaterialAlertDialogBuilder(this, R.style.TransparentDialog)
+            .setView(dialogBinding.root)
+            .setCancelable(false)
+            .create()
+
+        dialogBinding.btnDialogDone.setOnClickListener    { dialog.dismiss(); finish() }
+        dialogBinding.btnDialogRestart.setOnClickListener { dialog.dismiss(); restartSession() }
+
+        dialog.show()
     }
 
     private fun toggleShuffle() {
@@ -410,7 +412,7 @@ class StudyActivity : AppCompatActivity() {
             else           -> "All"
         }
         b.tvCardsLeft.text = "$left cards left"
-        b.tvStats.text     = "Known $knownCount • Hard $hardCount • Shuffle $shuffleText • $modeText"
+        b.tvStats.text     = "Known $knownCount \u2022 Hard $hardCount \u2022 Shuffle $shuffleText \u2022 $modeText"
     }
 
     private fun updateCardUi() {
