@@ -229,13 +229,11 @@ class DeckCardsActivity : AppCompatActivity() {
 
     // ── Real Report Dialog ────────────────────────────────────────────────────
     private fun showReportDialog() {
-        val session = SessionManager(this)
-        val me = session.load()
-        val reporterUserId = me?.id ?: 0
-
+        val me = SessionManager(this).load()
+        // Both args need Int — deckId is Long, me.id is Long → cast both to Int
         val dialog = DeckContentReportDialogFragment.newInstance(
             deckId         = deckId.toInt(),
-            reporterUserId = reporterUserId
+            reporterUserId = (me?.id ?: 0L).toInt()
         )
         dialog.show(supportFragmentManager, "deck_report")
     }
