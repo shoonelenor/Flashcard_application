@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Colour selector for BottomNavigationView labels.
+    Active   = stardeck_bottom_nav_text_active  (#3A8DFF)
+    Inactive = stardeck_bottom_nav_text_inactive (#7B88A8)
+-->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="#FF3A8DFF" android:state_checked="true" />
+    <item android:color="#FF7B88A8" />
+</selector>

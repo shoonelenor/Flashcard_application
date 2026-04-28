@@ -1,21 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- ─── Base ─────────────────────────────────────────────────── -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
+    <!-- ─── StarDeck Brand (existing — unchanged for compatibility) ── -->
     <color name="stardeck_bg_top">#FF0D1736</color>
     <color name="stardeck_bg_bottom">#FF050B18</color>
     <color name="stardeck_glow">#332A6CFF</color>
 
     <color name="stardeck_primary">#FF4F6BFF</color>
+    <color name="stardeck_primary_dark">#FF3A52E0</color>
+    <color name="stardeck_primary_light">#FF7B91FF</color>
     <color name="stardeck_link">#FF5D71FF</color>
 
     <color name="stardeck_text_primary">#FFF5F7FF</color>
     <color name="stardeck_text_secondary">#FF9CA7C7</color>
     <color name="stardeck_text_hint">#FF6F7898</color>
+    <color name="stardeck_text_disabled">#FF3D4A6B</color>
 
     <color name="stardeck_field_bg">#FF101A37</color>
     <color name="stardeck_field_stroke">#FF1F2B4D</color>
+    <color name="stardeck_field_stroke_focused">#FF4F6BFF</color>
+    <color name="stardeck_field_stroke_error">#FFFF5C7A</color>
 
     <color name="stardeck_dialog_bg">#FF18234A</color>
     <color name="stardeck_dialog_stroke">#FF2F3D6E</color>
@@ -23,20 +30,56 @@
     <color name="stardeck_logo_start">#FF6A5CFF</color>
     <color name="stardeck_logo_end">#FF25C5FF</color>
 
-    <!-- bottom navigation -->
+    <!-- ─── Surface Layers (dark-space hierarchy) ────────────────── -->
+    <!-- bg → surface → surface_2 → surface_offset (deepest) -->
+    <color name="stardeck_surface">#FF0D1736</color>
+    <color name="stardeck_surface_2">#FF111E40</color>
+    <color name="stardeck_surface_card">#FF18234A</color>
+    <color name="stardeck_surface_elevated">#FF1E2D59</color>
+    <color name="stardeck_divider">#FF1F2B4D</color>
+    <color name="stardeck_divider_subtle">#FF151F3A</color>
+    <color name="stardeck_scrim">#CC050B18</color>
+
+    <!-- ─── Bottom Navigation ──────────────────────────────────────── -->
     <color name="stardeck_bottom_nav_bg">#FF081227</color>
     <color name="stardeck_bottom_nav_stroke">#FF12264A</color>
-
     <color name="stardeck_bottom_nav_icon_active">#FF3A8DFF</color>
     <color name="stardeck_bottom_nav_icon_inactive">#FF7B88A8</color>
-
     <color name="stardeck_bottom_nav_text_active">#FF3A8DFF</color>
     <color name="stardeck_bottom_nav_text_inactive">#FF7B88A8</color>
 
-    <!-- Stats screen background -->
-    <color name="colorBackground">#FF0D1736</color>
+    <!-- ─── Semantic State Colors ─────────────────────────────────── -->
+    <!-- Success (green) -->
+    <color name="stardeck_success">#FF34D399</color>
+    <color name="stardeck_success_bg">#1A34D399</color>
+    <color name="stardeck_success_text">#FF6EE7B7</color>
 
-    <!-- Aliases used by AdminStatsFragment / ManagerStatsFragment -->
+    <!-- Warning (amber) -->
+    <color name="stardeck_warning">#FFFBBF24</color>
+    <color name="stardeck_warning_bg">#1AFBBF24</color>
+    <color name="stardeck_warning_text">#FFFCD34D</color>
+
+    <!-- Error (rose) -->
+    <color name="stardeck_error">#FFFF5C7A</color>
+    <color name="stardeck_error_bg">#1AFF5C7A</color>
+    <color name="stardeck_error_text">#FFFF8FA3</color>
+
+    <!-- Info (sky blue) -->
+    <color name="stardeck_info">#FF38BDF8</color>
+    <color name="stardeck_info_bg">#1A38BDF8</color>
+
+    <!-- ─── Premium / Gold ────────────────────────────────────────── -->
+    <color name="stardeck_gold">#FFFBBF24</color>
+    <color name="stardeck_gold_dark">#FFD97706</color>
+    <color name="stardeck_gold_text">#FFFCD34D</color>
+
+    <!-- ─── Ripple / Overlay ─────────────────────────────────────── -->
+    <color name="stardeck_ripple">#33FFFFFF</color>
+    <color name="stardeck_overlay_low">#1AFFFFFF</color>
+    <color name="stardeck_overlay_medium">#33FFFFFF</color>
+
+    <!-- ─── Legacy aliases (keep for existing usages) ───────────── -->
+    <color name="colorBackground">#FF0D1736</color>
     <color name="colorPrimary">#FF4F6BFF</color>
     <color name="teal_700">#FF3A8DFF</color>
 </resources>
