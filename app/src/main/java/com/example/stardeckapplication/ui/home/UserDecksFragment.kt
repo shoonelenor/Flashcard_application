@@ -111,7 +111,6 @@ class UserDecksFragment : Fragment(R.layout.fragment_user_decks) {
             (activity as? UserHomeActivity)?.openTab(R.id.nav_explore)
         }
 
-        // ✅ Wire AI Generate button to AiGenerateActivity
         b.btnAiGenerate.setOnClickListener {
             startActivity(Intent(requireContext(), AiGenerateActivity::class.java))
         }
@@ -146,7 +145,7 @@ class UserDecksFragment : Fragment(R.layout.fragment_user_decks) {
             postUi {
                 isPremiumUser = premium
                 all = decks
-                b.tvStats.text = "${decks.size} decks • $cardCount cards"
+                b.tvStats.text = "${decks.size} decks \u2022 $cardCount cards"
                 applyFilterSortAndRender()
                 inFlight.set(false)
             }
@@ -193,7 +192,7 @@ class UserDecksFragment : Fragment(R.layout.fragment_user_decks) {
     }
 
     private fun showSortDialog() {
-        val options = arrayOf("Recent", "A–Z", "Premium first")
+        val options = arrayOf("Recent", "A\u2013Z", "Premium first")
         val current = when (sortMode) {
             SortMode.RECENT -> 0
             SortMode.A_Z -> 1
@@ -226,6 +225,7 @@ class UserDecksFragment : Fragment(R.layout.fragment_user_decks) {
         startActivity(
             Intent(requireContext(), DeckCardsActivity::class.java)
                 .putExtra(DeckCardsActivity.EXTRA_DECK_ID, deck.id)
+                .putExtra(DeckCardsActivity.EXTRA_DECK_TITLE, deck.title)   // ← fix: pass title
         )
     }
 
@@ -350,7 +350,7 @@ class UserDecksFragment : Fragment(R.layout.fragment_user_decks) {
                             if (deckId > 0L) {
                                 val unlocked = achievementSync.syncForUser(me.id)
                                 val message = if (unlocked > 0) {
-                                    "Deck created • $unlocked achievement(s) unlocked!"
+                                    "Deck created \u2022 $unlocked achievement(s) unlocked!"
                                 } else {
                                     "Deck created"
                                 }

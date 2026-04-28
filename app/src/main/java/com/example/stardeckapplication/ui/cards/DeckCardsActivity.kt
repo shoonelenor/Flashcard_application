@@ -16,6 +16,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.stardeckapplication.R
 import com.example.stardeckapplication.db.CardDao
 import com.example.stardeckapplication.db.CardDao.Card
+import com.example.stardeckapplication.ui.home.DeckContentReportDialogFragment
+import com.example.stardeckapplication.util.SessionManager
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
@@ -27,6 +29,7 @@ class DeckCardsActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_DECK_ID          = "deck_id"
+        const val EXTRA_DECK_TITLE       = "deck_title"
         const val EXTRA_READ_ONLY_PUBLIC = "read_only_public"
     }
 
@@ -47,7 +50,7 @@ class DeckCardsActivity : AppCompatActivity() {
     private lateinit var tvCount:             TextView
     private lateinit var btnStudy:            MaterialButton
     private lateinit var btnQuiz:             MaterialButton
-    private lateinit var btnOverflow:         ImageButton   // was btnReport — matches R.id.btnOverflow in layout
+    private lateinit var btnOverflow:         ImageButton
     private lateinit var rvCards:             RecyclerView
     private lateinit var groupEmpty:          View
     private lateinit var fabAdd:              FloatingActionButton
@@ -116,7 +119,7 @@ class DeckCardsActivity : AppCompatActivity() {
         setContentView(R.layout.activity_deck_cards)
 
         deckId     = intent.getLongExtra(EXTRA_DECK_ID, -1L)
-        deckTitle  = intent.getStringExtra("deck_title") ?: ""
+        deckTitle  = intent.getStringExtra(EXTRA_DECK_TITLE) ?: ""
         isReadOnly = intent.getBooleanExtra(EXTRA_READ_ONLY_PUBLIC, false)
         if (deckId == -1L) { finish(); return }
 
@@ -138,7 +141,7 @@ class DeckCardsActivity : AppCompatActivity() {
         tvCount             = findViewById(R.id.tvCount)
         btnStudy            = findViewById(R.id.btnStudy)
         btnQuiz             = findViewById(R.id.btnQuiz)
-        btnOverflow         = findViewById(R.id.btnOverflow)   // fixed: was R.id.btnReport
+        btnOverflow         = findViewById(R.id.btnOverflow)
         rvCards             = findViewById(R.id.rvCards)
         groupEmpty          = findViewById(R.id.groupEmpty)
         fabAdd              = findViewById(R.id.fabAdd)
@@ -158,7 +161,7 @@ class DeckCardsActivity : AppCompatActivity() {
     private fun setupToolbar() {
         setSupportActionBar(toolbar)
         supportActionBar?.apply {
-            title = deckTitle
+            title = deckTitle.ifBlank { "Deck" }
             setDisplayHomeAsUpEnabled(true)
         }
         toolbar.setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
@@ -166,12 +169,10 @@ class DeckCardsActivity : AppCompatActivity() {
 
     private fun setupReadOnlyMode() {
         if (isReadOnly) {
-            // In read-only/public mode: hide FAB & Quiz, show Overflow (report) button
             fabAdd.hide()
-            btnQuiz.visibility    = View.GONE
+            btnQuiz.visibility     = View.GONE
             btnOverflow.visibility = View.VISIBLE
         } else {
-            // Owner mode: hide overflow button
             btnOverflow.visibility = View.GONE
         }
     }
@@ -198,7 +199,6 @@ class DeckCardsActivity : AppCompatActivity() {
 
     // ── Study / Quiz / Report buttons ─────────────────────────────────────────
     private fun setupActionButtons() {
-        // Study — uses "extra_deck_id" as required by StudyActivity
         btnStudy.setOnClickListener {
             val intent = android.content.Intent(
                 this,
@@ -209,7 +209,6 @@ class DeckCardsActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
-        // Quiz — uses "extra_deck_id" as required by QuizActivity
         btnQuiz.setOnClickListener {
             if (cardList.size < 2) {
                 Toast.makeText(this, "You need at least 2 cards to start a quiz", Toast.LENGTH_SHORT).show()
@@ -223,29 +222,22 @@ class DeckCardsActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
-        // Overflow / Report button (visible only in read-only/public mode)
         btnOverflow.setOnClickListener {
             showReportDialog()
         }
     }
 
+    // ── Real Report Dialog ────────────────────────────────────────────────────
     private fun showReportDialog() {
-        val reasons = arrayOf(
-            "Incorrect information",
-            "Inappropriate content",
-            "Duplicate deck",
-            "Spam",
-            "Other"
+        val session = SessionManager(this)
+        val me = session.load()
+        val reporterUserId = me?.id ?: 0
+
+        val dialog = DeckContentReportDialogFragment.newInstance(
+            deckId         = deckId.toInt(),
+            reporterUserId = reporterUserId
         )
-        var selectedReason = reasons[0]
-        android.app.AlertDialog.Builder(this)
-            .setTitle("Report this deck")
-            .setSingleChoiceItems(reasons, 0) { _, which -> selectedReason = reasons[which] }
-            .setPositiveButton("Submit Report") { _, _ ->
-                Toast.makeText(this, "Report submitted: $selectedReason", Toast.LENGTH_SHORT).show()
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
+        dialog.show(supportFragmentManager, "deck_report")
     }
 
     // ── Form buttons ──────────────────────────────────────────────────────────
@@ -292,7 +284,6 @@ class DeckCardsActivity : AppCompatActivity() {
         tvCount.text          = "$count card${if (count == 1) "" else "s"}"
         groupEmpty.visibility = if (count == 0) View.VISIBLE else View.GONE
         rvCards.visibility    = if (count == 0) View.GONE    else View.VISIBLE
-        // Show Quiz button only if owner and has enough cards
         if (!isReadOnly) {
             btnQuiz.visibility = if (count >= 2) View.VISIBLE else View.GONE
         }
