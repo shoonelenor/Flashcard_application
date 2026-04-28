@@ -38,14 +38,13 @@ class ManagerDeckCardsActivity : AppCompatActivity() {
     private lateinit var b: ActivityManagerDeckCardsBinding
 
     private val dbHelper  by lazy { StarDeckDbHelper(this) }
-    private val deckDao   by lazy { DeckDao(dbHelper) }     // ✅ adminGetCardsForDeck, adminCreateCard, adminUpdateCard, adminDeleteCard
-    private val cardDao   by lazy { CardDao(dbHelper) }     // ✅ managerGetCardsForDeck
+    private val deckDao   by lazy { DeckDao(dbHelper) }
+    private val cardDao   by lazy { CardDao(dbHelper) }
     private val session   by lazy { SessionManager(this) }
 
     private var deckId     : Long       = -1L
     private var screenMode : ScreenMode = ScreenMode.MANAGER_REVIEW
 
-    // ✅ DeckDao.CardRow — correct home
     private var allCards   : List<DeckDao.CardRow> = emptyList()
 
     private val adapter by lazy {
@@ -129,10 +128,8 @@ class ManagerDeckCardsActivity : AppCompatActivity() {
         val me = session.load() ?: return
 
         allCards = if (isAdminEditMode()) {
-            // ✅ already returns List<DeckDao.CardRow>
             deckDao.adminGetCardsForDeck(adminUserId = me.id, deckId = deckId)
         } else {
-            // ✅ map CardDao.CardRow → DeckDao.CardRow so both branches match
             cardDao.managerGetCardsForDeck(deckId).map { c ->
                 DeckDao.CardRow(
                     id        = c.id,
@@ -183,12 +180,12 @@ class ManagerDeckCardsActivity : AppCompatActivity() {
                 d.tilFront.error = null
                 d.tilBack.error  = null
 
-                val front = d.etFront.text?.toString().orEmpty().trim()
-                val back  = d.etBack.text?.toString().orEmpty().trim()
+                // etFrontEdit is the TextInputEditText inside tilFront
+                val front = d.etFrontEdit.text?.toString().orEmpty().trim()
+                val back  = d.etBackEdit.text?.toString().orEmpty().trim()
 
                 if (!validate(front, back, d)) return@setOnClickListener
 
-                // ✅ deckDao.adminCreateCard
                 val id = deckDao.adminCreateCard(
                     adminUserId = me.id,
                     deckId      = deckId,
@@ -214,8 +211,9 @@ class ManagerDeckCardsActivity : AppCompatActivity() {
 
         val d = DialogEditCardBinding.inflate(layoutInflater)
         d.tvTitle.text = "Edit Card"
-        d.etFront.setText(card.front)
-        d.etBack.setText(card.back)
+        // etFrontEdit / etBackEdit are the TextInputEditText views inside tilFront / tilBack
+        d.etFrontEdit.setText(card.front)
+        d.etBackEdit.setText(card.back)
 
         val dialog = MaterialAlertDialogBuilder(this)
             .setView(d.root)
@@ -228,12 +226,11 @@ class ManagerDeckCardsActivity : AppCompatActivity() {
                 d.tilFront.error = null
                 d.tilBack.error  = null
 
-                val front = d.etFront.text?.toString().orEmpty().trim()
-                val back  = d.etBack.text?.toString().orEmpty().trim()
+                val front = d.etFrontEdit.text?.toString().orEmpty().trim()
+                val back  = d.etBackEdit.text?.toString().orEmpty().trim()
 
                 if (!validate(front, back, d)) return@setOnClickListener
 
-                // ✅ deckDao.adminUpdateCard
                 val rows = deckDao.adminUpdateCard(
                     adminUserId = me.id,
                     deckId      = deckId,
@@ -262,7 +259,6 @@ class ManagerDeckCardsActivity : AppCompatActivity() {
             .setTitle("Delete card?")
             .setMessage("This card will be deleted.")
             .setPositiveButton("Delete") { _, _ ->
-                // ✅ deckDao.adminDeleteCard
                 val rows = deckDao.adminDeleteCard(
                     adminUserId = me.id,
                     deckId      = deckId,
@@ -290,7 +286,7 @@ class ManagerDeckCardsActivity : AppCompatActivity() {
     private fun isAdminEditMode(): Boolean = screenMode == ScreenMode.ADMIN_EDIT
 
     // ══════════════════════════════════════════════════════════════════════
-    //  ADAPTER — uses DeckDao.CardRow throughout
+    //  ADAPTER
     // ══════════════════════════════════════════════════════════════════════
 
     private class CardsAdapter(
@@ -346,9 +342,9 @@ class ManagerDeckCardsActivity : AppCompatActivity() {
                 b.tvBack.text  = card.back
                 b.tvHint.text  = if (isExpanded) "Tap to hide answer" else "Tap to show answer"
 
-                b.divider.visibility  = if (isExpanded) View.VISIBLE else View.GONE
-                b.tvBack.visibility   = if (isExpanded) View.VISIBLE else View.GONE
-                b.btnEdit.visibility  = if (canEdit) View.VISIBLE else View.GONE
+                b.divider.visibility   = if (isExpanded) View.VISIBLE else View.GONE
+                b.tvBack.visibility    = if (isExpanded) View.VISIBLE else View.GONE
+                b.btnEdit.visibility   = if (canEdit) View.VISIBLE else View.GONE
                 b.btnDelete.visibility = if (canEdit) View.VISIBLE else View.GONE
 
                 b.root.setOnClickListener      { onToggleId(card.id) }
