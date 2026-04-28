@@ -70,6 +70,7 @@ class MyDecksActivity : AppCompatActivity() {
         startActivity(
             Intent(this, DeckCardsActivity::class.java)
                 .putExtra(DeckCardsActivity.EXTRA_DECK_ID, deck.id)
+                .putExtra("deck_title", deck.title)   // fixed: toolbar title was blank
         )
     }
 
