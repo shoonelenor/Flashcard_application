@@ -32,4 +32,7 @@
 
     <color name="stardeck_bottom_nav_text_active">#FF3A8DFF</color>
     <color name="stardeck_bottom_nav_text_inactive">#FF7B88A8</color>
+
+    <!-- Stats screen background -->
+    <color name="colorBackground">#FF0D1736</color>
 </resources>
