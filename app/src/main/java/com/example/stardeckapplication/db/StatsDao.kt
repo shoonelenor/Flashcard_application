@@ -95,6 +95,12 @@ class StatsDao(private val helper: StarDeckDbHelper) {
 
     // ── User study stats ─────────────────────────────────────────────────────
 
+    /** Total number of study sessions the user has ever completed */
+    fun getTotalStudyCount(userId: Long): Int =
+        scalarInt(
+            "SELECT COUNT(*) FROM ${DbContract.TSTUDYSESSIONS} WHERE ${DbContract.SUSERID} = $userId"
+        )
+
     /** Number of study sessions the user completed today */
     fun getTodayStudyCount(userId: Long): Int {
         val sql = """
@@ -147,8 +153,8 @@ class StatsDao(private val helper: StarDeckDbHelper) {
         db.rawQuery(sql, arrayOf(userId.toString())).use { c ->
             if (!c.moveToFirst()) return null
             return RecentDeckRow(
-                deckId       = c.getLong(0),
-                title        = c.getString(1),
+                deckId        = c.getLong(0),
+                title         = c.getString(1),
                 lastStudiedAt = c.getLong(2)
             )
         }
@@ -192,9 +198,9 @@ class StatsDao(private val helper: StarDeckDbHelper) {
             while (c.moveToNext()) map[c.getString(0)] = c.getInt(1)
         }
 
-        val result = mutableListOf<DayCount>()
-        val cal    = Calendar.getInstance()
-        val sdf    = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val result   = mutableListOf<DayCount>()
+        val cal      = Calendar.getInstance()
+        val sdf      = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
         val labelFmt = SimpleDateFormat("EEE", Locale.getDefault())
         val todayStr = sdf.format(cal.time)
         cal.add(Calendar.DAY_OF_YEAR, -6)
