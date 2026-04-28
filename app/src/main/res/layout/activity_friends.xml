@@ -1,17 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@color/stardeck_bg_top">
 
-    <!--
-        NO MaterialToolbar here.
-        FriendsActivity.kt uses supportActionBar with setDisplayHomeAsUpEnabled(true)
-        + onOptionsItemSelected for back navigation.
-        A floating MaterialToolbar without setSupportActionBar() has no click listener
-        attached — that is why the exit/back button was not working.
-    -->
+    <!-- Toolbar — wired via setSupportActionBar(toolbar) in FriendsActivity.kt -->
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/stardeck_bg_top"
+        android:title="Friends"
+        android:titleTextColor="@color/stardeck_text_primary"
+        app:navigationIcon="@android:drawable/ic_menu_revert" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -22,13 +25,7 @@
         android:paddingEnd="16dp"
         android:paddingBottom="16dp">
 
-        <!--
-            Tab Row — 3 equal-width buttons.
-            Fixed: height wrap_content + minHeight 52dp so buttons are not cramped.
-            textSize raised to 13sp, insetTop/insetBottom set to 0 to use full height.
-            Using OutlinedButton style for all 3 so text fits — active state is set
-            via backgroundTint in Kotlin's updateTabState().
-        -->
+        <!-- Tab Row — 3 equal-width buttons -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

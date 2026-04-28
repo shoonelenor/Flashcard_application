@@ -6,14 +6,15 @@
     android:orientation="vertical"
     android:background="@color/stardeck_bg_top">
 
-    <!--
-        NO MaterialToolbar here.
-        ReportIssueActivity.kt uses supportActionBar (AppCompatActivity's built-in action bar)
-        with setDisplayHomeAsUpEnabled(true) + onOptionsItemSelected for back navigation.
-        A floating MaterialToolbar without setSupportActionBar() wired up has no click listener
-        — that is why the exit/back button was not working.
-        The supportActionBar renders the title and back arrow automatically.
-    -->
+    <!-- Toolbar — wired via setSupportActionBar(toolbar) in ReportIssueActivity.kt -->
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/stardeck_bg_top"
+        android:title="Help / Report Issue"
+        android:titleTextColor="@color/stardeck_text_primary"
+        app:navigationIcon="@android:drawable/ic_menu_revert" />
 
     <ScrollView
         android:layout_width="match_parent"
@@ -24,7 +25,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingTop="16dp"
+            android:paddingTop="8dp"
             android:paddingStart="20dp"
             android:paddingEnd="20dp"
             android:paddingBottom="32dp">

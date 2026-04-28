@@ -1,7 +1,6 @@
 package com.example.stardeckapplication.ui.profile
 
 import android.os.Bundle
-import android.view.MenuItem
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Button
@@ -15,6 +14,7 @@ import com.example.stardeckapplication.db.DbContract
 import com.example.stardeckapplication.db.FriendDao
 import com.example.stardeckapplication.db.StarDeckDbHelper
 import com.example.stardeckapplication.util.SessionManager
+import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 class FriendsActivity : AppCompatActivity() {
@@ -34,19 +34,20 @@ class FriendsActivity : AppCompatActivity() {
     private var currentUserId: Long = -1L
     private var currentMode: String = MODE_FRIENDS
 
-    private var friends  = listOf<FriendDao.FriendRow>()
-    private var incoming = listOf<FriendDao.FriendRow>()
-    private var sent     = listOf<FriendDao.FriendRow>()
+    private var friends    = listOf<FriendDao.FriendRow>()
+    private var incoming   = listOf<FriendDao.FriendRow>()
+    private var sent       = listOf<FriendDao.FriendRow>()
     private var foundUsers = listOf<FriendDao.UserLite>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_friends)
 
-        supportActionBar?.apply {
-            title = "Friends"
-            setDisplayHomeAsUpEnabled(true)
-        }
+        // Wire toolbar exactly like AchievementsActivity so the back arrow works
+        val toolbar: MaterialToolbar = findViewById(R.id.toolbar)
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.title = "Friends"
 
         session = SessionManager(this)
         dao     = FriendDao(StarDeckDbHelper(this))
@@ -89,7 +90,14 @@ class FriendsActivity : AppCompatActivity() {
         refreshAll()
     }
 
-    // ── Data ─────────────────────────────────────────────────────────────────
+    // ── Back navigation (same pattern as AchievementsActivity) ────────────────
+
+    override fun onSupportNavigateUp(): Boolean {
+        finish()
+        return true
+    }
+
+    // ── Data ──────────────────────────────────────────────────────────────────
 
     private fun refreshAll() {
         friends  = dao.getFriends(currentUserId)
@@ -212,14 +220,6 @@ class FriendsActivity : AppCompatActivity() {
 
     private fun toast(msg: String) =
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.itemId == android.R.id.home) {
-            onBackPressedDispatcher.onBackPressed()
-            return true
-        }
-        return super.onOptionsItemSelected(item)
-    }
 
     companion object {
         private const val MODE_FRIENDS  = "friends"
