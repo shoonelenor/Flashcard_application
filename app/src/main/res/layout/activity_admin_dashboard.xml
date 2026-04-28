@@ -29,10 +29,9 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gap="16dp">
+            android:orientation="vertical">
 
-            <!-- ── Section: Overview KPIs ──────────────────────────────── -->
+            <!-- ── Section: Overview KPIs ──────────────────────────────────── -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -41,21 +40,19 @@
                 android:textStyle="bold"
                 android:layout_marginBottom="8dp" />
 
-            <androidx.gridlayout.widget.GridLayout
+            <!-- Row 1: Total Users | Premium -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:columnCount="2"
-                app:rowCount="5"
-                app:useDefaultMargins="true">
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp">
 
-                <!-- Users -->
                 <com.google.android.material.card.MaterialCardView
                     style="@style/Widget.Material3.CardView.Elevated"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    app:layout_columnWeight="1"
+                    android:layout_weight="1"
                     android:layout_marginEnd="4dp"
-                    android:layout_marginBottom="8dp"
                     app:cardCornerRadius="12dp">
                     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:orientation="vertical" android:padding="16dp">
@@ -63,19 +60,18 @@
                             android:text="Total Users" android:textAppearance="?attr/textAppearanceLabelMedium"
                             android:alpha="0.7" />
                         <TextView android:id="@+id/tvTotalUsers" android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" android:textAppearance="?attr/textAppearanceHeadlineMedium"
+                            android:layout_height="wrap_content"
+                            android:textAppearance="?attr/textAppearanceHeadlineMedium"
                             android:textStyle="bold" tools:text="124" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- Premium Users -->
                 <com.google.android.material.card.MaterialCardView
                     style="@style/Widget.Material3.CardView.Elevated"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    app:layout_columnWeight="1"
+                    android:layout_weight="1"
                     android:layout_marginStart="4dp"
-                    android:layout_marginBottom="8dp"
                     app:cardCornerRadius="12dp">
                     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:orientation="vertical" android:padding="16dp">
@@ -83,19 +79,26 @@
                             android:text="Premium" android:textAppearance="?attr/textAppearanceLabelMedium"
                             android:alpha="0.7" />
                         <TextView android:id="@+id/tvPremiumUsers" android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" android:textAppearance="?attr/textAppearanceHeadlineMedium"
+                            android:layout_height="wrap_content"
+                            android:textAppearance="?attr/textAppearanceHeadlineMedium"
                             android:textStyle="bold" android:textColor="#d19900" tools:text="32" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
 
-                <!-- Disabled Users -->
+            <!-- Row 2: Disabled | Total Decks -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp">
+
                 <com.google.android.material.card.MaterialCardView
                     style="@style/Widget.Material3.CardView.Elevated"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    app:layout_columnWeight="1"
+                    android:layout_weight="1"
                     android:layout_marginEnd="4dp"
-                    android:layout_marginBottom="8dp"
                     app:cardCornerRadius="12dp">
                     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:orientation="vertical" android:padding="16dp">
@@ -103,19 +106,18 @@
                             android:text="Disabled" android:textAppearance="?attr/textAppearanceLabelMedium"
                             android:alpha="0.7" />
                         <TextView android:id="@+id/tvDisabledUsers" android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" android:textAppearance="?attr/textAppearanceHeadlineMedium"
+                            android:layout_height="wrap_content"
+                            android:textAppearance="?attr/textAppearanceHeadlineMedium"
                             android:textStyle="bold" android:textColor="#a12c7b" tools:text="3" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- Total Decks -->
                 <com.google.android.material.card.MaterialCardView
                     style="@style/Widget.Material3.CardView.Elevated"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    app:layout_columnWeight="1"
+                    android:layout_weight="1"
                     android:layout_marginStart="4dp"
-                    android:layout_marginBottom="8dp"
                     app:cardCornerRadius="12dp">
                     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:orientation="vertical" android:padding="16dp">
@@ -123,19 +125,26 @@
                             android:text="Total Decks" android:textAppearance="?attr/textAppearanceLabelMedium"
                             android:alpha="0.7" />
                         <TextView android:id="@+id/tvTotalDecks" android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" android:textAppearance="?attr/textAppearanceHeadlineMedium"
+                            android:layout_height="wrap_content"
+                            android:textAppearance="?attr/textAppearanceHeadlineMedium"
                             android:textStyle="bold" tools:text="88" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
 
-                <!-- Hidden Decks -->
+            <!-- Row 3: Hidden Decks | Total Cards -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp">
+
                 <com.google.android.material.card.MaterialCardView
                     style="@style/Widget.Material3.CardView.Elevated"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    app:layout_columnWeight="1"
+                    android:layout_weight="1"
                     android:layout_marginEnd="4dp"
-                    android:layout_marginBottom="8dp"
                     app:cardCornerRadius="12dp">
                     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:orientation="vertical" android:padding="16dp">
@@ -143,19 +152,18 @@
                             android:text="Hidden Decks" android:textAppearance="?attr/textAppearanceLabelMedium"
                             android:alpha="0.7" />
                         <TextView android:id="@+id/tvHiddenDecks" android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" android:textAppearance="?attr/textAppearanceHeadlineMedium"
+                            android:layout_height="wrap_content"
+                            android:textAppearance="?attr/textAppearanceHeadlineMedium"
                             android:textStyle="bold" android:textColor="#a13544" tools:text="5" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- Total Cards -->
                 <com.google.android.material.card.MaterialCardView
                     style="@style/Widget.Material3.CardView.Elevated"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    app:layout_columnWeight="1"
+                    android:layout_weight="1"
                     android:layout_marginStart="4dp"
-                    android:layout_marginBottom="8dp"
                     app:cardCornerRadius="12dp">
                     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:orientation="vertical" android:padding="16dp">
@@ -163,19 +171,26 @@
                             android:text="Total Cards" android:textAppearance="?attr/textAppearanceLabelMedium"
                             android:alpha="0.7" />
                         <TextView android:id="@+id/tvTotalCards" android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" android:textAppearance="?attr/textAppearanceHeadlineMedium"
+                            android:layout_height="wrap_content"
+                            android:textAppearance="?attr/textAppearanceHeadlineMedium"
                             android:textStyle="bold" tools:text="1204" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
 
-                <!-- Study Sessions -->
+            <!-- Row 4: Study Sessions | Open Reports -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp">
+
                 <com.google.android.material.card.MaterialCardView
                     style="@style/Widget.Material3.CardView.Elevated"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    app:layout_columnWeight="1"
+                    android:layout_weight="1"
                     android:layout_marginEnd="4dp"
-                    android:layout_marginBottom="8dp"
                     app:cardCornerRadius="12dp">
                     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:orientation="vertical" android:padding="16dp">
@@ -183,19 +198,18 @@
                             android:text="Study Sessions" android:textAppearance="?attr/textAppearanceLabelMedium"
                             android:alpha="0.7" />
                         <TextView android:id="@+id/tvStudySessions" android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" android:textAppearance="?attr/textAppearanceHeadlineMedium"
+                            android:layout_height="wrap_content"
+                            android:textAppearance="?attr/textAppearanceHeadlineMedium"
                             android:textStyle="bold" tools:text="340" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- Open Reports -->
                 <com.google.android.material.card.MaterialCardView
                     style="@style/Widget.Material3.CardView.Elevated"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    app:layout_columnWeight="1"
+                    android:layout_weight="1"
                     android:layout_marginStart="4dp"
-                    android:layout_marginBottom="8dp"
                     app:cardCornerRadius="12dp">
                     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:orientation="vertical" android:padding="16dp">
@@ -203,19 +217,26 @@
                             android:text="Open Reports" android:textAppearance="?attr/textAppearanceLabelMedium"
                             android:alpha="0.7" />
                         <TextView android:id="@+id/tvOpenReports" android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" android:textAppearance="?attr/textAppearanceHeadlineMedium"
+                            android:layout_height="wrap_content"
+                            android:textAppearance="?attr/textAppearanceHeadlineMedium"
                             android:textStyle="bold" android:textColor="#a13544" tools:text="2" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
 
-                <!-- Active This Month -->
+            <!-- Row 5: Active Month | Inactive Month -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp">
+
                 <com.google.android.material.card.MaterialCardView
                     style="@style/Widget.Material3.CardView.Elevated"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    app:layout_columnWeight="1"
+                    android:layout_weight="1"
                     android:layout_marginEnd="4dp"
-                    android:layout_marginBottom="8dp"
                     app:cardCornerRadius="12dp">
                     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:orientation="vertical" android:padding="16dp">
@@ -223,19 +244,18 @@
                             android:text="Active (month)" android:textAppearance="?attr/textAppearanceLabelMedium"
                             android:alpha="0.7" />
                         <TextView android:id="@+id/tvActiveThisMonth" android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" android:textAppearance="?attr/textAppearanceHeadlineMedium"
+                            android:layout_height="wrap_content"
+                            android:textAppearance="?attr/textAppearanceHeadlineMedium"
                             android:textStyle="bold" android:textColor="#437a22" tools:text="91" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- Inactive This Month -->
                 <com.google.android.material.card.MaterialCardView
                     style="@style/Widget.Material3.CardView.Elevated"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    app:layout_columnWeight="1"
+                    android:layout_weight="1"
                     android:layout_marginStart="4dp"
-                    android:layout_marginBottom="8dp"
                     app:cardCornerRadius="12dp">
                     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:orientation="vertical" android:padding="16dp">
@@ -243,44 +263,41 @@
                             android:text="Inactive (month)" android:textAppearance="?attr/textAppearanceLabelMedium"
                             android:alpha="0.7" />
                         <TextView android:id="@+id/tvInactiveThisMonth" android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" android:textAppearance="?attr/textAppearanceHeadlineMedium"
+                            android:layout_height="wrap_content"
+                            android:textAppearance="?attr/textAppearanceHeadlineMedium"
                             android:textStyle="bold" android:textColor="#da7101" tools:text="33" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
 
-                <!-- Achievements Unlocked -->
-                <com.google.android.material.card.MaterialCardView
-                    style="@style/Widget.Material3.CardView.Elevated"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    app:layout_columnWeight="1"
-                    android:layout_marginEnd="4dp"
-                    android:layout_marginBottom="8dp"
-                    app:cardCornerRadius="12dp">
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:orientation="vertical" android:padding="16dp">
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:text="Achievements" android:textAppearance="?attr/textAppearanceLabelMedium"
-                            android:alpha="0.7" />
-                        <TextView android:id="@+id/tvAchievementsUnlocked" android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" android:textAppearance="?attr/textAppearanceHeadlineMedium"
-                            android:textStyle="bold" tools:text="56" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
+            <!-- Row 6: Achievements (single full-width) -->
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Material3.CardView.Elevated"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="12dp">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical" android:padding="16dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Achievements Unlocked" android:textAppearance="?attr/textAppearanceLabelMedium"
+                        android:alpha="0.7" />
+                    <TextView android:id="@+id/tvAchievementsUnlocked" android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="?attr/textAppearanceHeadlineMedium"
+                        android:textStyle="bold" tools:text="56" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
-            </androidx.gridlayout.widget.GridLayout>
-
-            <!-- ── Section: Pie Charts ──────────────────────────────────── -->
+            <!-- ── Section: Pie Charts ─────────────────────────────────────── -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Breakdowns"
                 android:textAppearance="?attr/textAppearanceTitleMedium"
                 android:textStyle="bold"
-                android:layout_marginTop="8dp"
                 android:layout_marginBottom="8dp" />
 
-            <!-- User status pie -->
             <com.google.android.material.card.MaterialCardView
                 style="@style/Widget.Material3.CardView.Elevated"
                 android:layout_width="match_parent"
@@ -299,7 +316,6 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Deck visibility pie -->
             <com.google.android.material.card.MaterialCardView
                 style="@style/Widget.Material3.CardView.Elevated"
                 android:layout_width="match_parent"
@@ -318,7 +334,6 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Monthly activity pie -->
             <com.google.android.material.card.MaterialCardView
                 style="@style/Widget.Material3.CardView.Elevated"
                 android:layout_width="match_parent"
@@ -337,7 +352,7 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- ── Section: Bar Charts ──────────────────────────────────── -->
+            <!-- ── Section: Bar Charts ─────────────────────────────────────── -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -347,7 +362,6 @@
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="8dp" />
 
-            <!-- Top categories bar -->
             <com.google.android.material.card.MaterialCardView
                 style="@style/Widget.Material3.CardView.Elevated"
                 android:layout_width="match_parent"
@@ -366,7 +380,6 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Top languages bar -->
             <com.google.android.material.card.MaterialCardView
                 style="@style/Widget.Material3.CardView.Elevated"
                 android:layout_width="match_parent"
@@ -385,7 +398,6 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Top subjects bar -->
             <com.google.android.material.card.MaterialCardView
                 style="@style/Widget.Material3.CardView.Elevated"
                 android:layout_width="match_parent"
