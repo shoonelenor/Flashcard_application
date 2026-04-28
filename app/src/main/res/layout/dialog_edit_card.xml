@@ -7,24 +7,35 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="20dp">
 
-        <!-- ── Front ──────────────────────────────────────────────────────── -->
+        <!-- Dialog title -->
         <TextView
+            android:id="@+id/tvTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Front"
+            android:text="Edit Card"
+            android:textSize="18sp"
             android:textStyle="bold"
-            android:layout_marginBottom="4dp" />
+            android:layout_marginBottom="16dp" />
 
-        <EditText
-            android:id="@+id/etFrontEdit"
+        <!-- ── Front ──────────────────────────────────────────────────────── -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilFront"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Front text"
-            android:inputType="textMultiLine"
-            android:minLines="2"
-            android:layout_marginBottom="4dp" />
+            android:layout_marginBottom="4dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etFront"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textMultiLine"
+                android:minLines="2" />
+
+        </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Front image preview -->
         <ImageView
@@ -64,21 +75,22 @@
         </LinearLayout>
 
         <!-- ── Back ───────────────────────────────────────────────────────── -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Back"
-            android:textStyle="bold"
-            android:layout_marginBottom="4dp" />
-
-        <EditText
-            android:id="@+id/etBackEdit"
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilBack"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Back text"
-            android:inputType="textMultiLine"
-            android:minLines="2"
-            android:layout_marginBottom="4dp" />
+            android:layout_marginBottom="4dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etBack"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textMultiLine"
+                android:minLines="2" />
+
+        </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Back image preview -->
         <ImageView

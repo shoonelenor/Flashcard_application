@@ -195,6 +195,32 @@ class CardDao {
         }
     }
 
+    /**
+     * Used by ManagerDeckCardsActivity to load cards for a deck in read-only
+     * review mode (no ownership / admin check required).
+     *
+     * Returns a list of [CardRow] which mirrors the fields exposed by
+     * [DeckDao.CardRow] so the activity can map between them.
+     */
+    fun managerGetCardsForDeck(deckId: Long): List<CardRow> {
+        val result = mutableListOf<CardRow>()
+        getCardsByDeck(deckId).use { cursor ->
+            val idIdx        = cursor.getColumnIndexOrThrow(DbContract.CID)
+            val frontIdx     = cursor.getColumnIndexOrThrow(DbContract.CFRONT)
+            val backIdx      = cursor.getColumnIndexOrThrow(DbContract.CBACK)
+            val createdAtIdx = cursor.getColumnIndexOrThrow(DbContract.CCREATEDAT)
+            while (cursor.moveToNext()) {
+                result += CardRow(
+                    id        = cursor.getLong(idIdx),
+                    front     = cursor.getString(frontIdx),
+                    back      = cursor.getString(backIdx),
+                    createdAt = cursor.getLong(createdAtIdx)
+                )
+            }
+        }
+        return result
+    }
+
     // ── Convenience data-class mapper ─────────────────────────────────────────
 
     /** Convenience: return all cards for [deckId] as a list of [Card] objects. */
@@ -239,7 +265,18 @@ class CardDao {
         }
     }
 
-    // ── Data class ────────────────────────────────────────────────────────────
+    // ── Data classes ──────────────────────────────────────────────────────────
+
+    /**
+     * Lightweight row used by [managerGetCardsForDeck].
+     * Mirrors [DeckDao.CardRow] so ManagerDeckCardsActivity can map between them.
+     */
+    data class CardRow(
+        val id: Long,
+        val front: String,
+        val back: String,
+        val createdAt: Long
+    )
 
     data class Card(
         val id: Long = 0L,

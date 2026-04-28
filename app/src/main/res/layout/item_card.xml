@@ -1,88 +1,84 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView
+<com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="8dp"
-    app:cardCornerRadius="8dp"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="6dp"
+    app:cardCornerRadius="12dp"
     app:cardElevation="2dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="12dp">
+        android:padding="16dp">
 
         <!-- Front text -->
         <TextView
-            android:id="@+id/tvCardFront"
+            android:id="@+id/tvFront"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textStyle="bold"
             android:textSize="15sp"
-            android:layout_marginBottom="4dp" />
+            android:textStyle="bold"
+            android:textColor="?attr/colorOnSurface" />
 
-        <!-- Front image (hidden when null) -->
-        <ImageView
-            android:id="@+id/imgCardFront"
+        <!-- Hint label: "Tap to show/hide answer" -->
+        <TextView
+            android:id="@+id/tvHint"
             android:layout_width="match_parent"
-            android:layout_height="120dp"
-            android:scaleType="centerCrop"
-            android:visibility="gone"
-            android:contentDescription="Card front image"
-            android:layout_marginBottom="8dp" />
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Tap to show answer"
+            android:textSize="12sp"
+            android:textColor="?attr/colorControlNormal" />
 
-        <!-- Divider -->
+        <!-- Divider (hidden when collapsed) -->
         <View
+            android:id="@+id/divider"
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:background="#DDDDDD"
-            android:layout_marginBottom="8dp" />
+            android:layout_marginVertical="8dp"
+            android:background="?attr/colorOutline"
+            android:visibility="gone" />
 
-        <!-- Back text -->
+        <!-- Back text (hidden when collapsed) -->
         <TextView
-            android:id="@+id/tvCardBack"
+            android:id="@+id/tvBack"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="14sp"
-            android:layout_marginBottom="4dp" />
+            android:textColor="?attr/colorOnSurface"
+            android:visibility="gone" />
 
-        <!-- Back image (hidden when null) -->
-        <ImageView
-            android:id="@+id/imgCardBack"
-            android:layout_width="match_parent"
-            android:layout_height="120dp"
-            android:scaleType="centerCrop"
-            android:visibility="gone"
-            android:contentDescription="Card back image"
-            android:layout_marginBottom="8dp" />
-
-        <!-- Action buttons -->
+        <!-- Edit / Delete buttons (visible only in admin-edit mode) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="end">
+            android:gravity="end"
+            android:layout_marginTop="8dp">
 
-            <ImageButton
-                android:id="@+id/btnEditCard"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:src="@android:drawable/ic_menu_edit"
-                android:contentDescription="Edit card"
-                android:background="?attr/selectableItemBackgroundBorderless" />
+            <Button
+                android:id="@+id/btnEdit"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Edit"
+                android:visibility="gone" />
 
-            <ImageButton
-                android:id="@+id/btnDeleteCard"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:src="@android:drawable/ic_menu_delete"
-                android:contentDescription="Delete card"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:layout_marginStart="8dp" />
+            <Button
+                android:id="@+id/btnDelete"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Delete"
+                android:textColor="@color/design_default_color_error"
+                android:visibility="gone" />
 
         </LinearLayout>
 
     </LinearLayout>
-</androidx.cardview.widget.CardView>
+
+</com.google.android.material.card.MaterialCardView>
