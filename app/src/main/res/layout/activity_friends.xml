@@ -5,65 +5,85 @@
     android:orientation="vertical"
     android:background="@color/stardeck_bg_top">
 
-    <!-- Toolbar -->
-    <com.google.android.material.appbar.MaterialToolbar
-        android:id="@+id/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="@color/stardeck_bg_top"
-        android:title="Friends"
-        android:titleTextColor="@color/stardeck_text_primary" />
+    <!--
+        NO MaterialToolbar here.
+        FriendsActivity.kt uses supportActionBar with setDisplayHomeAsUpEnabled(true)
+        + onOptionsItemSelected for back navigation.
+        A floating MaterialToolbar without setSupportActionBar() has no click listener
+        attached — that is why the exit/back button was not working.
+    -->
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
+        android:paddingTop="12dp"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
         android:paddingBottom="16dp">
 
-        <!-- Tab Row -->
+        <!--
+            Tab Row — 3 equal-width buttons.
+            Fixed: height wrap_content + minHeight 52dp so buttons are not cramped.
+            textSize raised to 13sp, insetTop/insetBottom set to 0 to use full height.
+            Using OutlinedButton style for all 3 so text fits — active state is set
+            via backgroundTint in Kotlin's updateTabState().
+        -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_marginBottom="16dp"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="14dp"
             android:orientation="horizontal"
-            android:background="@color/stardeck_field_bg"
-            android:padding="4dp">
+            android:weightSum="3">
 
             <Button
                 android:id="@+id/btnTabFriends"
                 style="@style/Widget.Material3.Button.TonalButton"
                 android:layout_width="0dp"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginEnd="2dp"
+                android:layout_marginEnd="4dp"
+                android:minHeight="52dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp"
                 android:text="My Friends"
-                android:textSize="12sp"
-                android:textColor="@color/stardeck_text_primary"
+                android:textSize="13sp"
+                android:textColor="@color/white"
                 android:backgroundTint="@color/stardeck_primary" />
 
             <Button
                 android:id="@+id/btnTabRequests"
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="0dp"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="2dp"
-                android:layout_marginEnd="2dp"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="4dp"
+                android:minHeight="52dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp"
                 android:text="Requests"
-                android:textSize="12sp"
+                android:textSize="13sp"
                 android:textColor="@color/stardeck_text_secondary" />
 
             <Button
                 android:id="@+id/btnTabFind"
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="0dp"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="2dp"
+                android:layout_marginStart="4dp"
+                android:minHeight="52dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp"
                 android:text="Find Users"
-                android:textSize="12sp"
+                android:textSize="13sp"
                 android:textColor="@color/stardeck_text_secondary" />
 
         </LinearLayout>
@@ -106,7 +126,7 @@
 
         </LinearLayout>
 
-        <!-- Count label -->
+        <!-- Count / status label -->
         <TextView
             android:id="@+id/tvFriendCount"
             android:layout_width="match_parent"
@@ -118,36 +138,18 @@
             android:textColor="@color/stardeck_text_secondary" />
 
         <!-- Empty state -->
-        <LinearLayout
-            android:id="@+id/layoutEmpty"
+        <TextView
+            android:id="@+id/tvFriendEmpty"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
+            android:layout_marginTop="32dp"
             android:gravity="center"
-            android:paddingTop="48dp"
-            android:paddingBottom="48dp"
-            android:visibility="gone">
+            android:text="No friends yet.&#10;Tap Find Users to search."
+            android:textSize="14sp"
+            android:textColor="@color/stardeck_text_hint"
+            android:visibility="gone" />
 
-            <TextView
-                android:id="@+id/tvFriendEmpty"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="No friends yet"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:textColor="@color/stardeck_text_primary" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="Use Find Users to add friends"
-                android:textSize="13sp"
-                android:textColor="@color/stardeck_text_hint"
-                android:gravity="center" />
-
-        </LinearLayout>
-
+        <!-- Friends list -->
         <ListView
             android:id="@+id/listFriends"
             android:layout_width="match_parent"

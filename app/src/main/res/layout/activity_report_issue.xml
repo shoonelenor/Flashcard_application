@@ -6,15 +6,14 @@
     android:orientation="vertical"
     android:background="@color/stardeck_bg_top">
 
-    <!-- Toolbar — back arrow uses standard home icon, NOT the ticket icon -->
-    <com.google.android.material.appbar.MaterialToolbar
-        android:id="@+id/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="@color/stardeck_bg_top"
-        android:title="Help / Report Issue"
-        android:titleTextColor="@color/stardeck_text_primary"
-        app:navigationIcon="@android:drawable/ic_menu_revert" />
+    <!--
+        NO MaterialToolbar here.
+        ReportIssueActivity.kt uses supportActionBar (AppCompatActivity's built-in action bar)
+        with setDisplayHomeAsUpEnabled(true) + onOptionsItemSelected for back navigation.
+        A floating MaterialToolbar without setSupportActionBar() wired up has no click listener
+        — that is why the exit/back button was not working.
+        The supportActionBar renders the title and back arrow automatically.
+    -->
 
     <ScrollView
         android:layout_width="match_parent"
@@ -25,7 +24,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingTop="8dp"
+            android:paddingTop="16dp"
             android:paddingStart="20dp"
             android:paddingEnd="20dp"
             android:paddingBottom="32dp">
@@ -175,8 +174,7 @@
 
             <!--
                 SUCCESS MESSAGE — MUST stay as TextView.
-                The Kotlin code casts tvReportSuccess as TextView via findViewById.
-                Do NOT change this to MaterialCardView or any other type.
+                Kotlin casts this as TextView via findViewById<TextView>.
             -->
             <TextView
                 android:id="@+id/tvReportSuccess"
