@@ -6,14 +6,17 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@color/stardeck_bg_bottom"
-    android:padding="12dp">
+    android:paddingTop="16dp"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingBottom="0dp">
 
     <!-- ── Search bar ── -->
     <com.google.android.material.textfield.TextInputLayout
         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
+        android:layout_marginBottom="12dp"
         android:hint="Search decks, owner, metadata"
         app:hintTextColor="@color/stardeck_text_secondary"
         app:boxStrokeColor="@color/stardeck_field_stroke"
@@ -33,7 +36,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
+        android:layout_marginBottom="12dp"
         android:orientation="horizontal"
         android:gravity="center_vertical">
 
@@ -102,7 +105,7 @@
         style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="12dp"
         android:hint="Subject"
         app:hintTextColor="@color/stardeck_text_secondary"
         app:boxStrokeColor="@color/stardeck_field_stroke"
@@ -122,7 +125,8 @@
         android:id="@+id/tvSubjectNote"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="4dp"
         android:text="Choose a category first to see subjects."
         android:textAppearance="@style/TextAppearance.Material3.BodySmall"
         android:textColor="@color/stardeck_text_secondary" />
@@ -133,7 +137,7 @@
         style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="4dp"
         android:hint="Language"
         app:hintTextColor="@color/stardeck_text_secondary"
         app:boxStrokeColor="@color/stardeck_field_stroke"
@@ -153,8 +157,8 @@
         android:id="@+id/tvCount"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="4dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="8dp"
         android:text="0 deck(s) found"
         android:textAppearance="@style/TextAppearance.Material3.BodySmall"
         android:textColor="@color/stardeck_text_secondary" />
@@ -170,7 +174,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:clipToPadding="false"
-            android:paddingBottom="8dp" />
+            android:paddingBottom="16dp" />
 
         <!-- Empty state -->
         <LinearLayout
