@@ -5,9 +5,28 @@ import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 
-class CardDao(context: Context) {
+/**
+ * CardDao supports two construction patterns used across the codebase:
+ *
+ *   1. CardDao(context)    – used by DeckCardsActivity (new image feature)
+ *   2. CardDao(dbHelper)   – used by all other Activities/Fragments that
+ *                            already hold a StarDeckDbHelper reference
+ *
+ * Both patterns share the same implementation below.
+ */
+class CardDao {
 
-    private val dbHelper = StarDeckDbHelper(context)
+    private val dbHelper: StarDeckDbHelper
+
+    /** Construct from a Context (used by DeckCardsActivity). */
+    constructor(context: Context) {
+        dbHelper = StarDeckDbHelper(context)
+    }
+
+    /** Construct from an existing helper instance (used by all legacy callers). */
+    constructor(dbHelper: StarDeckDbHelper) {
+        this.dbHelper = dbHelper
+    }
 
     // ── helpers ──────────────────────────────────────────────────────────────
 
@@ -18,11 +37,6 @@ class CardDao(context: Context) {
 
     /**
      * Insert a new card. Returns the new row id, or -1 on failure.
-     * @param deckId      parent deck
-     * @param front       front text
-     * @param back        back text
-     * @param frontImagePath  optional absolute path saved in internal storage
-     * @param backImagePath   optional absolute path saved in internal storage
      */
     fun insertCard(
         deckId: Long,
@@ -42,6 +56,18 @@ class CardDao(context: Context) {
         }
         return db.insert(DbContract.TCARDS, null, cv)
     }
+
+    /**
+     * Alias for [insertCard] kept for backward-compatibility with callers
+     * that use the old name `createCardAny`.
+     */
+    fun createCardAny(
+        deckId: Long,
+        front: String,
+        back: String,
+        frontImagePath: String? = null,
+        backImagePath: String? = null
+    ): Long = insertCard(deckId, front, back, frontImagePath, backImagePath)
 
     /**
      * Update an existing card by its id.
@@ -144,6 +170,25 @@ class CardDao(context: Context) {
         val cursor = db.rawQuery(
             "SELECT COUNT(*) FROM ${DbContract.TCARDS} WHERE ${DbContract.CDECKID} = ?",
             arrayOf(deckId.toString())
+        )
+        return cursor.use {
+            if (it.moveToFirst()) it.getInt(0) else 0
+        }
+    }
+
+    /**
+     * Return the total number of cards across ALL decks owned by [ownerUserId],
+     * regardless of card status.  Used by UserDecksFragment for the stats banner.
+     */
+    fun getTotalCardCountForOwnerAllStatuses(ownerUserId: Long): Int {
+        val db = getReadableDb()
+        val cursor = db.rawQuery(
+            """
+            SELECT COUNT(*) FROM ${DbContract.TCARDS} c
+            INNER JOIN ${DbContract.TDECKS} d ON c.${DbContract.CDECKID} = d.${DbContract.DID}
+            WHERE d.${DbContract.DOWNERUSERID} = ?
+            """.trimIndent(),
+            arrayOf(ownerUserId.toString())
         )
         return cursor.use {
             if (it.moveToFirst()) it.getInt(0) else 0

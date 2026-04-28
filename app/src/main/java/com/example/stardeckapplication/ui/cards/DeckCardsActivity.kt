@@ -21,6 +21,13 @@ import java.io.File
 
 class DeckCardsActivity : AppCompatActivity() {
 
+    companion object {
+        /** Intent extra: the deck id to open (Long). */
+        const val EXTRA_DECK_ID = "deck_id"
+        /** Intent extra: open the deck in read-only / public view mode (Boolean). */
+        const val EXTRA_READ_ONLY_PUBLIC = "read_only_public"
+    }
+
     // ── DAO & state ───────────────────────────────────────────────────────────
     private lateinit var cardDao: CardDao
     private var deckId: Long = -1L
@@ -100,7 +107,7 @@ class DeckCardsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_deck_cards)
 
-        deckId    = intent.getLongExtra("deck_id", -1L)
+        deckId    = intent.getLongExtra(EXTRA_DECK_ID, -1L)
         deckTitle = intent.getStringExtra("deck_title") ?: ""
         if (deckId == -1L) { finish(); return }
 
@@ -315,10 +322,6 @@ class DeckCardsActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Copy the picked image into app-private internal storage and return the
-     * absolute path. Returns null on any error.
-     */
     private fun saveImageToInternalStorage(uri: Uri): String? {
         return try {
             val dir = File(filesDir, "card_images").apply { mkdirs() }
