@@ -7,12 +7,16 @@ import android.os.Handler
 import android.os.Looper
 import android.view.View
 import android.widget.Button
+import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.example.stardeckapplication.R
 import com.example.stardeckapplication.databinding.ActivityQuizBinding
 import com.example.stardeckapplication.db.DbContract
 import com.example.stardeckapplication.db.DeckDao
 import com.example.stardeckapplication.db.StarDeckDbHelper
 import com.example.stardeckapplication.util.SessionManager
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 
@@ -21,11 +25,10 @@ class QuizActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_DECK_ID = "extra_deck_id"
         private const val MIN_CARDS = 2
-        // Match your app's stardeck_primary #FF4F6BFF
         private const val COLOR_PRIMARY  = 0xFF4F6BFF.toInt()
-        private const val COLOR_CORRECT  = 0xFF2E7D32.toInt()  // dark green
-        private const val COLOR_WRONG    = 0xFFC62828.toInt()  // dark red
-        private const val COLOR_NEUTRAL  = 0xFF37474F.toInt()  // dark grey
+        private const val COLOR_CORRECT  = 0xFF2E7D32.toInt()
+        private const val COLOR_WRONG    = 0xFFC62828.toInt()
+        private const val COLOR_NEUTRAL  = 0xFF37474F.toInt()
     }
 
     private lateinit var b: ActivityQuizBinding
@@ -47,7 +50,7 @@ class QuizActivity : AppCompatActivity() {
     data class QuizQuestion(
         val questionText : String,
         val correctAnswer: String,
-        val options      : List<String>  // 4 choices, shuffled
+        val options      : List<String>
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -96,7 +99,7 @@ class QuizActivity : AppCompatActivity() {
     private fun buildQuestions() {
         val shuffled = allCards.shuffled()
         questions = shuffled.map { card ->
-            val wrongPool   = allCards.filter { it.id != card.id }.shuffled()
+            val wrongPool    = allCards.filter { it.id != card.id }.shuffled()
             val wrongAnswers = wrongPool.take(3).map { it.back }
             val options      = (wrongAnswers + card.back).shuffled()
             QuizQuestion(
@@ -111,10 +114,10 @@ class QuizActivity : AppCompatActivity() {
         answered = false
         val q = questions[currentIndex]
 
-        b.tvProgress.text      = "Question ${currentIndex + 1} / ${questions.size}"
-        b.progressBar.max      = questions.size
-        b.progressBar.progress = currentIndex + 1
-        b.tvQuestion.text      = q.questionText
+        b.tvProgress.text       = "Question ${currentIndex + 1} / ${questions.size}"
+        b.progressBar.max       = questions.size
+        b.progressBar.progress  = currentIndex + 1
+        b.tvQuestion.text       = q.questionText
         b.tvFeedback.visibility = View.GONE
         b.btnNext.visibility    = View.GONE
 
@@ -160,29 +163,46 @@ class QuizActivity : AppCompatActivity() {
 
     private fun showSummary() {
         val total = questions.size
+        val wrong = total - score
         val pct   = if (total > 0) (score * 100 / total) else 0
+        val wrongPct = 100 - pct
+
         val emoji = when {
             pct >= 80 -> "🌟 Excellent!"
             pct >= 60 -> "👍 Good job!"
             pct >= 40 -> "📚 Keep going!"
             else      -> "💪 Keep practicing!"
         }
-        val message = buildString {
-            append("📊 Quiz Results\n")
-            append("────────────────\n")
-            append("Score: $score / $total  ($pct%)\n\n")
-            append(emoji)
+
+        val dialogView = layoutInflater.inflate(R.layout.dialog_quiz_complete, null)
+
+        dialogView.findViewById<TextView>(R.id.tvQuizDialogScore).text   = "$score / $total"
+        dialogView.findViewById<TextView>(R.id.tvQuizDialogCorrect).text = "$score ($pct%)"
+        dialogView.findViewById<TextView>(R.id.tvQuizDialogWrong).text   = "$wrong ($wrongPct%)"
+        dialogView.findViewById<TextView>(R.id.tvQuizDialogAccuracy).text = "$pct%"
+        dialogView.findViewById<TextView>(R.id.tvQuizDialogEmoji).text   = emoji
+
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogView)
+            .setCancelable(false)
+            .create()
+
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        dialogView.findViewById<MaterialButton>(R.id.btnQuizDialogDone).setOnClickListener {
+            dialog.dismiss()
+            finish()
         }
-        MaterialAlertDialogBuilder(this)
-            .setTitle("Quiz Complete")
-            .setMessage(message)
-            .setPositiveButton("Play Again") { _, _ ->
-                currentIndex = 0; score = 0
-                buildQuestions()
-                showQuestion()
-            }
-            .setNegativeButton("Done") { _, _ -> finish() }
-            .show()
+
+        dialogView.findViewById<MaterialButton>(R.id.btnQuizDialogPlayAgain).setOnClickListener {
+            dialog.dismiss()
+            currentIndex = 0
+            score = 0
+            buildQuestions()
+            showQuestion()
+        }
+
+        dialog.show()
     }
 
     override fun onSupportNavigateUp(): Boolean { finish(); return true }
