@@ -1,124 +1,274 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="@drawable/bg_dialog"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="24dp">
 
+    <!-- ── Title ──────────────────────────────────────────────────── -->
     <TextView
         android:id="@+id/tvTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Edit Account"
-        android:textAppearance="@style/TextAppearance.Material3.TitleLarge" />
+        android:textColor="@color/stardeck_text_primary"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="20dp" />
 
+    <!-- ── Name field ───────────────────────────────────────────── -->
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/tilName"
         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:hint="Name">
+        android:hint="Name"
+        app:boxBackgroundColor="@color/stardeck_field_bg"
+        app:boxStrokeColor="@color/stardeck_field_stroke"
+        app:boxStrokeWidth="1dp"
+        app:hintTextColor="@color/stardeck_text_hint"
+        app:placeholderTextColor="@color/stardeck_text_hint">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etName"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:textColor="@color/stardeck_text_primary"
+            android:textColorHint="@color/stardeck_text_hint" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <!-- ── Email field ──────────────────────────────────────────── -->
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/tilEmail"
         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:hint="Email">
+        android:layout_marginTop="12dp"
+        android:hint="Email"
+        app:boxBackgroundColor="@color/stardeck_field_bg"
+        app:boxStrokeColor="@color/stardeck_field_stroke"
+        app:boxStrokeWidth="1dp"
+        app:hintTextColor="@color/stardeck_text_hint">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etEmail"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="textEmailAddress" />
+            android:inputType="textEmailAddress"
+            android:textColor="@color/stardeck_text_primary"
+            android:textColorHint="@color/stardeck_text_hint" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <!-- ── Role label ───────────────────────────────────────────── -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="18dp"
+        android:layout_marginBottom="8dp"
         android:text="Role"
-        android:textAppearance="@style/TextAppearance.Material3.LabelLarge" />
+        android:textColor="@color/stardeck_text_secondary"
+        android:textSize="12sp"
+        android:letterSpacing="0.08" />
 
+    <!-- ── Role chips ───────────────────────────────────────────── -->
     <com.google.android.material.chip.ChipGroup
         android:id="@+id/chipRoleGroup"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:singleSelection="true"
-        app:selectionRequired="true">
+        app:selectionRequired="true"
+        app:chipSpacingHorizontal="8dp">
 
         <com.google.android.material.chip.Chip
             android:id="@+id/chipUser"
+            style="@style/Widget.Material3.Chip.Filter"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="user"
             android:checkable="true"
-            android:checked="true" />
+            android:checked="true"
+            android:text="user"
+            android:textColor="@color/stardeck_text_primary"
+            app:chipBackgroundColor="@color/stardeck_surface_elevated"
+            app:chipStrokeColor="@color/stardeck_field_stroke"
+            app:chipStrokeWidth="1dp"
+            app:checkedIconVisible="false" />
 
         <com.google.android.material.chip.Chip
             android:id="@+id/chipManager"
+            style="@style/Widget.Material3.Chip.Filter"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:checkable="true"
             android:text="manager"
-            android:checkable="true" />
+            android:textColor="@color/stardeck_text_primary"
+            app:chipBackgroundColor="@color/stardeck_surface_elevated"
+            app:chipStrokeColor="@color/stardeck_field_stroke"
+            app:chipStrokeWidth="1dp"
+            app:checkedIconVisible="false" />
 
         <com.google.android.material.chip.Chip
             android:id="@+id/chipAdmin"
+            style="@style/Widget.Material3.Chip.Filter"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:checkable="true"
             android:text="admin"
-            android:checkable="true" />
+            android:textColor="@color/stardeck_text_primary"
+            app:chipBackgroundColor="@color/stardeck_surface_elevated"
+            app:chipStrokeColor="@color/stardeck_field_stroke"
+            app:chipStrokeWidth="1dp"
+            app:checkedIconVisible="false" />
     </com.google.android.material.chip.ChipGroup>
 
-    <com.google.android.material.switchmaterial.SwitchMaterial
-        android:id="@+id/swDisabled"
+    <!-- ── Divider ──────────────────────────────────────────────── -->
+    <View
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:text="Disabled (blocks login)" />
+        android:layout_height="1dp"
+        android:layout_marginTop="18dp"
+        android:background="@color/stardeck_divider" />
 
-    <com.google.android.material.switchmaterial.SwitchMaterial
-        android:id="@+id/swPremium"
+    <!-- ── Disabled switch ────────────────────────────────────────── -->
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Premium access (demo)" />
+        android:layout_height="48dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:layout_marginTop="4dp">
 
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Disabled"
+                android:textColor="@color/stardeck_text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Blocks login"
+                android:textColor="@color/stardeck_text_secondary"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/swDisabled"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
+    <!-- ── Premium switch ─────────────────────────────────────────── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Premium access"
+                android:textColor="@color/stardeck_text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Grant demo premium features"
+                android:textColor="@color/stardeck_text_secondary"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/swPremium"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
+    <!-- ── Temp password group (shown only on Create) ──────────────── -->
     <LinearLayout
         android:id="@+id/groupTempPw"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:layout_marginTop="10dp">
+        android:layout_marginTop="8dp"
+        android:visibility="gone">
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginBottom="16dp"
+            android:background="@color/stardeck_divider" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="Temp Password"
+            android:textColor="@color/stardeck_text_secondary"
+            android:textSize="12sp"
+            android:letterSpacing="0.08" />
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilTempPw"
             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Temp password">
+            android:hint="Auto-generated password"
+            app:boxBackgroundColor="@color/stardeck_field_bg"
+            app:boxStrokeColor="@color/stardeck_field_stroke"
+            app:boxStrokeWidth="1dp"
+            app:hintTextColor="@color/stardeck_text_hint"
+            app:endIconMode="password_toggle"
+            app:endIconTint="@color/stardeck_text_hint">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etTempPw"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textPassword" />
+                android:inputType="textPassword"
+                android:textColor="@color/stardeck_text_primary"
+                android:textColorHint="@color/stardeck_text_hint"
+                android:fontFamily="monospace" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <TextView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="User will be forced to change it at first login."
-            android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:src="@drawable/ic_info"
+                android:layout_marginEnd="6dp"
+                app:tint="@color/stardeck_text_hint" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="User will be forced to change it at first login."
+                android:textColor="@color/stardeck_text_hint"
+                android:textSize="12sp" />
+        </LinearLayout>
     </LinearLayout>
 
 </LinearLayout>
