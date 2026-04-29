@@ -18,6 +18,7 @@ import com.example.stardeckapplication.db.DbContract
 import com.example.stardeckapplication.db.ReportReasonDao
 import com.example.stardeckapplication.db.StarDeckDbHelper
 import com.example.stardeckapplication.util.SessionManager
+import com.google.android.material.chip.Chip
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 
@@ -56,12 +57,14 @@ class ManageReportReasonsActivity : AppCompatActivity() {
 
         b.etSearch.doAfterTextChanged { applyFilters() }
 
-        // Use individual chip click listeners — works on all Material versions
+        val chipActive   = b.chipStatusActive   as Chip
+        val chipInactive = b.chipStatusInactive as Chip
+
         fun updateStatusFilter() {
             statusFilter = when {
-                b.chipStatusActive.isChecked   -> true
-                b.chipStatusInactive.isChecked -> false
-                else                           -> null
+                chipActive.isChecked   -> true
+                chipInactive.isChecked -> false
+                else                   -> null
             }
             applyFilters()
         }

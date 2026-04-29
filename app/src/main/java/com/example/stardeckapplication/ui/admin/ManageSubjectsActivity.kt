@@ -20,6 +20,7 @@ import com.example.stardeckapplication.db.DbContract
 import com.example.stardeckapplication.db.StarDeckDbHelper
 import com.example.stardeckapplication.db.SubjectDao
 import com.example.stardeckapplication.util.SessionManager
+import com.google.android.material.chip.Chip
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 
@@ -59,12 +60,14 @@ class ManageSubjectsActivity : AppCompatActivity() {
 
         b.etSearch.doAfterTextChanged { applyFilters() }
 
-        // Use individual chip click listeners — works on all Material versions
+        val chipActive   = b.chipStatusActive   as Chip
+        val chipInactive = b.chipStatusInactive as Chip
+
         fun updateStatusFilter() {
             statusFilter = when {
-                b.chipStatusActive.isChecked   -> true
-                b.chipStatusInactive.isChecked -> false
-                else                           -> null
+                chipActive.isChecked   -> true
+                chipInactive.isChecked -> false
+                else                   -> null
             }
             applyFilters()
         }
@@ -270,7 +273,7 @@ class ManageSubjectsActivity : AppCompatActivity() {
         categories: List<CategoryDao.SelectableCategory>
     ): Long? = categories.firstOrNull { it.name.equals(rawText.trim(), ignoreCase = true) }?.id
 
-    // ── Toggle / Delete ───────────────────────────────────────────────────────
+    // ── Toggle / Delete ─────────────────────────────────────────────────────
 
     private fun confirmToggle(row: SubjectDao.AdminSubjectRow) {
         val nextActive = !row.isActive
