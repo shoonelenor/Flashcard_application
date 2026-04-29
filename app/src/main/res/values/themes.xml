@@ -61,6 +61,15 @@
         <item name="android:letterSpacing">0</item>
     </style>
 
+    <!-- Medium title: card labels, list item titles (16sp bold) — fixes Content Setup crash -->
+    <style name="TextAppearance.StarDeck.TitleMedium"
+        parent="TextAppearance.Material3.TitleMedium">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/stardeck_text_primary</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+
     <!-- Small label: badges, tags, secondary metadata (11sp medium) -->
     <style name="TextAppearance.StarDeck.LabelSmall"
         parent="TextAppearance.Material3.LabelSmall">
