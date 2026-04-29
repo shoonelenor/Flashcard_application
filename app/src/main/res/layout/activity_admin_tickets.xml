@@ -1,68 +1,109 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="?attr/colorSurface">
+    android:background="@color/stardeck_bg_bottom">
 
-    <!-- Summary bar -->
+    <!-- ── HEADER BAR ── -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="16dp"
-        android:gravity="center_vertical"
-        android:background="?attr/colorPrimaryContainer">
+        android:paddingStart="18dp"
+        android:paddingEnd="18dp"
+        android:paddingTop="18dp"
+        android:paddingBottom="14dp"
+        android:gravity="center_vertical">
 
-        <ImageView
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:src="@drawable/ic_stat_ticket"
-            android:contentDescription="Tickets"
-            android:layout_marginEnd="10dp" />
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            app:cardCornerRadius="11dp"
+            app:cardElevation="0dp"
+            app:cardBackgroundColor="#1A66BB6A">
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_sd_ticket"
+                android:contentDescription="Tickets" />
+        </com.google.android.material.card.MaterialCardView>
 
-        <TextView
-            android:id="@+id/tvTicketOpenCount"
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Loading…"
-            android:textSize="15sp"
+            android:layout_marginStart="12dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="SUPPORT"
+                android:textColor="@color/stardeck_text_secondary"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.1" />
+
+            <TextView
+                android:id="@+id/tvTicketOpenCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Loading…"
+                android:textColor="@color/stardeck_text_primary"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Admin badge -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:background="@drawable/bg_home_circle_chip"
+            android:gravity="center"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:text="ADMIN"
+            android:textColor="@color/stardeck_link"
+            android:textSize="11sp"
             android:textStyle="bold"
-            android:textColor="?attr/colorOnPrimaryContainer" />
+            android:letterSpacing="0.1" />
 
     </LinearLayout>
 
-    <!-- Filter chips -->
+    <!-- ── FILTER CHIPS ── -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="12dp"
-        android:gravity="center">
+        android:paddingStart="18dp"
+        android:paddingEnd="18dp"
+        android:paddingBottom="12dp">
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnFilterAll"
             style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="0dp"
             android:layout_height="36dp"
             android:layout_weight="1"
-            android:layout_marginEnd="4dp"
+            android:layout_marginEnd="6dp"
             android:text="All"
             android:textSize="12sp"
             android:enabled="false" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnFilterOpen"
             style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="0dp"
             android:layout_height="36dp"
             android:layout_weight="1"
-            android:layout_marginEnd="4dp"
+            android:layout_marginEnd="6dp"
             android:text="Open"
             android:textSize="12sp" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnFilterResolved"
             style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="0dp"
@@ -73,7 +114,16 @@
 
     </LinearLayout>
 
-    <!-- Loading -->
+    <!-- ── DIVIDER ── -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/stardeck_field_stroke"
+        android:layout_marginStart="18dp"
+        android:layout_marginEnd="18dp"
+        android:layout_marginBottom="4dp" />
+
+    <!-- ── LOADING ── -->
     <ProgressBar
         android:id="@+id/progressTickets"
         android:layout_width="wrap_content"
@@ -81,25 +131,54 @@
         android:layout_gravity="center"
         android:visibility="gone" />
 
-    <!-- Empty state -->
-    <TextView
-        android:id="@+id/tvTicketsEmpty"
+    <!-- ── EMPTY STATE ── -->
+    <LinearLayout
+        android:id="@+id/layoutTicketsEmpty"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
+        android:orientation="vertical"
         android:gravity="center"
-        android:text="No tickets yet"
-        android:textSize="15sp"
-        android:textColor="?attr/colorOnSurfaceVariant"
-        android:visibility="gone" />
+        android:visibility="gone">
 
-    <!-- Ticket list -->
-    <ListView
+        <TextView
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:background="@drawable/bg_home_circle_chip"
+            android:gravity="center"
+            android:text="🎫"
+            android:textSize="24sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="No tickets yet"
+            android:textColor="@color/stardeck_text_primary"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="All support tickets will appear here"
+            android:textColor="@color/stardeck_text_secondary"
+            android:textSize="13sp" />
+
+    </LinearLayout>
+
+    <!-- ── TICKET LIST ── -->
+    <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/listViewTickets"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:divider="?attr/colorOutlineVariant"
-        android:dividerHeight="1dp" />
+        android:paddingStart="18dp"
+        android:paddingEnd="18dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="110dp"
+        android:clipToPadding="false"
+        android:overScrollMode="never" />
 
 </LinearLayout>
