@@ -1,76 +1,83 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/root"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/stardeck_surface">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@color/stardeck_surface_2"
+        app:elevation="0dp"
         app:liftOnScroll="true"
         app:liftOnScrollTargetViewId="@id/recycler">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:title="Language Setup"
-            app:navigationIcon="@android:drawable/ic_menu_revert" />
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/stardeck_surface_2"
+            app:navigationIcon="@drawable/ic_back"
+            app:navigationIconTint="@color/stardeck_text_primary"
+            app:title="Language Setup"
+            app:titleTextColor="@color/stardeck_text_primary"
+            app:titleTextAppearance="@style/TextAppearance.Material3.TitleLarge" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:paddingHorizontal="16dp"
+            android:paddingBottom="12dp"
+            android:paddingTop="4dp">
 
             <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                style="@style/Widget.StarDeck.TextInputLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Search language / description">
+                android:hint="Search languages..."
+                app:startIconDrawable="@drawable/ic_search"
+                app:startIconTint="@color/stardeck_text_hint">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etSearch"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+                    android:layout_height="wrap_content"
+                    android:inputType="text"
+                    android:imeOptions="actionSearch" />
             </com.google.android.material.textfield.TextInputLayout>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:text="Status Filter"
-                android:textAppearance="@style/TextAppearance.Material3.LabelLarge" />
 
             <com.google.android.material.chip.ChipGroup
                 android:id="@+id/chipStatusGroup"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="10dp"
                 app:singleSelection="true"
                 app:selectionRequired="true">
 
                 <com.google.android.material.chip.Chip
-                    android:id="@+id/chipStatusAll"
+                    android:id="@+id/chipAll"
+                    style="@style/Widget.Material3.Chip.Filter"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:checkable="true"
-                    android:checked="true"
-                    android:text="All" />
+                    android:text="All"
+                    android:checked="true" />
 
                 <com.google.android.material.chip.Chip
-                    android:id="@+id/chipStatusActive"
+                    android:id="@+id/chipActive"
+                    style="@style/Widget.Material3.Chip.Filter"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:checkable="true"
                     android:text="Active" />
 
                 <com.google.android.material.chip.Chip
-                    android:id="@+id/chipStatusInactive"
+                    android:id="@+id/chipInactive"
+                    style="@style/Widget.Material3.Chip.Filter"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:checkable="true"
                     android:text="Inactive" />
             </com.google.android.material.chip.ChipGroup>
 
@@ -78,55 +85,60 @@
                 android:id="@+id/tvCount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="0 language(s)"
-                android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
+                android:layout_marginTop="10dp"
+                android:text="0 languages"
+                android:textColor="@color/stardeck_text_secondary"
+                android:textAppearance="@style/TextAppearance.Material3.LabelSmall" />
         </LinearLayout>
+
+        <com.google.android.material.divider.MaterialDivider
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            app:dividerColor="@color/stardeck_divider" />
     </com.google.android.material.appbar.AppBarLayout>
 
-    <FrameLayout
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+        android:clipToPadding="false"
+        android:paddingHorizontal="12dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="88dp"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recycler"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:clipToPadding="false"
-            android:padding="16dp"
-            android:paddingBottom="88dp" />
+    <LinearLayout
+        android:id="@+id/layoutEmpty"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:visibility="gone">
 
-        <LinearLayout
-            android:id="@+id/groupEmpty"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:orientation="vertical"
-            android:visibility="gone">
+        <ImageView
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:src="@drawable/ic_empty_box"
+            android:alpha="0.4"
+            android:contentDescription="No data" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="No languages"
-                android:textAppearance="@style/TextAppearance.Material3.TitleLarge" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="No languages found"
+            android:textColor="@color/stardeck_text_hint"
+            android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
+    </LinearLayout>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="Create your first language for deck classification."
-                android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
-        </LinearLayout>
-    </FrameLayout>
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
         android:id="@+id/fabAdd"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
-        android:contentDescription="Add language"
-        app:srcCompat="@android:drawable/ic_input_add" />
+        android:layout_margin="20dp"
+        android:text="Add Language"
+        app:icon="@drawable/ic_add" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
