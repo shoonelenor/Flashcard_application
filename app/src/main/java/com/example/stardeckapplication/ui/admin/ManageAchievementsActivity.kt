@@ -60,7 +60,16 @@ class ManageAchievementsActivity : AppCompatActivity() {
         b.recycler.adapter = adapter
 
         b.etSearch.doAfterTextChanged { applyFilters() }
-        b.chipStatusGroup.setOnCheckedStateChangeListener { _, _ ->
+
+        b.chipStatusActive.setOnCheckedChangeListener { _, _ ->
+            statusFilter = when {
+                b.chipStatusActive.isChecked -> true
+                b.chipStatusInactive.isChecked -> false
+                else -> null
+            }
+            applyFilters()
+        }
+        b.chipStatusInactive.setOnCheckedChangeListener { _, _ ->
             statusFilter = when {
                 b.chipStatusActive.isChecked -> true
                 b.chipStatusInactive.isChecked -> false

@@ -62,7 +62,15 @@ class ManageSubjectsActivity : AppCompatActivity() {
 
         b.etSearch.doAfterTextChanged { applyFilters() }
 
-        b.chipStatusGroup.setOnCheckedStateChangeListener { _, _ ->
+        b.chipStatusActive.setOnCheckedChangeListener { _, _ ->
+            statusFilter = when {
+                b.chipStatusActive.isChecked -> true
+                b.chipStatusInactive.isChecked -> false
+                else -> null
+            }
+            applyFilters()
+        }
+        b.chipStatusInactive.setOnCheckedChangeListener { _, _ ->
             statusFilter = when {
                 b.chipStatusActive.isChecked -> true
                 b.chipStatusInactive.isChecked -> false
@@ -373,6 +381,7 @@ class ManageSubjectsActivity : AppCompatActivity() {
                 binding.btnToggle.text = if (row.isActive) "Deactivate" else "Activate"
                 binding.btnToggle.setOnClickListener { onToggle(row) }
 
+                binding.btnDelete.isEnabled = row.usageCount == 0
                 binding.btnDelete.isEnabled = row.usageCount == 0
                 binding.btnDelete.setOnClickListener { onDelete(row) }
             }
