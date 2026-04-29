@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.example.stardeckapplication.R
 import com.example.stardeckapplication.databinding.ActivityManageReportReasonsBinding
 import com.example.stardeckapplication.databinding.DialogReportReasonBinding
 import com.example.stardeckapplication.databinding.ItemReportReasonBinding
@@ -18,6 +19,7 @@ import com.example.stardeckapplication.db.DbContract
 import com.example.stardeckapplication.db.ReportReasonDao
 import com.example.stardeckapplication.db.StarDeckDbHelper
 import com.example.stardeckapplication.util.SessionManager
+import com.google.android.material.chip.ChipGroup
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 
@@ -56,19 +58,11 @@ class ManageReportReasonsActivity : AppCompatActivity() {
 
         b.etSearch.doAfterTextChanged { applyFilters() }
 
-        b.chipStatusActive.setOnCheckedChangeListener { _, _ ->
+        b.chipStatusGroup.setOnCheckedStateChangeListener { group: ChipGroup, checkedIds: List<Int> ->
             statusFilter = when {
-                b.chipStatusActive.isChecked   -> true
-                b.chipStatusInactive.isChecked -> false
-                else                           -> null
-            }
-            applyFilters()
-        }
-        b.chipStatusInactive.setOnCheckedChangeListener { _, _ ->
-            statusFilter = when {
-                b.chipStatusActive.isChecked   -> true
-                b.chipStatusInactive.isChecked -> false
-                else                           -> null
+                checkedIds.contains(R.id.chipStatusActive)   -> true
+                checkedIds.contains(R.id.chipStatusInactive) -> false
+                else                                         -> null
             }
             applyFilters()
         }
@@ -110,7 +104,7 @@ class ManageReportReasonsActivity : AppCompatActivity() {
         b.recycler.visibility   = if (filtered.isEmpty()) View.GONE   else View.VISIBLE
     }
 
-    // ── Create ────────────────────────────────────────────────────────────────
+    // ── Create / Edit ─────────────────────────────────────────────────────
 
     private fun showCreateDialog() {
         val d = DialogReportReasonBinding.inflate(layoutInflater)
@@ -147,10 +141,10 @@ class ManageReportReasonsActivity : AppCompatActivity() {
                 d.tilDescription.error = null
                 d.tilSortOrder.error   = null
 
-                val name        = d.etName.text?.toString().orEmpty().trim()
-                val description = d.etDescription.text?.toString().orEmpty().trim()
+                val name         = d.etName.text?.toString().orEmpty().trim()
+                val description  = d.etDescription.text?.toString().orEmpty().trim()
                 val sortOrderRaw = d.etSortOrder.text?.toString().orEmpty().trim().toIntOrNull()
-                val isActive    = d.swActive.isChecked
+                val isActive     = d.swActive.isChecked
 
                 var ok = true
 
@@ -204,7 +198,7 @@ class ManageReportReasonsActivity : AppCompatActivity() {
         return dialog
     }
 
-    // ── Toggle / Delete ───────────────────────────────────────────────────────
+    // ── Toggle / Delete ─────────────────────────────────────────────────────
 
     private fun confirmToggle(row: ReportReasonDao.ReportReasonRow) {
         val nextActive = !row.isActive

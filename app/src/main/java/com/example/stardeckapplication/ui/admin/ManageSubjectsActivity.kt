@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.example.stardeckapplication.R
 import com.example.stardeckapplication.databinding.ActivityManageSubjectsBinding
 import com.example.stardeckapplication.databinding.DialogSubjectBinding
 import com.example.stardeckapplication.databinding.ItemSubjectBinding
@@ -20,6 +21,7 @@ import com.example.stardeckapplication.db.DbContract
 import com.example.stardeckapplication.db.StarDeckDbHelper
 import com.example.stardeckapplication.db.SubjectDao
 import com.example.stardeckapplication.util.SessionManager
+import com.google.android.material.chip.ChipGroup
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 
@@ -36,7 +38,7 @@ class ManageSubjectsActivity : AppCompatActivity() {
     private var statusFilter: Boolean? = null
 
     private val adapter = SubjectsAdapter(
-        onEdit = { showEditDialog(it) },
+        onEdit   = { showEditDialog(it) },
         onToggle = { confirmToggle(it) },
         onDelete = { confirmDelete(it) }
     )
@@ -47,10 +49,7 @@ class ManageSubjectsActivity : AppCompatActivity() {
         setContentView(b.root)
 
         val me = session.load()
-        if (me == null || me.role != DbContract.ROLE_ADMIN) {
-            finish()
-            return
-        }
+        if (me == null || me.role != DbContract.ROLE_ADMIN) { finish(); return }
 
         setSupportActionBar(b.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
@@ -62,19 +61,11 @@ class ManageSubjectsActivity : AppCompatActivity() {
 
         b.etSearch.doAfterTextChanged { applyFilters() }
 
-        b.chipStatusActive.setOnCheckedChangeListener { _, _ ->
+        b.chipStatusGroup.setOnCheckedStateChangeListener { group: ChipGroup, checkedIds: List<Int> ->
             statusFilter = when {
-                b.chipStatusActive.isChecked -> true
-                b.chipStatusInactive.isChecked -> false
-                else -> null
-            }
-            applyFilters()
-        }
-        b.chipStatusInactive.setOnCheckedChangeListener { _, _ ->
-            statusFilter = when {
-                b.chipStatusActive.isChecked -> true
-                b.chipStatusInactive.isChecked -> false
-                else -> null
+                checkedIds.contains(R.id.chipStatusActive)   -> true
+                checkedIds.contains(R.id.chipStatusInactive) -> false
+                else                                         -> null
             }
             applyFilters()
         }
@@ -114,8 +105,10 @@ class ManageSubjectsActivity : AppCompatActivity() {
         adapter.submitList(filtered)
         b.tvCount.text = "${filtered.size} subject(s)"
         b.groupEmpty.visibility = if (filtered.isEmpty()) View.VISIBLE else View.GONE
-        b.recycler.visibility = if (filtered.isEmpty()) View.GONE else View.VISIBLE
+        b.recycler.visibility   = if (filtered.isEmpty()) View.GONE   else View.VISIBLE
     }
+
+    // ── Create / Edit ─────────────────────────────────────────────────────
 
     private fun showCreateDialog() {
         val d = DialogSubjectBinding.inflate(layoutInflater)
@@ -145,7 +138,7 @@ class ManageSubjectsActivity : AppCompatActivity() {
         val labels = categories.map { it.name }
 
         d.actCategory.setAdapter(
-            ArrayAdapter(this, android.R.layout.simple_list_item_1, labels)
+            ArrayAdapter(d.actCategory.context, android.R.layout.simple_list_item_1, labels)
         )
         d.actCategory.setOnClickListener { d.actCategory.showDropDown() }
 
@@ -167,8 +160,7 @@ class ManageSubjectsActivity : AppCompatActivity() {
         d.actCategory.setOnItemClickListener { _, _, _, _ ->
             if (existing == null) {
                 val categoryId = resolveCategoryId(
-                    d.actCategory.text?.toString().orEmpty(),
-                    categories
+                    d.actCategory.text?.toString().orEmpty(), categories
                 )
                 if (categoryId != null && categoryId > 0L) {
                     d.etSortOrder.setText(subjectDao.getNextSortOrder(categoryId).toString())
@@ -178,8 +170,7 @@ class ManageSubjectsActivity : AppCompatActivity() {
 
         if (existing == null && categories.isNotEmpty()) {
             val firstCategoryId = resolveCategoryId(
-                d.actCategory.text?.toString().orEmpty(),
-                categories
+                d.actCategory.text?.toString().orEmpty(), categories
             )
             if (firstCategoryId != null && firstCategoryId > 0L) {
                 d.etSortOrder.setText(subjectDao.getNextSortOrder(firstCategoryId).toString())
@@ -192,92 +183,79 @@ class ManageSubjectsActivity : AppCompatActivity() {
         existing: SubjectDao.AdminSubjectRow?,
         categories: List<CategoryDao.SelectableCategory>
     ): AlertDialog {
-        val positiveText = if (existing == null) "Create" else "Save"
 
         val dialog = MaterialAlertDialogBuilder(this)
             .setView(d.root)
-            .setPositiveButton(positiveText, null)
+            .setPositiveButton(if (existing == null) "Create" else "Save", null)
             .setNegativeButton("Cancel", null)
             .create()
 
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                d.tilCategory.error = null
-                d.tilName.error = null
+                d.tilCategory.error    = null
+                d.tilName.error        = null
                 d.tilDescription.error = null
-                d.tilSortOrder.error = null
+                d.tilSortOrder.error   = null
 
-                val categoryId = resolveCategoryId(
-                    d.actCategory.text?.toString().orEmpty(),
-                    categories
+                val categoryId   = resolveCategoryId(
+                    d.actCategory.text?.toString().orEmpty(), categories
                 )
-                val name = d.etName.text?.toString().orEmpty().trim()
-                val description = d.etDescription.text?.toString().orEmpty().trim()
-                val parsedSortOrder = d.etSortOrder.text?.toString().orEmpty().trim().toIntOrNull()
-                val isActive = d.swActive.isChecked
+                val name         = d.etName.text?.toString().orEmpty().trim()
+                val description  = d.etDescription.text?.toString().orEmpty().trim()
+                val sortOrderRaw = d.etSortOrder.text?.toString().orEmpty().trim().toIntOrNull()
+                val isActive     = d.swActive.isChecked
 
                 var ok = true
 
                 if (categoryId == null) {
-                    d.tilCategory.error = "Please choose a valid category"
-                    ok = false
+                    d.tilCategory.error = "Please choose a valid category"; ok = false
                 }
 
                 if (name.length < 2) {
-                    d.tilName.error = "At least 2 characters required"
-                    ok = false
+                    d.tilName.error = "At least 2 characters required"; ok = false
                 } else if (name.length > 60) {
-                    d.tilName.error = "Max 60 characters"
-                    ok = false
+                    d.tilName.error = "Max 60 characters"; ok = false
                 } else if (categoryId != null && subjectDao.isNameTaken(categoryId, name, existing?.id)) {
-                    d.tilName.error = "Subject already exists in this category"
-                    ok = false
+                    d.tilName.error = "Subject already exists in this category"; ok = false
                 }
 
                 if (description.length > 200) {
-                    d.tilDescription.error = "Max 200 characters"
-                    ok = false
+                    d.tilDescription.error = "Max 200 characters"; ok = false
                 }
 
-                if (parsedSortOrder == null || parsedSortOrder < 0) {
-                    d.tilSortOrder.error = "Enter 0 or higher"
-                    ok = false
+                if (sortOrderRaw == null || sortOrderRaw < 0) {
+                    d.tilSortOrder.error = "Enter 0 or higher"; ok = false
                 }
 
                 if (!ok || categoryId == null) return@setOnClickListener
 
-                val sortOrder = parsedSortOrder ?: 0
+                val sortOrder = sortOrderRaw ?: 0
 
                 try {
                     if (existing == null) {
                         subjectDao.createSubject(
-                            categoryId = categoryId,
-                            name = name,
+                            categoryId  = categoryId,
+                            name        = name,
                             description = description.ifBlank { null },
-                            isActive = isActive,
-                            sortOrder = sortOrder
+                            isActive    = isActive,
+                            sortOrder   = sortOrder
                         )
                         Snackbar.make(b.root, "Subject created", Snackbar.LENGTH_SHORT).show()
                     } else {
                         subjectDao.updateSubject(
-                            subjectId = existing.id,
-                            categoryId = categoryId,
-                            name = name,
+                            subjectId   = existing.id,
+                            categoryId  = categoryId,
+                            name        = name,
                             description = description.ifBlank { null },
-                            isActive = isActive,
-                            sortOrder = sortOrder
+                            isActive    = isActive,
+                            sortOrder   = sortOrder
                         )
                         Snackbar.make(b.root, "Subject updated", Snackbar.LENGTH_SHORT).show()
                     }
-
                     reload()
                     dialog.dismiss()
                 } catch (e: Exception) {
-                    Snackbar.make(
-                        b.root,
-                        "Could not save: ${e.message}",
-                        Snackbar.LENGTH_LONG
-                    ).show()
+                    Snackbar.make(b.root, "Could not save: ${e.message}", Snackbar.LENGTH_LONG).show()
                 }
             }
         }
@@ -288,15 +266,12 @@ class ManageSubjectsActivity : AppCompatActivity() {
     private fun resolveCategoryId(
         rawText: String,
         categories: List<CategoryDao.SelectableCategory>
-    ): Long? {
-        val clean = rawText.trim()
-        val matched = categories.firstOrNull { it.name.equals(clean, ignoreCase = true) }
-        return matched?.id
-    }
+    ): Long? = categories.firstOrNull { it.name.equals(rawText.trim(), ignoreCase = true) }?.id
+
+    // ── Toggle / Delete ─────────────────────────────────────────────────────
 
     private fun confirmToggle(row: SubjectDao.AdminSubjectRow) {
         val nextActive = !row.isActive
-
         MaterialAlertDialogBuilder(this)
             .setTitle("${if (nextActive) "Activate" else "Deactivate"} subject?")
             .setMessage("This will ${if (nextActive) "activate" else "deactivate"} \"${row.name}\".")
@@ -341,47 +316,45 @@ class ManageSubjectsActivity : AppCompatActivity() {
             .show()
     }
 
+    // ── Adapter ───────────────────────────────────────────────────────────────
+
     private class SubjectsAdapter(
-        private val onEdit: (SubjectDao.AdminSubjectRow) -> Unit,
+        private val onEdit:   (SubjectDao.AdminSubjectRow) -> Unit,
         private val onToggle: (SubjectDao.AdminSubjectRow) -> Unit,
         private val onDelete: (SubjectDao.AdminSubjectRow) -> Unit
     ) : ListAdapter<SubjectDao.AdminSubjectRow, SubjectsAdapter.VH>(Diff()) {
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
             val binding = ItemSubjectBinding.inflate(
-                LayoutInflater.from(parent.context),
-                parent,
-                false
+                LayoutInflater.from(parent.context), parent, false
             )
             return VH(binding, onEdit, onToggle, onDelete)
         }
 
-        override fun onBindViewHolder(holder: VH, position: Int) {
+        override fun onBindViewHolder(holder: VH, position: Int) =
             holder.bind(getItem(position))
-        }
 
         class VH(
-            private val binding: ItemSubjectBinding,
-            private val onEdit: (SubjectDao.AdminSubjectRow) -> Unit,
+            private val binding:  ItemSubjectBinding,
+            private val onEdit:   (SubjectDao.AdminSubjectRow) -> Unit,
             private val onToggle: (SubjectDao.AdminSubjectRow) -> Unit,
             private val onDelete: (SubjectDao.AdminSubjectRow) -> Unit
         ) : RecyclerView.ViewHolder(binding.root) {
 
             fun bind(row: SubjectDao.AdminSubjectRow) {
-                binding.tvName.text = row.name
+                binding.tvName.text     = row.name
                 binding.tvCategory.text = "Category: ${row.categoryName}"
                 binding.tvDescription.text =
                     row.description?.takeIf { it.isNotBlank() } ?: "No description"
 
                 binding.chipStatus.text = if (row.isActive) "Active" else "Inactive"
-                binding.chipSort.text = "Order: ${row.sortOrder}"
-                binding.chipUsage.text = "Used: ${row.usageCount}"
+                binding.chipSort.text   = "Order: ${row.sortOrder}"
+                binding.chipUsage.text  = "Used: ${row.usageCount}"
 
-                binding.btnEdit.setOnClickListener { onEdit(row) }
+                binding.btnEdit.setOnClickListener   { onEdit(row) }
                 binding.btnToggle.text = if (row.isActive) "Deactivate" else "Activate"
                 binding.btnToggle.setOnClickListener { onToggle(row) }
 
-                binding.btnDelete.isEnabled = row.usageCount == 0
                 binding.btnDelete.isEnabled = row.usageCount == 0
                 binding.btnDelete.setOnClickListener { onDelete(row) }
             }
@@ -391,12 +364,12 @@ class ManageSubjectsActivity : AppCompatActivity() {
             override fun areItemsTheSame(
                 oldItem: SubjectDao.AdminSubjectRow,
                 newItem: SubjectDao.AdminSubjectRow
-            ): Boolean = oldItem.id == newItem.id
+            ) = oldItem.id == newItem.id
 
             override fun areContentsTheSame(
                 oldItem: SubjectDao.AdminSubjectRow,
                 newItem: SubjectDao.AdminSubjectRow
-            ): Boolean = oldItem == newItem
+            ) = oldItem == newItem
         }
     }
 }
