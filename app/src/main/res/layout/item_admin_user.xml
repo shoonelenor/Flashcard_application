@@ -1,24 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  Redesigned user card for Manage Accounts RecyclerView.
-  Changes:
-   - Added circular avatar with initials (tvAvatarInitials)
-   - Stronger name typography + muted email below
-   - Badge row: role chip, status chip, optional premium chip
-   - Action buttons moved to a clean end row (text buttons, no icons needed)
-   - Card elevation + 16dp corner radius instead of plain divider rows
-   - All touch targets >= 40dp
--->
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/cardUser"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:layout_marginHorizontal="12dp"
     android:layout_marginBottom="10dp"
-    app:cardBackgroundColor="@color/stardeck_surface"
+    app:cardBackgroundColor="@color/stardeck_surface_card"
     app:cardCornerRadius="16dp"
-    app:cardElevation="2dp"
+    app:cardElevation="4dp"
     app:strokeColor="@color/stardeck_field_stroke"
     app:strokeWidth="1dp">
 
@@ -26,33 +17,34 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="14dp">
+        android:padding="16dp">
 
-        <!-- Top row: avatar + name/email -->
+        <!-- ── Row 1: Avatar circle + Name/Email ─────────────────── -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
-            <!-- Circular avatar with initials -->
+            <!-- Avatar circle (solid primary color oval background) -->
             <FrameLayout
-                android:layout_width="42dp"
-                android:layout_height="42dp"
-                android:background="@drawable/bg_avatar_circle">
+                android:layout_width="44dp"
+                android:layout_height="44dp">
 
+                <!-- Oval background drawn inline - no external drawable needed -->
                 <TextView
                     android:id="@+id/tvAvatarInitials"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:background="@drawable/bg_circle_primary"
                     android:gravity="center"
                     android:text="U"
                     android:textColor="@color/white"
-                    android:textSize="16sp"
+                    android:textSize="18sp"
                     android:textStyle="bold" />
             </FrameLayout>
 
-            <!-- Name + email -->
+            <!-- Name + email column -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -67,8 +59,8 @@
                     android:ellipsize="end"
                     android:maxLines="1"
                     android:text="User Name"
-                    android:textAppearance="@style/TextAppearance.StarDeck.BodyLarge"
                     android:textColor="@color/stardeck_text_primary"
+                    android:textSize="16sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -79,114 +71,113 @@
                     android:ellipsize="end"
                     android:maxLines="1"
                     android:text="user@email.com"
-                    android:textAppearance="@style/TextAppearance.StarDeck.LabelMedium"
-                    android:textColor="@color/stardeck_text_secondary" />
+                    android:textColor="@color/stardeck_text_secondary"
+                    android:textSize="12sp" />
             </LinearLayout>
         </LinearLayout>
 
-        <!-- Badge row: role / status / premium -->
-        <com.google.android.material.chip.ChipGroup
-            android:id="@+id/chipGroupBadges"
+        <!-- ── Row 2: Badge chips ─────────────────────────────────── -->
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            app:chipSpacingHorizontal="6dp"
-            app:singleLine="true">
+            android:layout_marginTop="12dp"
+            android:orientation="horizontal">
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipRole"
-                style="@style/Widget.Material3.Chip.Assist"
+            <TextView
+                android:id="@+id/tvBadgeRole"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:checkable="false"
-                android:clickable="false"
-                android:focusable="false"
+                android:background="@drawable/bg_badge_neutral"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
                 android:text="user"
+                android:textColor="@color/stardeck_text_primary"
                 android:textSize="11sp" />
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipStatus"
-                style="@style/Widget.Material3.Chip.Assist"
+            <TextView
+                android:id="@+id/tvBadgeStatus"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:checkable="false"
-                android:clickable="false"
-                android:focusable="false"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/bg_badge_success"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
                 android:text="active"
+                android:textColor="@color/stardeck_success_text"
                 android:textSize="11sp" />
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipPremium"
-                style="@style/Widget.Material3.Chip.Assist"
+            <TextView
+                android:id="@+id/tvBadgePremium"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:checkable="false"
-                android:clickable="false"
-                android:focusable="false"
-                android:text="⭐ premium"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/bg_badge_gold"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
+                android:text="★ premium"
+                android:textColor="@color/stardeck_gold_text"
                 android:textSize="11sp"
                 android:visibility="gone" />
-        </com.google.android.material.chip.ChipGroup>
+        </LinearLayout>
 
-        <!-- Divider -->
-        <com.google.android.material.divider.MaterialDivider
+        <!-- ── Thin divider ──────────────────────────────────────── -->
+        <View
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:layout_height="1dp"
+            android:layout_marginTop="14dp"
             android:layout_marginBottom="4dp"
-            app:dividerColor="@color/stardeck_divider" />
+            android:background="@color/stardeck_divider" />
 
-        <!-- Action buttons row -->
+        <!-- ── Row 3: Action buttons ─────────────────────────────── -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="40dp"
+            android:layout_height="wrap_content"
             android:gravity="end|center_vertical"
             android:orientation="horizontal">
 
-            <com.google.android.material.button.MaterialButton
+            <TextView
                 android:id="@+id/btnEdit"
-                style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="40dp"
-                android:minWidth="0dp"
-                android:paddingHorizontal="10dp"
+                android:gravity="center"
+                android:paddingHorizontal="14dp"
                 android:text="Edit"
                 android:textColor="@color/stardeck_primary"
-                android:textSize="13sp" />
+                android:textSize="13sp"
+                android:textStyle="bold" />
 
             <View
                 android:layout_width="1dp"
-                android:layout_height="20dp"
+                android:layout_height="18dp"
                 android:layout_marginHorizontal="2dp"
                 android:background="@color/stardeck_divider" />
 
-            <com.google.android.material.button.MaterialButton
+            <TextView
                 android:id="@+id/btnResetPw"
-                style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="40dp"
-                android:minWidth="0dp"
-                android:paddingHorizontal="10dp"
+                android:gravity="center"
+                android:paddingHorizontal="14dp"
                 android:text="Reset PW"
                 android:textColor="@color/stardeck_text_secondary"
                 android:textSize="13sp" />
 
             <View
                 android:layout_width="1dp"
-                android:layout_height="20dp"
+                android:layout_height="18dp"
                 android:layout_marginHorizontal="2dp"
                 android:background="@color/stardeck_divider" />
 
-            <com.google.android.material.button.MaterialButton
+            <TextView
                 android:id="@+id/btnDelete"
-                style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="40dp"
-                android:minWidth="0dp"
-                android:paddingHorizontal="10dp"
+                android:gravity="center"
+                android:paddingHorizontal="14dp"
                 android:text="Delete"
                 android:textColor="@color/stardeck_error"
-                android:textSize="13sp" />
+                android:textSize="13sp"
+                android:textStyle="bold" />
         </LinearLayout>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

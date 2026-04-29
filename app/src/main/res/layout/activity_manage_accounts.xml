@@ -1,218 +1,218 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/stardeck_bg_bottom">
+    android:background="@color/stardeck_bg_bottom"
+    android:orientation="vertical">
 
-    <com.google.android.material.appbar.AppBarLayout
-        android:id="@+id/appBarLayout"
+    <!-- ── Toolbar ──────────────────────────────────────────────── -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/stardeck_surface"
+        app:navigationIcon="@drawable/ic_chevron_right"
+        app:navigationIconTint="@color/stardeck_text_primary"
+        app:title="Manage Accounts"
+        app:titleTextColor="@color/stardeck_text_primary" />
+
+    <!-- ── Filter panel ─────────────────────────────────────────── -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/stardeck_surface"
-        app:elevation="0dp">
+        android:orientation="vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingBottom="14dp">
 
-        <com.google.android.material.appbar.MaterialToolbar
-            android:id="@+id/toolbar"
+        <!-- Search field -->
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            app:navigationIcon="@drawable/ic_chevron_right"
-            app:navigationIconTint="@color/stardeck_text_primary"
-            app:title="Manage Accounts"
-            app:titleTextAppearance="@style/TextAppearance.StarDeck.TitleLarge"
-            app:titleTextColor="@color/stardeck_text_primary" />
+            android:layout_height="44dp"
+            android:background="@drawable/bg_search_field"
+            android:layout_marginTop="8dp">
 
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="14dp"
+                android:src="@drawable/ic_search"
+                app:tint="@color/stardeck_text_hint" />
+
+            <EditText
+                android:id="@+id/etSearch"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@null"
+                android:hint="Search accounts…"
+                android:inputType="text"
+                android:maxLines="1"
+                android:paddingStart="44dp"
+                android:paddingEnd="12dp"
+                android:textColor="@color/stardeck_text_primary"
+                android:textColorHint="@color/stardeck_text_hint"
+                android:textSize="14sp" />
+        </FrameLayout>
+
+        <!-- Role chips -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/chipRoleGroup"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/chipRoleAll"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:background="@drawable/bg_chip_selected"
+                    android:gravity="center"
+                    android:paddingHorizontal="16dp"
+                    android:text="All Roles"
+                    android:textColor="@color/white"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/chipRoleUser"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_chip_default"
+                    android:gravity="center"
+                    android:paddingHorizontal="16dp"
+                    android:text="User"
+                    android:textColor="@color/stardeck_text_secondary"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/chipRoleManager"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_chip_default"
+                    android:gravity="center"
+                    android:paddingHorizontal="16dp"
+                    android:text="Manager"
+                    android:textColor="@color/stardeck_text_secondary"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/chipRoleAdmin"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_chip_default"
+                    android:gravity="center"
+                    android:paddingHorizontal="16dp"
+                    android:text="Admin"
+                    android:textColor="@color/stardeck_text_secondary"
+                    android:textSize="13sp" />
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <!-- Status chips -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/chipStatusGroup"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/chipStatusAll"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:background="@drawable/bg_chip_selected"
+                    android:gravity="center"
+                    android:paddingHorizontal="16dp"
+                    android:text="All Status"
+                    android:textColor="@color/white"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/chipStatusActive"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_chip_default"
+                    android:gravity="center"
+                    android:paddingHorizontal="16dp"
+                    android:text="Active"
+                    android:textColor="@color/stardeck_text_secondary"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/chipStatusDisabled"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_chip_default"
+                    android:gravity="center"
+                    android:paddingHorizontal="16dp"
+                    android:text="Disabled"
+                    android:textColor="@color/stardeck_text_secondary"
+                    android:textSize="13sp" />
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <!-- Premium toggle + count -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingHorizontal="16dp"
-            android:paddingBottom="12dp">
+            android:layout_marginTop="12dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-            <!-- Search bar -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/searchLayout"
-                style="@style/Widget.StarDeck.TextInputLayout"
-                android:layout_width="match_parent"
+            <Switch
+                android:id="@+id/swPremiumOnly"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:hint="Search by name or email…"
-                app:startIconDrawable="@drawable/ic_search"
-                app:startIconTint="@color/stardeck_text_hint">
+                android:layout_weight="1"
+                android:text="Premium only"
+                android:textColor="@color/stardeck_text_primary"
+                android:textSize="14sp" />
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etSearch"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="text"
-                    android:maxLines="1" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <!-- Role filter -->
-            <HorizontalScrollView
-                android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/tvCount"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:scrollbars="none">
-
-                <com.google.android.material.chip.ChipGroup
-                    android:id="@+id/chipRoleGroup"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:chipSpacingHorizontal="6dp"
-                    app:singleSelection="true">
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipRoleAll"
-                        style="@style/Widget.Material3.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:checked="true"
-                        android:text="All Roles" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipRoleUser"
-                        style="@style/Widget.Material3.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="User" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipRoleManager"
-                        style="@style/Widget.Material3.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Manager" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipRoleAdmin"
-                        style="@style/Widget.Material3.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Admin" />
-                </com.google.android.material.chip.ChipGroup>
-            </HorizontalScrollView>
-
-            <!-- Status filter -->
-            <HorizontalScrollView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:scrollbars="none">
-
-                <com.google.android.material.chip.ChipGroup
-                    android:id="@+id/chipStatusGroup"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:chipSpacingHorizontal="6dp"
-                    app:singleSelection="true">
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipStatusAll"
-                        style="@style/Widget.Material3.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:checked="true"
-                        android:text="All Status" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipStatusActive"
-                        style="@style/Widget.Material3.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Active" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipStatusDisabled"
-                        style="@style/Widget.Material3.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Disabled" />
-                </com.google.android.material.chip.ChipGroup>
-            </HorizontalScrollView>
-
-            <!-- Premium toggle + count row -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/swPremiumOnly"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Premium only" />
-
-                <TextView
-                    android:id="@+id/tvCount"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="0 accounts"
-                    android:textAppearance="@style/TextAppearance.StarDeck.LabelSmall"
-                    android:textColor="@color/stardeck_text_secondary" />
-            </LinearLayout>
+                android:text="0 account(s)"
+                android:textColor="@color/stardeck_text_secondary"
+                android:textSize="12sp" />
         </LinearLayout>
+    </LinearLayout>
 
-        <com.google.android.material.divider.MaterialDivider
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:dividerColor="@color/stardeck_divider" />
-    </com.google.android.material.appbar.AppBarLayout>
+    <!-- ── Thin divider line ─────────────────────────────────────── -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/stardeck_divider" />
 
+    <!-- ── Account list ──────────────────────────────────────────── -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:clipToPadding="false"
-        android:paddingTop="8dp"
-        android:paddingBottom="96dp"
-        android:paddingHorizontal="12dp"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+        android:paddingTop="10dp"
+        android:paddingBottom="80dp" />
 
-    <!-- Empty state -->
-    <LinearLayout
-        android:id="@+id/groupEmpty"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center"
-        android:orientation="vertical"
-        android:visibility="gone"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+    <!-- ── Add User FAB ──────────────────────────────────────────── -->
+    <!-- FAB is absolutely positioned via FrameLayout wrapper -->
 
-        <ImageView
-            android:layout_width="72dp"
-            android:layout_height="72dp"
-            android:alpha="0.35"
-            android:src="@drawable/ic_sd_users"
-            app:tint="@color/stardeck_text_hint" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            android:text="No users found"
-            android:textAppearance="@style/TextAppearance.StarDeck.BodyMedium"
-            android:textColor="@color/stardeck_text_secondary" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Try adjusting your filters"
-            android:textAppearance="@style/TextAppearance.StarDeck.LabelSmall"
-            android:textColor="@color/stardeck_text_hint" />
-    </LinearLayout>
-
-    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
-        android:id="@+id/fabAdd"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="20dp"
-        android:text="Add User"
-        app:icon="@drawable/ic_sd_users" />
-
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+</LinearLayout>
