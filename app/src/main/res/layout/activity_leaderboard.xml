@@ -3,40 +3,73 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:background="@color/stardeck_bg_top">
 
+    <!-- Toolbar -->
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/stardeck_bg_top"
         android:title="Leaderboard"
+        android:titleTextColor="@color/stardeck_text_primary"
         app:navigationIcon="@android:drawable/ic_menu_revert" />
 
-    <TextView
-        android:id="@+id/tvSubtitle"
+    <!-- Subtitle bar -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="horizontal"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
-        android:paddingTop="8dp"
-        android:text="Top learners on this device"
-        android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp"
+        android:gravity="center_vertical"
+        android:background="@color/stardeck_field_bg">
 
+        <TextView
+            android:id="@+id/tvSubtitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Top learners on this device"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:textColor="@color/stardeck_text_secondary" />
+
+        <com.google.android.material.chip.Chip
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Keep studying! 🔥"
+            android:textSize="11sp"
+            android:textColor="@color/stardeck_text_primary"
+            android:checkable="false"
+            android:clickable="false"
+            app:chipBackgroundColor="@color/stardeck_primary" />
+
+    </LinearLayout>
+
+    <!-- List -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:padding="16dp"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="16dp"
         android:clipToPadding="false" />
 
+    <!-- Empty state -->
     <LinearLayout
         android:id="@+id/groupEmpty"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center"
         android:orientation="vertical"
-        android:padding="24dp"
+        android:padding="32dp"
         android:visibility="gone">
 
         <TextView
@@ -44,15 +77,20 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="No study data yet"
-            android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/stardeck_text_primary" />
 
         <TextView
             android:id="@+id/tvEmptyDesc"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
             android:text="Study some cards with any account to appear on the leaderboard."
-            android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
+            android:textSize="13sp"
+            android:textColor="@color/stardeck_text_secondary" />
+
     </LinearLayout>
 
 </LinearLayout>
