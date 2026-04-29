@@ -89,15 +89,25 @@ class LeaderboardActivity : AppCompatActivity() {
 
         class VH(private val b: ItemLeaderboardUserBinding) : RecyclerView.ViewHolder(b.root) {
             fun bind(position: Int, row: StatsDao.LeaderboardRow) {
-                b.tvRank.text  = (position + 1).toString()
-                b.tvName.text  = row.name
-                // tvEmail now shows a friendly rank label instead of private email
+                // Rank number
+                b.tvRank.text = when (position) {
+                    0 -> "🥇"
+                    1 -> "🥈"
+                    2 -> "🥉"
+                    else -> "${position + 1}"
+                }
+                // Avatar: first letter of name, uppercase
+                b.tvAvatar.text = row.name.firstOrNull()?.uppercaseChar()?.toString() ?: "?"
+                // Name
+                b.tvName.text = row.name
+                // Rank label (replaces old email field)
                 b.tvEmail.text = when (position) {
                     0 -> "🥇 Top Studier"
                     1 -> "🥈 2nd Place"
                     2 -> "🥉 3rd Place"
                     else -> "Rank #${position + 1}"
                 }
+                // Stats
                 val streakText = if (row.streakDays == 1) "1 day" else "${row.streakDays} days"
                 b.tvStats.text = "Total: ${row.totalStudy} • Streak: $streakText"
             }
