@@ -47,6 +47,7 @@
                     android:maxLines="1" />
             </com.google.android.material.textfield.TextInputLayout>
 
+            <!-- Role filter -->
             <HorizontalScrollView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -54,55 +55,93 @@
                 android:scrollbars="none">
 
                 <com.google.android.material.chip.ChipGroup
-                    android:id="@+id/chipGroupFilter"
+                    android:id="@+id/chipRoleGroup"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     app:singleSelection="true">
 
                     <com.google.android.material.chip.Chip
-                        android:id="@+id/chipAll"
+                        android:id="@+id/chipRoleAll"
                         style="@style/Widget.Material3.Chip.Filter"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:checked="true"
-                        android:text="All" />
+                        android:text="All Roles" />
 
                     <com.google.android.material.chip.Chip
-                        android:id="@+id/chipActive"
+                        android:id="@+id/chipRoleUser"
+                        style="@style/Widget.Material3.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="User" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipRoleManager"
+                        style="@style/Widget.Material3.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Manager" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipRoleAdmin"
+                        style="@style/Widget.Material3.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Admin" />
+                </com.google.android.material.chip.ChipGroup>
+            </HorizontalScrollView>
+
+            <!-- Status filter -->
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:scrollbars="none">
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/chipStatusGroup"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:singleSelection="true">
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipStatusAll"
+                        style="@style/Widget.Material3.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:checked="true"
+                        android:text="All Status" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipStatusActive"
                         style="@style/Widget.Material3.Chip.Filter"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Active" />
 
                     <com.google.android.material.chip.Chip
-                        android:id="@+id/chipBanned"
+                        android:id="@+id/chipStatusDisabled"
                         style="@style/Widget.Material3.Chip.Filter"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Banned" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipAdmin"
-                        style="@style/Widget.Material3.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Admin" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipManager"
-                        style="@style/Widget.Material3.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Manager" />
+                        android:text="Disabled" />
                 </com.google.android.material.chip.ChipGroup>
             </HorizontalScrollView>
 
+            <!-- Premium toggle -->
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/swPremiumOnly"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Premium only" />
+
             <TextView
-                android:id="@+id/tvItemCount"
+                android:id="@+id/tvCount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="0 users"
+                android:text="0 accounts"
                 android:textAppearance="@style/TextAppearance.StarDeck.LabelSmall"
                 android:textColor="@color/stardeck_text_secondary" />
         </LinearLayout>
@@ -114,7 +153,7 @@
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerView"
+        android:id="@+id/recycler"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
@@ -122,7 +161,7 @@
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
     <LinearLayout
-        android:id="@+id/emptyState"
+        android:id="@+id/groupEmpty"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center"

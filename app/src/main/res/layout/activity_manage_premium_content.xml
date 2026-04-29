@@ -19,7 +19,7 @@
             android:layout_height="?attr/actionBarSize"
             app:navigationIcon="@drawable/ic_chevron_right"
             app:navigationIconTint="@color/stardeck_text_primary"
-            app:title="Premium Content"
+            app:title="Manage Premium Content"
             app:titleTextAppearance="@style/TextAppearance.StarDeck.TitleLarge"
             app:titleTextColor="@color/stardeck_text_primary" />
 
@@ -35,8 +35,8 @@
                 style="@style/Widget.StarDeck.TextInputLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Search premium content..."
-                app:startIconDrawable="@drawable/ic_sd_star"
+                android:hint="Search content..."
+                app:startIconDrawable="@drawable/ic_sd_premium"
                 app:startIconTint="@color/stardeck_text_hint">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -47,8 +47,51 @@
                     android:maxLines="1" />
             </com.google.android.material.textfield.TextInputLayout>
 
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:scrollbars="none">
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/chipStatusGroup"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:singleSelection="true">
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipStatusAll"
+                        style="@style/Widget.Material3.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:checked="true"
+                        android:text="All" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipStatusActive"
+                        style="@style/Widget.Material3.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Active" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipStatusHidden"
+                        style="@style/Widget.Material3.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Hidden" />
+                </com.google.android.material.chip.ChipGroup>
+            </HorizontalScrollView>
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/swPremiumOnly"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Premium only" />
+
             <TextView
-                android:id="@+id/tvItemCount"
+                android:id="@+id/tvCount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
@@ -64,7 +107,7 @@
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerView"
+        android:id="@+id/recycler"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
@@ -72,7 +115,7 @@
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
     <LinearLayout
-        android:id="@+id/emptyState"
+        android:id="@+id/groupEmpty"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center"
@@ -84,25 +127,40 @@
             android:layout_width="64dp"
             android:layout_height="64dp"
             android:alpha="0.4"
-            android:src="@drawable/ic_sd_star"
+            android:src="@drawable/ic_sd_premium"
             app:tint="@color/stardeck_text_hint" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:text="No premium content found"
+            android:text="No content found"
             android:textAppearance="@style/TextAppearance.StarDeck.LabelSmall"
             android:textColor="@color/stardeck_text_hint" />
     </LinearLayout>
 
-    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
-        android:id="@+id/fabAdd"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
-        android:text="Add Premium"
-        app:icon="@drawable/ic_sd_star" />
+        android:layout_gravity="bottom"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:gravity="end">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnEnsureSeed"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:text="Seed Data" />
+
+        <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+            android:id="@+id/fabAdd"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Add Content"
+            app:icon="@drawable/ic_sd_premium" />
+    </LinearLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

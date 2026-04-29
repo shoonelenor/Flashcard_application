@@ -19,7 +19,7 @@
             android:layout_height="?attr/actionBarSize"
             app:navigationIcon="@drawable/ic_chevron_right"
             app:navigationIconTint="@color/stardeck_text_primary"
-            app:title="Category Setup"
+            app:title="Manage Categories"
             app:titleTextAppearance="@style/TextAppearance.StarDeck.TitleLarge"
             app:titleTextColor="@color/stardeck_text_primary" />
 
@@ -36,7 +36,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="Search categories..."
-                app:startIconDrawable="@drawable/ic_sd_layers"
+                app:startIconDrawable="@drawable/ic_sd_category"
                 app:startIconTint="@color/stardeck_text_hint">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -47,8 +47,44 @@
                     android:maxLines="1" />
             </com.google.android.material.textfield.TextInputLayout>
 
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:scrollbars="none">
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/chipStatusGroup"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:singleSelection="true">
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipStatusAll"
+                        style="@style/Widget.Material3.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:checked="true"
+                        android:text="All" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipStatusActive"
+                        style="@style/Widget.Material3.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Active" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipStatusInactive"
+                        style="@style/Widget.Material3.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Inactive" />
+                </com.google.android.material.chip.ChipGroup>
+            </HorizontalScrollView>
+
             <TextView
-                android:id="@+id/tvItemCount"
+                android:id="@+id/tvCount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
@@ -64,7 +100,7 @@
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerView"
+        android:id="@+id/recycler"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
@@ -72,7 +108,7 @@
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
     <LinearLayout
-        android:id="@+id/emptyState"
+        android:id="@+id/groupEmpty"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center"
@@ -84,7 +120,7 @@
             android:layout_width="64dp"
             android:layout_height="64dp"
             android:alpha="0.4"
-            android:src="@drawable/ic_sd_layers"
+            android:src="@drawable/ic_sd_category"
             app:tint="@color/stardeck_text_hint" />
 
         <TextView
@@ -103,6 +139,6 @@
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
         android:text="Add Category"
-        app:icon="@drawable/ic_sd_layers" />
+        app:icon="@drawable/ic_sd_category" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
