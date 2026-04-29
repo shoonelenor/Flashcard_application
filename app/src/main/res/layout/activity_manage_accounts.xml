@@ -30,13 +30,14 @@
             android:paddingHorizontal="16dp"
             android:paddingBottom="12dp">
 
+            <!-- Search bar — uses ic_search so users instantly recognise this as a search field -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/searchLayout"
                 style="@style/Widget.StarDeck.TextInputLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="Search users..."
-                app:startIconDrawable="@drawable/ic_sd_users"
+                app:startIconDrawable="@drawable/ic_search"
                 app:startIconTint="@color/stardeck_text_hint">
 
                 <com.google.android.material.textfield.TextInputEditText
