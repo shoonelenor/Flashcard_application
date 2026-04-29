@@ -18,13 +18,14 @@ class AdminTicketsActivity : AppCompatActivity() {
 
     private lateinit var dao: ReportDao
     private lateinit var listView: ListView
+    private lateinit var emptyLayout: LinearLayout
     private lateinit var tvEmpty: TextView
     private lateinit var tvOpenCount: TextView
     private lateinit var progressBar: ProgressBar
 
     private var allTickets = listOf<ReportDao.TicketRow>()
     private var filtered   = listOf<ReportDao.TicketRow>()
-    private var showFilter = "all"   // "all" | "open" | "resolved"
+    private var showFilter = "all"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,11 +38,13 @@ class AdminTicketsActivity : AppCompatActivity() {
 
         dao         = ReportDao(StarDeckDbHelper(this))
         listView    = findViewById(R.id.listViewTickets)
-        tvEmpty     = findViewById(R.id.tvTicketsEmpty)
+        emptyLayout = findViewById(R.id.layoutTicketsEmpty)
         tvOpenCount = findViewById(R.id.tvTicketOpenCount)
         progressBar = findViewById(R.id.progressTickets)
 
-        // Filter chip buttons
+        // get the "No tickets yet" TextView that lives inside the empty state layout
+        tvEmpty = emptyLayout.findViewById(R.id.tvTicketsEmptyLabel)
+
         val btnAll      = findViewById<Button>(R.id.btnFilterAll)
         val btnOpen     = findViewById<Button>(R.id.btnFilterOpen)
         val btnResolved = findViewById<Button>(R.id.btnFilterResolved)
@@ -70,22 +73,17 @@ class AdminTicketsActivity : AppCompatActivity() {
             else       -> allTickets
         }
         if (filtered.isEmpty()) {
-            listView.visibility  = View.GONE
-            tvEmpty.visibility   = View.VISIBLE
-            tvEmpty.text = when (filter) {
-                "open"     -> "No open tickets"
-                "resolved" -> "No resolved tickets"
-                else       -> "No tickets yet"
-            }
+            listView.visibility    = View.GONE
+            emptyLayout.visibility = View.VISIBLE
         } else {
-            listView.visibility = View.VISIBLE
-            tvEmpty.visibility  = View.GONE
+            listView.visibility    = View.VISIBLE
+            emptyLayout.visibility = View.GONE
             listView.adapter = TicketAdapter(filtered)
         }
     }
 
     private fun updateFilterButtons(active: Button, vararg inactive: Button) {
-        active.alpha = 1.0f
+        active.alpha     = 1.0f
         active.isEnabled = false
         inactive.forEach { it.alpha = 0.5f; it.isEnabled = true }
     }
@@ -110,7 +108,7 @@ class AdminTicketsActivity : AppCompatActivity() {
             view.findViewById<TextView>(R.id.tvTicketDate).text     = fmt.format(Date(ticket.createdAt))
 
             val tvStatus = view.findViewById<TextView>(R.id.tvTicketStatus)
-            val isOpen = ticket.status == DbContract.REPORT_OPEN
+            val isOpen   = ticket.status == DbContract.REPORT_OPEN
             tvStatus.text = if (isOpen) "OPEN" else "RESOLVED"
             tvStatus.setBackgroundResource(
                 if (isOpen) R.drawable.badge_open else R.drawable.badge_resolved
