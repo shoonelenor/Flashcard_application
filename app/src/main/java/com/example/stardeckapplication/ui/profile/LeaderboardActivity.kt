@@ -23,7 +23,7 @@ class LeaderboardActivity : AppCompatActivity() {
 
     private val session  by lazy { SessionManager(this) }
     private val dbHelper by lazy { StarDeckDbHelper(this) }
-    private val statsDao by lazy { StatsDao(dbHelper) }   // ✅ getLocalLeaderboard, LeaderboardRow
+    private val statsDao by lazy { StatsDao(dbHelper) }
 
     private val adapter = LeaderboardAdapter()
 
@@ -54,7 +54,6 @@ class LeaderboardActivity : AppCompatActivity() {
     }
 
     private fun loadData() {
-        // ✅ statsDao.getLocalLeaderboard — correct home
         val rows: List<StatsDao.LeaderboardRow> = runCatching { statsDao.getLocalLeaderboard() }
             .getOrElse {
                 Snackbar.make(b.root, "Could not load leaderboard.", Snackbar.LENGTH_LONG).show()
@@ -71,9 +70,9 @@ class LeaderboardActivity : AppCompatActivity() {
         }
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    //  ADAPTER — uses StatsDao.LeaderboardRow throughout
-    // ══════════════════════════════════════════════════════════════════════
+    // ══════════════════════════════════════════════════════
+    //  ADAPTER
+    // ══════════════════════════════════════════════════════
 
     private class LeaderboardAdapter :
         ListAdapter<StatsDao.LeaderboardRow, LeaderboardAdapter.VH>(Diff) {
@@ -92,7 +91,13 @@ class LeaderboardActivity : AppCompatActivity() {
             fun bind(position: Int, row: StatsDao.LeaderboardRow) {
                 b.tvRank.text  = (position + 1).toString()
                 b.tvName.text  = row.name
-                b.tvEmail.text = row.email
+                // tvEmail now shows a friendly rank label instead of private email
+                b.tvEmail.text = when (position) {
+                    0 -> "🥇 Top Studier"
+                    1 -> "🥈 2nd Place"
+                    2 -> "🥉 3rd Place"
+                    else -> "Rank #${position + 1}"
+                }
                 val streakText = if (row.streakDays == 1) "1 day" else "${row.streakDays} days"
                 b.tvStats.text = "Total: ${row.totalStudy} • Streak: $streakText"
             }
