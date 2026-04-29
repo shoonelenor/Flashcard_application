@@ -11,7 +11,6 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.example.stardeckapplication.R
 import com.example.stardeckapplication.databinding.ActivityManageReportReasonsBinding
 import com.example.stardeckapplication.databinding.DialogReportReasonBinding
 import com.example.stardeckapplication.databinding.ItemReportReasonBinding
@@ -19,7 +18,6 @@ import com.example.stardeckapplication.db.DbContract
 import com.example.stardeckapplication.db.ReportReasonDao
 import com.example.stardeckapplication.db.StarDeckDbHelper
 import com.example.stardeckapplication.util.SessionManager
-import com.google.android.material.chip.ChipGroup
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 
@@ -58,14 +56,18 @@ class ManageReportReasonsActivity : AppCompatActivity() {
 
         b.etSearch.doAfterTextChanged { applyFilters() }
 
-        b.chipStatusGroup.setOnCheckedStateChangeListener { group: ChipGroup, checkedIds: List<Int> ->
+        // Use individual chip click listeners — works on all Material versions
+        fun updateStatusFilter() {
             statusFilter = when {
-                checkedIds.contains(R.id.chipStatusActive)   -> true
-                checkedIds.contains(R.id.chipStatusInactive) -> false
-                else                                         -> null
+                b.chipStatusActive.isChecked   -> true
+                b.chipStatusInactive.isChecked -> false
+                else                           -> null
             }
             applyFilters()
         }
+        b.chipStatusAll.setOnClickListener      { updateStatusFilter() }
+        b.chipStatusActive.setOnClickListener   { updateStatusFilter() }
+        b.chipStatusInactive.setOnClickListener { updateStatusFilter() }
 
         b.fabAdd.setOnClickListener { showCreateDialog() }
 
@@ -104,7 +106,7 @@ class ManageReportReasonsActivity : AppCompatActivity() {
         b.recycler.visibility   = if (filtered.isEmpty()) View.GONE   else View.VISIBLE
     }
 
-    // ── Create / Edit ─────────────────────────────────────────────────────
+    // ── Create ────────────────────────────────────────────────────────────────
 
     private fun showCreateDialog() {
         val d = DialogReportReasonBinding.inflate(layoutInflater)
@@ -198,7 +200,7 @@ class ManageReportReasonsActivity : AppCompatActivity() {
         return dialog
     }
 
-    // ── Toggle / Delete ─────────────────────────────────────────────────────
+    // ── Toggle / Delete ───────────────────────────────────────────────────────
 
     private fun confirmToggle(row: ReportReasonDao.ReportReasonRow) {
         val nextActive = !row.isActive
@@ -223,8 +225,7 @@ class ManageReportReasonsActivity : AppCompatActivity() {
             MaterialAlertDialogBuilder(this)
                 .setTitle("Cannot delete")
                 .setMessage(
-                    "This reason has already been used in report history.\n\n" +
-                    "Deactivate it instead so old reports stay safe."
+                    "This reason has already been used in report history.\n\nDeactivate it instead so old reports stay safe."
                 )
                 .setPositiveButton("OK", null)
                 .show()
