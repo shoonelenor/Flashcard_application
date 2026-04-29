@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.doAfterTextChanged
@@ -11,6 +12,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.example.stardeckapplication.R
 import com.example.stardeckapplication.databinding.ActivityManageReportReasonsBinding
 import com.example.stardeckapplication.databinding.DialogReportReasonBinding
 import com.example.stardeckapplication.databinding.ItemReportReasonBinding
@@ -26,13 +28,13 @@ class ManageReportReasonsActivity : AppCompatActivity() {
     private lateinit var b: ActivityManageReportReasonsBinding
 
     private val dbHelper by lazy { StarDeckDbHelper(this) }
-    private val reportReasonDao by lazy { ReportReasonDao(dbHelper) }
+    private val reasonDao by lazy { ReportReasonDao(dbHelper) }
     private val session by lazy { SessionManager(this) }
 
-    private var all: List<ReportReasonDao.ReportReasonRow> = emptyList()
+    private var all: List<ReportReasonDao.AdminReasonRow> = emptyList()
     private var statusFilter: Boolean? = null
 
-    private val adapter = ReportReasonsAdapter(
+    private val adapter = ReasonsAdapter(
         onEdit = { showEditDialog(it) },
         onToggle = { confirmToggle(it) },
         onDelete = { confirmDelete(it) }
@@ -51,7 +53,7 @@ class ManageReportReasonsActivity : AppCompatActivity() {
 
         setSupportActionBar(b.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = "Report Reason Setup"
+        supportActionBar?.title = "Report Reasons Setup"
         b.toolbar.setNavigationOnClickListener { finish() }
 
         b.recycler.layoutManager = LinearLayoutManager(this)
@@ -59,12 +61,33 @@ class ManageReportReasonsActivity : AppCompatActivity() {
 
         b.etSearch.doAfterTextChanged { applyFilters() }
 
-        b.chipStatusGroup.setOnCheckedStateChangeListener { _, _ ->
-            statusFilter = when {
-                b.chipStatusActive.isChecked -> true
-                b.chipStatusInactive.isChecked -> false
-                else -> null
+        // Status chip click listeners
+        fun selectStatusChip(selected: TextView) {
+            listOf(b.chipStatusAll, b.chipStatusActive, b.chipStatusInactive).forEach { chip ->
+                chip.setBackgroundResource(
+                    if (chip == selected) R.drawable.bg_chip_selected
+                    else R.drawable.bg_chip_default
+                )
+                chip.setTextColor(
+                    if (chip == selected) getColor(android.R.color.white)
+                    else getColor(R.color.stardeck_text_secondary)
+                )
             }
+        }
+
+        b.chipStatusAll.setOnClickListener {
+            selectStatusChip(b.chipStatusAll)
+            statusFilter = null
+            applyFilters()
+        }
+        b.chipStatusActive.setOnClickListener {
+            selectStatusChip(b.chipStatusActive)
+            statusFilter = true
+            applyFilters()
+        }
+        b.chipStatusInactive.setOnClickListener {
+            selectStatusChip(b.chipStatusInactive)
+            statusFilter = false
             applyFilters()
         }
 
@@ -79,7 +102,7 @@ class ManageReportReasonsActivity : AppCompatActivity() {
     }
 
     private fun reload() {
-        all = reportReasonDao.adminGetAllReportReasons()
+        all = reasonDao.adminGetAllReasons()
         applyFilters()
     }
 
@@ -90,7 +113,7 @@ class ManageReportReasonsActivity : AppCompatActivity() {
 
         if (q.isNotBlank()) {
             filtered = filtered.filter { row ->
-                row.name.lowercase().contains(q) ||
+                row.label.lowercase().contains(q) ||
                         row.description.orEmpty().lowercase().contains(q)
             }
         }
@@ -109,55 +132,51 @@ class ManageReportReasonsActivity : AppCompatActivity() {
         val d = DialogReportReasonBinding.inflate(layoutInflater)
         d.tvTitle.text = "Create Report Reason"
         d.swActive.isChecked = true
-        d.etSortOrder.setText(reportReasonDao.getNextSortOrder().toString())
-
-        createReasonDialog(d, existing = null).show()
+        d.etSortOrder.setText(reasonDao.getNextSortOrder().toString())
+        createReasonDialog(d, null).show()
     }
 
-    private fun showEditDialog(row: ReportReasonDao.ReportReasonRow) {
+    private fun showEditDialog(row: ReportReasonDao.AdminReasonRow) {
         val d = DialogReportReasonBinding.inflate(layoutInflater)
         d.tvTitle.text = "Edit Report Reason"
-        d.etName.setText(row.name)
+        d.etLabel.setText(row.label)
         d.etDescription.setText(row.description.orEmpty())
         d.etSortOrder.setText(row.sortOrder.toString())
         d.swActive.isChecked = row.isActive
-
-        createReasonDialog(d, existing = row).show()
+        createReasonDialog(d, row).show()
     }
 
     private fun createReasonDialog(
         d: DialogReportReasonBinding,
-        existing: ReportReasonDao.ReportReasonRow?
+        existing: ReportReasonDao.AdminReasonRow?
     ): AlertDialog {
-        val positiveText = if (existing == null) "Create" else "Save"
-
         val dialog = MaterialAlertDialogBuilder(this)
             .setView(d.root)
-            .setPositiveButton(positiveText, null)
+            .setPositiveButton(if (existing == null) "Create" else "Save", null)
             .setNegativeButton("Cancel", null)
             .create()
 
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                d.tilName.error = null
+                d.tilLabel.error = null
                 d.tilDescription.error = null
                 d.tilSortOrder.error = null
 
-                val name = d.etName.text?.toString().orEmpty().trim()
+                val label = d.etLabel.text?.toString().orEmpty().trim()
                 val description = d.etDescription.text?.toString().orEmpty().trim()
                 val parsedSortOrder = d.etSortOrder.text?.toString().orEmpty().trim().toIntOrNull()
                 val isActive = d.swActive.isChecked
 
                 var ok = true
 
-                if (name.length < 3) {
-                    d.tilName.error = "At least 3 characters required"
+                if (label.length < 2) {
+                    d.tilLabel.error = "At least 2 characters required"
                     ok = false
-                } else if (name.length > 60) {
-                    d.tilName.error = "Max 60 characters"
+                } else if (label.length > 80) {
+                    d.tilLabel.error = "Max 80 characters"
                     ok = false
-                } else if (reportReasonDao.isNameTaken(name, existing?.id)) {
-                    d.tilName.error = "Reason already exists"
+                } else if (reasonDao.isLabelTaken(label, existing?.id)) {
+                    d.tilLabel.error = "Report reason already exists"
                     ok = false
                 }
 
@@ -177,104 +196,81 @@ class ManageReportReasonsActivity : AppCompatActivity() {
 
                 try {
                     if (existing == null) {
-                        reportReasonDao.createReason(
-                            name = name,
+                        reasonDao.createReason(
+                            label = label,
                             description = description.ifBlank { null },
                             isActive = isActive,
                             sortOrder = sortOrder
                         )
-                        Snackbar.make(b.root, "Reason created", Snackbar.LENGTH_SHORT).show()
+                        Snackbar.make(b.root, "Report reason created", Snackbar.LENGTH_SHORT).show()
                     } else {
-                        reportReasonDao.updateReason(
+                        reasonDao.updateReason(
                             reasonId = existing.id,
-                            name = name,
+                            label = label,
                             description = description.ifBlank { null },
                             isActive = isActive,
                             sortOrder = sortOrder
                         )
-                        Snackbar.make(b.root, "Reason updated", Snackbar.LENGTH_SHORT).show()
+                        Snackbar.make(b.root, "Report reason updated", Snackbar.LENGTH_SHORT).show()
                     }
-
                     reload()
                     dialog.dismiss()
                 } catch (e: Exception) {
-                    Snackbar.make(
-                        b.root,
-                        "Could not save: ${e.message}",
-                        Snackbar.LENGTH_LONG
-                    ).show()
+                    Snackbar.make(b.root, "Could not save: ${e.message}", Snackbar.LENGTH_LONG).show()
                 }
             }
         }
-
         return dialog
     }
 
-    private fun confirmToggle(row: ReportReasonDao.ReportReasonRow) {
+    private fun confirmToggle(row: ReportReasonDao.AdminReasonRow) {
         val nextActive = !row.isActive
-        val actionText = if (nextActive) "activate" else "deactivate"
-
         MaterialAlertDialogBuilder(this)
-            .setTitle("${if (nextActive) "Activate" else "Deactivate"} reason?")
-            .setMessage("This will $actionText \"${row.name}\".")
+            .setTitle("${if (nextActive) "Activate" else "Deactivate"} report reason?")
+            .setMessage("This will ${if (nextActive) "activate" else "deactivate"} \"${row.label}\".")
             .setPositiveButton("Yes") { _, _ ->
-                reportReasonDao.setReasonActive(row.id, nextActive)
-                Snackbar.make(
-                    b.root,
-                    "Reason ${if (nextActive) "activated" else "deactivated"}",
-                    Snackbar.LENGTH_SHORT
-                ).show()
+                reasonDao.setReasonActive(row.id, nextActive)
+                Snackbar.make(b.root, "Report reason ${if (nextActive) "activated" else "deactivated"}", Snackbar.LENGTH_SHORT).show()
                 reload()
             }
             .setNegativeButton("Cancel", null)
             .show()
     }
 
-    private fun confirmDelete(row: ReportReasonDao.ReportReasonRow) {
+    private fun confirmDelete(row: ReportReasonDao.AdminReasonRow) {
         if (row.usageCount > 0) {
             MaterialAlertDialogBuilder(this)
                 .setTitle("Cannot delete")
-                .setMessage(
-                    "This reason has already been used in report history.\n\n" +
-                            "Deactivate it instead so old reports stay safe."
-                )
+                .setMessage("This report reason has already been used in reports.\n\nDeactivate it instead so old reports stay safe.")
                 .setPositiveButton("OK", null)
                 .show()
             return
         }
 
         MaterialAlertDialogBuilder(this)
-            .setTitle("Delete reason?")
-            .setMessage("This will permanently delete \"${row.name}\".")
+            .setTitle("Delete report reason?")
+            .setMessage("This will permanently delete \"${row.label}\".")
             .setPositiveButton("Delete") { _, _ ->
-                val rows = reportReasonDao.deleteReason(row.id)
+                val rows = reasonDao.deleteReason(row.id)
                 if (rows == 1) {
-                    Snackbar.make(b.root, "Reason deleted", Snackbar.LENGTH_SHORT).show()
+                    Snackbar.make(b.root, "Report reason deleted", Snackbar.LENGTH_SHORT).show()
                     reload()
                 } else {
-                    Snackbar.make(
-                        b.root,
-                        "Could not delete reason",
-                        Snackbar.LENGTH_LONG
-                    ).show()
+                    Snackbar.make(b.root, "Could not delete report reason", Snackbar.LENGTH_LONG).show()
                 }
             }
             .setNegativeButton("Cancel", null)
             .show()
     }
 
-    private class ReportReasonsAdapter(
-        private val onEdit: (ReportReasonDao.ReportReasonRow) -> Unit,
-        private val onToggle: (ReportReasonDao.ReportReasonRow) -> Unit,
-        private val onDelete: (ReportReasonDao.ReportReasonRow) -> Unit
-    ) : ListAdapter<ReportReasonDao.ReportReasonRow, ReportReasonsAdapter.VH>(Diff()) {
+    private class ReasonsAdapter(
+        private val onEdit: (ReportReasonDao.AdminReasonRow) -> Unit,
+        private val onToggle: (ReportReasonDao.AdminReasonRow) -> Unit,
+        private val onDelete: (ReportReasonDao.AdminReasonRow) -> Unit
+    ) : ListAdapter<ReportReasonDao.AdminReasonRow, ReasonsAdapter.VH>(Diff()) {
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
-            val binding = ItemReportReasonBinding.inflate(
-                LayoutInflater.from(parent.context),
-                parent,
-                false
-            )
+            val binding = ItemReportReasonBinding.inflate(LayoutInflater.from(parent.context), parent, false)
             return VH(binding, onEdit, onToggle, onDelete)
         }
 
@@ -284,16 +280,14 @@ class ManageReportReasonsActivity : AppCompatActivity() {
 
         class VH(
             private val binding: ItemReportReasonBinding,
-            private val onEdit: (ReportReasonDao.ReportReasonRow) -> Unit,
-            private val onToggle: (ReportReasonDao.ReportReasonRow) -> Unit,
-            private val onDelete: (ReportReasonDao.ReportReasonRow) -> Unit
+            private val onEdit: (ReportReasonDao.AdminReasonRow) -> Unit,
+            private val onToggle: (ReportReasonDao.AdminReasonRow) -> Unit,
+            private val onDelete: (ReportReasonDao.AdminReasonRow) -> Unit
         ) : RecyclerView.ViewHolder(binding.root) {
 
-            fun bind(row: ReportReasonDao.ReportReasonRow) {
-                binding.tvName.text = row.name
-                binding.tvDescription.text =
-                    row.description?.takeIf { it.isNotBlank() } ?: "No description"
-
+            fun bind(row: ReportReasonDao.AdminReasonRow) {
+                binding.tvLabel.text = row.label
+                binding.tvDescription.text = row.description?.takeIf { it.isNotBlank() } ?: "No description"
                 binding.chipStatus.text = if (row.isActive) "Active" else "Inactive"
                 binding.chipSort.text = "Order: ${row.sortOrder}"
                 binding.chipUsage.text = "Used: ${row.usageCount}"
@@ -307,16 +301,9 @@ class ManageReportReasonsActivity : AppCompatActivity() {
             }
         }
 
-        private class Diff : DiffUtil.ItemCallback<ReportReasonDao.ReportReasonRow>() {
-            override fun areItemsTheSame(
-                oldItem: ReportReasonDao.ReportReasonRow,
-                newItem: ReportReasonDao.ReportReasonRow
-            ): Boolean = oldItem.id == newItem.id
-
-            override fun areContentsTheSame(
-                oldItem: ReportReasonDao.ReportReasonRow,
-                newItem: ReportReasonDao.ReportReasonRow
-            ): Boolean = oldItem == newItem
+        private class Diff : DiffUtil.ItemCallback<ReportReasonDao.AdminReasonRow>() {
+            override fun areItemsTheSame(oldItem: ReportReasonDao.AdminReasonRow, newItem: ReportReasonDao.AdminReasonRow): Boolean = oldItem.id == newItem.id
+            override fun areContentsTheSame(oldItem: ReportReasonDao.AdminReasonRow, newItem: ReportReasonDao.AdminReasonRow): Boolean = oldItem == newItem
         }
     }
 }

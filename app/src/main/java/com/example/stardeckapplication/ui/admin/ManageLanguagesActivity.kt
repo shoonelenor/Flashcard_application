@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.doAfterTextChanged
@@ -11,6 +12,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.example.stardeckapplication.R
 import com.example.stardeckapplication.databinding.ActivityManageLanguagesBinding
 import com.example.stardeckapplication.databinding.DialogLanguageBinding
 import com.example.stardeckapplication.databinding.ItemLanguageBinding
@@ -59,12 +61,33 @@ class ManageLanguagesActivity : AppCompatActivity() {
 
         b.etSearch.doAfterTextChanged { applyFilters() }
 
-        b.chipStatusGroup.setOnCheckedStateChangeListener { _, _ ->
-            statusFilter = when {
-                b.chipStatusActive.isChecked -> true
-                b.chipStatusInactive.isChecked -> false
-                else -> null
+        // Status chip click listeners
+        fun selectStatusChip(selected: TextView) {
+            listOf(b.chipStatusAll, b.chipStatusActive, b.chipStatusInactive).forEach { chip ->
+                chip.setBackgroundResource(
+                    if (chip == selected) R.drawable.bg_chip_selected
+                    else R.drawable.bg_chip_default
+                )
+                chip.setTextColor(
+                    if (chip == selected) getColor(android.R.color.white)
+                    else getColor(R.color.stardeck_text_secondary)
+                )
             }
+        }
+
+        b.chipStatusAll.setOnClickListener {
+            selectStatusChip(b.chipStatusAll)
+            statusFilter = null
+            applyFilters()
+        }
+        b.chipStatusActive.setOnClickListener {
+            selectStatusChip(b.chipStatusActive)
+            statusFilter = true
+            applyFilters()
+        }
+        b.chipStatusInactive.setOnClickListener {
+            selectStatusChip(b.chipStatusInactive)
+            statusFilter = false
             applyFilters()
         }
 
