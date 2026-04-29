@@ -1,107 +1,192 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<!--
+  Redesigned user card for Manage Accounts RecyclerView.
+  Changes:
+   - Added circular avatar with initials (tvAvatarInitials)
+   - Stronger name typography + muted email below
+   - Badge row: role chip, status chip, optional premium chip
+   - Action buttons moved to a clean end row (text buttons, no icons needed)
+   - Card elevation + 16dp corner radius instead of plain divider rows
+   - All touch targets >= 40dp
+-->
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cardUser"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="12dp"
+    android:layout_marginBottom="10dp"
+    app:cardBackgroundColor="@color/stardeck_surface"
     app:cardCornerRadius="16dp"
+    app:cardElevation="2dp"
+    app:strokeColor="@color/stardeck_field_stroke"
     app:strokeWidth="1dp">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="vertical"
         android:padding="14dp">
 
-        <TextView
-            android:id="@+id/tvName"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="Name"
-            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
-
-        <TextView
-            android:id="@+id/tvEmail"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:text="email@example.com"
-            android:textAppearance="@style/TextAppearance.Material3.BodySmall"
-            app:layout_constraintTop_toBottomOf="@id/tvName"
-            app:layout_constraintStart_toStartOf="@id/tvName"
-            app:layout_constraintEnd_toEndOf="@id/tvName" />
-
-        <com.google.android.material.chip.ChipGroup
-            android:id="@+id/chipGroup"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            app:singleLine="true"
-            app:layout_constraintTop_toBottomOf="@id/tvEmail"
-            app:layout_constraintStart_toStartOf="@id/tvEmail"
-            app:layout_constraintEnd_toEndOf="@id/tvEmail">
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipRole"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="role"
-                android:checkable="false" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipStatus"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="status"
-                android:checkable="false" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipPremium"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="⭐ premium"
-                android:checkable="false"
-                android:visibility="gone" />
-        </com.google.android.material.chip.ChipGroup>
-
+        <!-- Top row: avatar + name/email -->
         <LinearLayout
-            android:id="@+id/actionRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <!-- Circular avatar with initials -->
+            <FrameLayout
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="@drawable/bg_avatar_circle">
+
+                <TextView
+                    android:id="@+id/tvAvatarInitials"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:text="U"
+                    android:textColor="@color/white"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+            </FrameLayout>
+
+            <!-- Name + email -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:text="User Name"
+                    android:textAppearance="@style/TextAppearance.StarDeck.BodyLarge"
+                    android:textColor="@color/stardeck_text_primary"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvEmail"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:text="user@email.com"
+                    android:textAppearance="@style/TextAppearance.StarDeck.LabelMedium"
+                    android:textColor="@color/stardeck_text_secondary" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Badge row: role / status / premium -->
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroupBadges"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:orientation="horizontal"
-            app:layout_constraintTop_toBottomOf="@id/chipGroup"
-            app:layout_constraintEnd_toEndOf="parent">
+            app:chipSpacingHorizontal="6dp"
+            app:singleLine="true">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipRole"
+                style="@style/Widget.Material3.Chip.Assist"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checkable="false"
+                android:clickable="false"
+                android:focusable="false"
+                android:text="user"
+                android:textSize="11sp" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipStatus"
+                style="@style/Widget.Material3.Chip.Assist"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checkable="false"
+                android:clickable="false"
+                android:focusable="false"
+                android:text="active"
+                android:textSize="11sp" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipPremium"
+                style="@style/Widget.Material3.Chip.Assist"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checkable="false"
+                android:clickable="false"
+                android:focusable="false"
+                android:text="⭐ premium"
+                android:textSize="11sp"
+                android:visibility="gone" />
+        </com.google.android.material.chip.ChipGroup>
+
+        <!-- Divider -->
+        <com.google.android.material.divider.MaterialDivider
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="4dp"
+            app:dividerColor="@color/stardeck_divider" />
+
+        <!-- Action buttons row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:gravity="end|center_vertical"
+            android:orientation="horizontal">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnEdit"
                 style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="40dp"
+                android:minWidth="0dp"
+                android:paddingHorizontal="10dp"
                 android:text="Edit"
-                android:textAllCaps="false" />
+                android:textColor="@color/stardeck_primary"
+                android:textSize="13sp" />
+
+            <View
+                android:layout_width="1dp"
+                android:layout_height="20dp"
+                android:layout_marginHorizontal="2dp"
+                android:background="@color/stardeck_divider" />
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnReset"
+                android:id="@+id/btnResetPw"
                 style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
+                android:layout_height="40dp"
+                android:minWidth="0dp"
+                android:paddingHorizontal="10dp"
                 android:text="Reset PW"
-                android:textAllCaps="false" />
+                android:textColor="@color/stardeck_text_secondary"
+                android:textSize="13sp" />
+
+            <View
+                android:layout_width="1dp"
+                android:layout_height="20dp"
+                android:layout_marginHorizontal="2dp"
+                android:background="@color/stardeck_divider" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnDelete"
                 style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
+                android:layout_height="40dp"
+                android:minWidth="0dp"
+                android:paddingHorizontal="10dp"
                 android:text="Delete"
-                android:textAllCaps="false" />
+                android:textColor="@color/stardeck_error"
+                android:textSize="13sp" />
         </LinearLayout>
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
+    </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

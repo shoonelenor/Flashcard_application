@@ -4,7 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/stardeck_surface">
+    android:background="@color/stardeck_bg_bottom">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
@@ -19,7 +19,7 @@
             android:layout_height="?attr/actionBarSize"
             app:navigationIcon="@drawable/ic_chevron_right"
             app:navigationIconTint="@color/stardeck_text_primary"
-            app:title="User Management"
+            app:title="Manage Accounts"
             app:titleTextAppearance="@style/TextAppearance.StarDeck.TitleLarge"
             app:titleTextColor="@color/stardeck_text_primary" />
 
@@ -30,13 +30,13 @@
             android:paddingHorizontal="16dp"
             android:paddingBottom="12dp">
 
-            <!-- Search bar — uses ic_search so users instantly recognise this as a search field -->
+            <!-- Search bar -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/searchLayout"
                 style="@style/Widget.StarDeck.TextInputLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Search users..."
+                android:hint="Search by name or email…"
                 app:startIconDrawable="@drawable/ic_search"
                 app:startIconTint="@color/stardeck_text_hint">
 
@@ -52,13 +52,14 @@
             <HorizontalScrollView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="10dp"
                 android:scrollbars="none">
 
                 <com.google.android.material.chip.ChipGroup
                     android:id="@+id/chipRoleGroup"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    app:chipSpacingHorizontal="6dp"
                     app:singleSelection="true">
 
                     <com.google.android.material.chip.Chip
@@ -96,13 +97,14 @@
             <HorizontalScrollView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="6dp"
                 android:scrollbars="none">
 
                 <com.google.android.material.chip.ChipGroup
                     android:id="@+id/chipStatusGroup"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    app:chipSpacingHorizontal="6dp"
                     app:singleSelection="true">
 
                     <com.google.android.material.chip.Chip
@@ -129,22 +131,29 @@
                 </com.google.android.material.chip.ChipGroup>
             </HorizontalScrollView>
 
-            <!-- Premium toggle -->
-            <com.google.android.material.materialswitch.MaterialSwitch
-                android:id="@+id/swPremiumOnly"
-                android:layout_width="wrap_content"
+            <!-- Premium toggle + count row -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="Premium only" />
+                android:layout_marginTop="10dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
-            <TextView
-                android:id="@+id/tvCount"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="0 accounts"
-                android:textAppearance="@style/TextAppearance.StarDeck.LabelSmall"
-                android:textColor="@color/stardeck_text_secondary" />
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/swPremiumOnly"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Premium only" />
+
+                <TextView
+                    android:id="@+id/tvCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0 accounts"
+                    android:textAppearance="@style/TextAppearance.StarDeck.LabelSmall"
+                    android:textColor="@color/stardeck_text_secondary" />
+            </LinearLayout>
         </LinearLayout>
 
         <com.google.android.material.divider.MaterialDivider
@@ -158,9 +167,12 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
-        android:paddingBottom="88dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="96dp"
+        android:paddingHorizontal="12dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
+    <!-- Empty state -->
     <LinearLayout
         android:id="@+id/groupEmpty"
         android:layout_width="match_parent"
@@ -171,17 +183,25 @@
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <ImageView
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:alpha="0.4"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:alpha="0.35"
             android:src="@drawable/ic_sd_users"
             app:tint="@color/stardeck_text_hint" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="14dp"
             android:text="No users found"
+            android:textAppearance="@style/TextAppearance.StarDeck.BodyMedium"
+            android:textColor="@color/stardeck_text_secondary" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Try adjusting your filters"
             android:textAppearance="@style/TextAppearance.StarDeck.LabelSmall"
             android:textColor="@color/stardeck_text_hint" />
     </LinearLayout>
@@ -191,7 +211,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
+        android:layout_margin="20dp"
         android:text="Add User"
         app:icon="@drawable/ic_sd_users" />
 
