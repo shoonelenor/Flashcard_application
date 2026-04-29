@@ -20,7 +20,6 @@ class ManageContentSetupActivity : AppCompatActivity() {
     private lateinit var b: ActivityManageContentSetupBinding
     private val session by lazy { SessionManager(this) }
 
-    // Renamed from MenuItem to ContentMenuItem to avoid clash with android.view.MenuItem
     data class ContentMenuItem(val label: String, val description: String, val target: Class<*>)
 
     private val menuItems = listOf(
@@ -48,11 +47,6 @@ class ManageContentSetupActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = "Content Setup"
         b.toolbar.setNavigationOnClickListener { finish() }
-
-        // Hide search bar and FAB - not needed for navigation menu
-        b.searchLayout.visibility = View.GONE
-        b.tvItemCount.visibility  = View.GONE
-        b.fabAdd.hide()
 
         b.recyclerView.layoutManager = LinearLayoutManager(this)
         b.recyclerView.adapter = MenuAdapter(menuItems) { item ->

@@ -20,47 +20,13 @@
             app:navigationIcon="@drawable/ic_chevron_right"
             app:navigationIconTint="@color/stardeck_text_primary"
             app:title="Content Setup"
-            app:titleTextAppearance="@style/TextAppearance.StarDeck.TitleLarge"
             app:titleTextColor="@color/stardeck_text_primary" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingHorizontal="16dp"
-            android:paddingBottom="12dp">
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/searchLayout"
-                style="@style/Widget.StarDeck.TextInputLayout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Search content..."
-                app:startIconDrawable="@drawable/ic_sd_book_open"
-                app:startIconTint="@color/stardeck_text_hint">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etSearch"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="text"
-                    android:maxLines="1" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <TextView
-                android:id="@+id/tvItemCount"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="0 items"
-                android:textAppearance="@style/TextAppearance.StarDeck.LabelSmall"
-                android:textColor="@color/stardeck_text_secondary" />
-        </LinearLayout>
 
         <com.google.android.material.divider.MaterialDivider
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:dividerColor="@color/stardeck_divider" />
+
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.recyclerview.widget.RecyclerView
@@ -68,7 +34,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
-        android:paddingBottom="88dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="24dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
     <LinearLayout
@@ -80,29 +47,13 @@
         android:visibility="gone"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <ImageView
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:alpha="0.4"
-            android:src="@drawable/ic_sd_book_open"
-            app:tint="@color/stardeck_text_hint" />
-
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
             android:text="No content found"
-            android:textAppearance="@style/TextAppearance.StarDeck.LabelSmall"
-            android:textColor="@color/stardeck_text_hint" />
-    </LinearLayout>
+            android:textColor="@color/stardeck_text_hint"
+            android:textSize="14sp" />
 
-    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
-        android:id="@+id/fabAdd"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
-        android:text="Add Content"
-        app:icon="@drawable/ic_sd_book_open" />
+    </LinearLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
