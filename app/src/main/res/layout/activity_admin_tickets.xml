@@ -159,6 +159,7 @@
             android:textStyle="bold" />
 
         <TextView
+            android:id="@+id/tvTicketsEmptyLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
@@ -168,8 +169,8 @@
 
     </LinearLayout>
 
-    <!-- ── TICKET LIST ── -->
-    <androidx.recyclerview.widget.RecyclerView
+    <!-- ── TICKET LIST (ListView kept for existing ArrayAdapter) ── -->
+    <ListView
         android:id="@+id/listViewTickets"
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -179,6 +180,8 @@
         android:paddingTop="8dp"
         android:paddingBottom="110dp"
         android:clipToPadding="false"
+        android:divider="@color/stardeck_field_stroke"
+        android:dividerHeight="0dp"
         android:overScrollMode="never" />
 
 </LinearLayout>
