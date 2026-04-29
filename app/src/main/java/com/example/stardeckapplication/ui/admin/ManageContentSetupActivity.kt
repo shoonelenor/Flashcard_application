@@ -20,16 +20,17 @@ class ManageContentSetupActivity : AppCompatActivity() {
     private lateinit var b: ActivityManageContentSetupBinding
     private val session by lazy { SessionManager(this) }
 
-    data class MenuItem(val label: String, val description: String, val target: Class<*>)
+    // Renamed from MenuItem to ContentMenuItem to avoid clash with android.view.MenuItem
+    data class ContentMenuItem(val label: String, val description: String, val target: Class<*>)
 
     private val menuItems = listOf(
-        MenuItem("Categories",         "Manage deck categories",          ManageCategoriesActivity::class.java),
-        MenuItem("Languages",          "Manage supported languages",       ManageLanguagesActivity::class.java),
-        MenuItem("Subjects",           "Manage deck subjects",             ManageSubjectsActivity::class.java),
-        MenuItem("Achievements",       "Manage user achievements",         ManageAchievementsActivity::class.java),
-        MenuItem("Report Reasons",     "Manage report reason options",     ManageReportReasonsActivity::class.java),
-        MenuItem("Premium Content",    "Manage premium decks & content",   ManagePremiumContentActivity::class.java),
-        MenuItem("Subscription Plans", "Manage subscription tiers",        ManageSubscriptionPlansActivity::class.java)
+        ContentMenuItem("Categories",         "Manage deck categories",          ManageCategoriesActivity::class.java),
+        ContentMenuItem("Languages",          "Manage supported languages",       ManageLanguagesActivity::class.java),
+        ContentMenuItem("Subjects",           "Manage deck subjects",             ManageSubjectsActivity::class.java),
+        ContentMenuItem("Achievements",       "Manage user achievements",         ManageAchievementsActivity::class.java),
+        ContentMenuItem("Report Reasons",     "Manage report reason options",     ManageReportReasonsActivity::class.java),
+        ContentMenuItem("Premium Content",    "Manage premium decks & content",   ManagePremiumContentActivity::class.java),
+        ContentMenuItem("Subscription Plans", "Manage subscription tiers",        ManageSubscriptionPlansActivity::class.java)
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,17 +54,16 @@ class ManageContentSetupActivity : AppCompatActivity() {
         b.tvItemCount.visibility  = View.GONE
         b.fabAdd.hide()
 
-        // Show filtered or full list
         b.recyclerView.layoutManager = LinearLayoutManager(this)
         b.recyclerView.adapter = MenuAdapter(menuItems) { item ->
             startActivity(Intent(this, item.target))
         }
 
-        b.emptyState.visibility  = View.GONE
+        b.emptyState.visibility   = View.GONE
         b.recyclerView.visibility = View.VISIBLE
     }
 
-    override fun onOptionsItemSelected(item: android.view.MenuItem): Boolean {
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == android.R.id.home) {
             finish()
             return true
@@ -72,8 +72,8 @@ class ManageContentSetupActivity : AppCompatActivity() {
     }
 
     private class MenuAdapter(
-        private val items: List<MenuItem>,
-        private val onClick: (MenuItem) -> Unit
+        private val items: List<ContentMenuItem>,
+        private val onClick: (ContentMenuItem) -> Unit
     ) : RecyclerView.Adapter<MenuAdapter.VH>() {
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
@@ -85,11 +85,11 @@ class ManageContentSetupActivity : AppCompatActivity() {
         override fun onBindViewHolder(holder: VH, position: Int) = holder.bind(items[position])
         override fun getItemCount() = items.size
 
-        class VH(view: View, private val onClick: (MenuItem) -> Unit) : RecyclerView.ViewHolder(view) {
+        class VH(view: View, private val onClick: (ContentMenuItem) -> Unit) : RecyclerView.ViewHolder(view) {
             private val tvLabel: TextView = view.findViewById(R.id.tvMenuLabel)
             private val tvDesc:  TextView = view.findViewById(R.id.tvMenuDescription)
 
-            fun bind(item: MenuItem) {
+            fun bind(item: ContentMenuItem) {
                 tvLabel.text = item.label
                 tvDesc.text  = item.description
                 itemView.setOnClickListener { onClick(item) }
